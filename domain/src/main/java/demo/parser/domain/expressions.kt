@@ -24,6 +24,10 @@ data class Variable(val id: String) : Expression {
     override fun toString() = id
 }
 
+data class Power(val left: Expression, val right: Expression): Expression {
+    override fun toString() = "$left ^ $right"
+}
+
 data class Multiplication(val left: Expression, val right: Expression) : Expression {
     override fun toString() = "$left * $right"
 }

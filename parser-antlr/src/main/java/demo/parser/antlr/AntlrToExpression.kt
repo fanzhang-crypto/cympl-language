@@ -47,6 +47,12 @@ internal class AntlrToExpression: ExprBaseVisitor<Expression>() {
         return Parenthesized(visit(ctx.expr()))
     }
 
+    override fun visitPower(ctx: ExprParser.PowerContext): Expression {
+        val left: Expression = visit(ctx.getChild(0))
+        val right: Expression = visit(ctx.getChild(2))
+        return Power(left, right)
+    }
+
     override fun visitMultiplication(ctx: ExprParser.MultiplicationContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))

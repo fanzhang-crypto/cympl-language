@@ -24,12 +24,13 @@ internal object ExpressionGrammar : Grammar<Program>() {
     private val PLUS by literalToken("+")
     private val MINUS by literalToken("-")
     private val TIMES by literalToken("*")
-    private val DIV by regexToken("/")
+    private val DIV by literalToken("/")
+    private val POW by literalToken("^")
 
     private val EQ by literalToken("=")
     private val COLON by literalToken(":")
 
-    private val addOrSub: Parser<Expression> by leftAssociative(parser(this::mulOrDiv), PLUS or MINUS) { l, op, r ->
+    private val addOrSubChain: Parser<Expression> by leftAssociative(parser(this::mulOrDivChain), PLUS or MINUS) { l, op, r ->
         when (op.text) {
             "+" -> Addition(l, r)
             "-" -> Subtraction(l, r)
@@ -37,7 +38,7 @@ internal object ExpressionGrammar : Grammar<Program>() {
         }
     }
 
-    private val mulOrDiv: Parser<Expression> by leftAssociative(parser(this::term), TIMES or DIV) { l, op, r ->
+    private val mulOrDivChain: Parser<Expression> by leftAssociative(parser(this::powChain), TIMES or DIV) { l, op, r ->
         when (op.text) {
             "*" -> Multiplication(l, r)
             "/" -> Division(l, r)
@@ -45,7 +46,11 @@ internal object ExpressionGrammar : Grammar<Program>() {
         }
     }
 
-    private val parenthesized: Parser<Expression> by (-LPR * addOrSub * -RPR)
+    private val powChain: Parser<Expression> by rightAssociative(parser(this::term), POW) { l, _, r ->
+        Power(l, r)
+    }
+
+    private val parenthesized: Parser<Expression> by (-LPR * addOrSubChain * -RPR)
         .map { e -> Parenthesized(e) }
 
     private val negation: Parser<Expression> by (MINUS * parser { term })
@@ -59,16 +64,16 @@ internal object ExpressionGrammar : Grammar<Program>() {
         parenthesized
     // @formatter:on
 
-    private val assign: Parser<Expression> by (ID * EQ * addOrSub).map { (id, _, e) ->
+    private val assign: Parser<Expression> by (ID * EQ * addOrSubChain).map { (id, _, e) ->
         Assignment(id.text, e)
     }
 
-    private val decl: Parser<Expression> by (ID * COLON * INT_TYPE * EQ * addOrSub).map { (id, _, type, _, e) ->
+    private val decl: Parser<Expression> by (ID * COLON * INT_TYPE * EQ * addOrSubChain).map { (id, _, type, _, e) ->
         Declaration(id.text, type.text, e)
     }
 
     private val prog: Parser<Program> by oneOrMore(
-        decl or assign or addOrSub
+        decl or assign or addOrSubChain
     ).map { Program(it) }
 
     override val rootParser: Parser<Program> by prog
@@ -76,8 +81,7 @@ internal object ExpressionGrammar : Grammar<Program>() {
 
 fun main() {
     val input = """
-        k = i * j
-        k:INT = i / j
+       2 ^ 3 ^ 4
     """.trimIndent()
 
     val program = ExpressionGrammar.parseToEnd(input)

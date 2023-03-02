@@ -10,6 +10,7 @@ assign: ID '=' expr     # Assignment
 ;
 
 expr: '(' expr ')'      # ParenthesizedExpression
+    | <assoc=right> expr '^' expr     # Power
     | expr '*' expr     # Multiplication
     | expr '/' expr     # Division
     | expr '+' expr     # Addition

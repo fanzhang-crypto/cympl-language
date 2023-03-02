@@ -1,5 +1,7 @@
 package demo.parser.domain
 
+import kotlin.math.pow
+
 class Interpreter {
 
     private val localVariables = mutableMapOf<String, Int>()
@@ -40,6 +42,11 @@ class Interpreter {
             is Multiplication -> evaluate(expr.left) * evaluate(expr.right)
             is Division -> evaluate(expr.left) / evaluate(expr.right)
             is Subtraction -> evaluate(expr.left) - evaluate(expr.right)
+            is Power -> {
+                val l = evaluate(expr.left).toDouble()
+                val r = evaluate(expr.right).toDouble()
+                l.pow(r).toInt()
+            }
             is Negation -> -evaluate(expr.expr)
 
             is Number -> expr.int
