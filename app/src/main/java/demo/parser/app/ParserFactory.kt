@@ -1,10 +1,10 @@
 package demo.parser.app
 
-import demo.parser.antlr.AntlrParser
 import demo.parser.domain.Parser
-import demo.parser.fp.FpParser
+import demo.parser.domain.Program
+import demo.parser.fp.FpProgramParser
 
 object ParserFactory {
 
-    fun getParser(): Parser = FpParser
+    fun getParser(): Parser<Program> = FpProgramParser()
 }

@@ -13,15 +13,15 @@ fun main() {
             }
 
             when (val r = parser.parse(line.byteInputStream())) {
-                is ParserResult.Success -> {
+                is ParseResult.Success -> {
                     try {
-                        interpreter.interpret(r.program)
+                        interpreter.interpret(r.value)
                             .forEach(::println)
                     } catch (e:RuntimeException) {
                         System.err.println(e.message)
                     }
                 }
-                is ParserResult.Failure -> {
+                is ParseResult.Failure -> {
                     r.errors.map { it.message }.forEach(System.err::println)
                 }
             }

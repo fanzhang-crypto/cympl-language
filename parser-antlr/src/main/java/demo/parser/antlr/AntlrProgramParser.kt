@@ -2,20 +2,18 @@ package demo.parser.antlr
 
 import ExprLexer
 import ExprParser
+import demo.parser.domain.*
 import demo.parser.domain.Parser
-import demo.parser.domain.ParserResult
-import demo.parser.domain.SyntaxException
-import demo.parser.domain.TokenLocation
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.atn.ATNSimulator
 import org.antlr.v4.runtime.tree.ParseTree
 import java.io.InputStream
 
-class AntlrParser: Parser {
+class AntlrProgramParser: Parser<Program> {
 
     private val programVisitor = AntlrToProgram()
 
-    override fun parse(inputStream: InputStream): ParserResult {
+    override fun parse(inputStream: InputStream): ParseResult<Program> {
         val errorListener = SyntaxErrorListener()
 
         val cs: CharStream = CharStreams.fromStream(inputStream)
@@ -28,7 +26,7 @@ class AntlrParser: Parser {
 
         val syntaxErrors = errorListener.syntaxErrors
         if (syntaxErrors.isNotEmpty()) {
-            return ParserResult.Failure(syntaxErrors)
+            return ParseResult.Failure(syntaxErrors)
         }
 
         val program = programVisitor.visit(programAST)
@@ -36,10 +34,10 @@ class AntlrParser: Parser {
         val semanticErrors = programVisitor.getSemanticErrors()
         if (semanticErrors.isNotEmpty()) {
             programVisitor.clearSemanticErrors()
-            return ParserResult.Failure(semanticErrors)
+            return ParseResult.Failure(semanticErrors)
         }
 
-        return ParserResult.Success(program)
+        return ParseResult.Success(program)
     }
 
     private fun <S, A : ATNSimulator> Recognizer<S, A>.setErrorListener(listener: ANTLRErrorListener) = apply {

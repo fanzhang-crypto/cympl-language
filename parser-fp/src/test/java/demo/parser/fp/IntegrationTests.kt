@@ -1,9 +1,8 @@
 package demo.parser.fp
 
 import demo.parser.domain.Interpreter
-import demo.parser.domain.ParserResult
-import demo.parser.domain.SemanticException
-import io.kotest.assertions.throwables.shouldThrow
+import demo.parser.domain.ParseResult
+import demo.parser.domain.Program
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
@@ -12,14 +11,14 @@ import org.junit.jupiter.api.Test
 
 class IntegrationTests {
 
-    private val parser = FpParser
+    private val parser = FpProgramParser()
     private val interpreter = Interpreter()
 
     @Test
     fun testCase0() {
         val input = """
             i:INT = 1  // some comment 1
-            //some comments 2
+            //some comment 2
             j:INT = 2
             k:INT = 3
             k = i - j
@@ -28,7 +27,7 @@ class IntegrationTests {
             (1 - (i + j)) / 2
         """.byteInputStream()
 
-        val program = parser.parse(input).shouldBeInstanceOf<ParserResult.Success>().program
+        val program = parser.parse(input).shouldBeInstanceOf<ParseResult.Success<Program>>().value
         val outputs = interpreter.interpret(program)
 
         outputs.joinToString("\n") shouldBe """
@@ -54,7 +53,7 @@ class IntegrationTests {
             i: INT = 9
         """.byteInputStream()
 
-        val errors = parser.parse(input).shouldBeInstanceOf<ParserResult.Failure>().errors
+        val errors = parser.parse(input).shouldBeInstanceOf<ParseResult.Failure<*>>().errors
         errors shouldHaveSize 1
         errors[0].shouldHaveMessage("syntax error at (4:23): extraneous input ':'")
     }
@@ -69,10 +68,10 @@ class IntegrationTests {
             i: INT = 9
         """.byteInputStream()
 
-        val program = parser.parse(input)
-            .shouldBeInstanceOf<ParserResult.Success>().program
-
-        shouldThrow<SemanticException> { interpreter.interpret(program).forEach(::println) }
-            .shouldHaveMessage("semantic error: variable i already declared")
+        val errors = parser.parse(input).shouldBeInstanceOf<ParseResult.Failure<*>>().errors
+        errors shouldHaveSize 3
+        errors[0].shouldHaveMessage("semantic error at (3:12): variable i already declared")
+        errors[1].shouldHaveMessage("semantic error at (5:17): variable k not defined")
+        errors[2].shouldHaveMessage("semantic error at (6:12): variable i already declared")
     }
 }

@@ -4,7 +4,9 @@ class TokenLocation(private val line: Int, private val position: Int) {
     override fun toString() = "($line:$position)"
 }
 
-class SemanticException : RuntimeException {
+sealed class ParseException(message: String): RuntimeException(message)
+
+class SemanticException : ParseException {
 
     constructor(message: String, location: TokenLocation)
             : super("semantic error at $location: $message")
@@ -14,4 +16,4 @@ class SemanticException : RuntimeException {
 }
 
 class SyntaxException(message: String, location: TokenLocation)
-    : RuntimeException("syntax error at $location: $message")
+    : ParseException("syntax error at $location: $message")

@@ -1,5 +1,7 @@
 plugins {
     kotlin("jvm") version "1.8.0"
+//    application
+    java
 }
 
 dependencies {
@@ -17,3 +19,18 @@ kotlin {
     jvmToolchain(17)
 }
 
+//application {
+//    mainClass.set("demo.parser.app.FileBatchExecutorKt")
+//}
+
+task("runBatch", JavaExec::class) {
+    mainClass.set("demo.parser.app.FileBatchExecutorKt")
+    classpath = sourceSets["main"].runtimeClasspath
+}
+
+// gradle runInteractive -q --console=plain
+task("runInteractive", JavaExec::class) {
+    standardInput = System.`in`
+    mainClass.set("demo.parser.app.InteractiveExecutorKt")
+    classpath = sourceSets["main"].runtimeClasspath
+}

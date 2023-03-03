@@ -16,7 +16,7 @@ fun main(args: Array<String>) {
     val interpreter = Interpreter()
 
     when (val r = parser.parse(input)) {
-        is ParserResult.Success -> interpreter.interpret(r.program).forEach(::println)
-        is ParserResult.Failure -> r.errors.map { it.message }.forEach( System.err::println)
+        is ParseResult.Success<Program> -> interpreter.interpret(r.value).forEach(::println)
+        is ParseResult.Failure<*> -> r.errors.map { it.message }.forEach( System.err::println)
     }
 }

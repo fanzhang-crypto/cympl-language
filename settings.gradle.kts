@@ -1,3 +1,9 @@
 rootProject.name = "parser-demo"
 
-include("app", "domain", "parser-antlr", "parser-fp")
+include(
+    "app",
+    "domain",
+    "parser-antlr",
+    "parser-fp",
+    "antlr-sample"
+)

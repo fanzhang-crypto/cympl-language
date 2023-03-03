@@ -2,13 +2,13 @@ package demo.parser.domain
 
 import java.io.InputStream
 
-interface Parser {
-    fun parse(inputStream: InputStream): ParserResult
+interface Parser<T> {
+    fun parse(inputStream: InputStream): ParseResult<T>
 }
 
-sealed interface ParserResult {
-    class Success(val program: Program) : ParserResult
-    class Failure(val errors: List<RuntimeException>) : ParserResult
+sealed interface ParseResult<T> {
+    class Success<T>(val value: T) : ParseResult<T>
+    class Failure<T>(val errors: List<ParseException>) : ParseResult<T>
 }
 
 
