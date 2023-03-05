@@ -2,9 +2,6 @@ package demo.parser.antlr
 
 import ExprBaseVisitor
 import demo.parser.domain.*
-import demo.parser.domain.Float
-import demo.parser.domain.Int
-
 
 internal class AntlrToExpression : ExprBaseVisitor<Expression>() {
 
@@ -21,12 +18,13 @@ internal class AntlrToExpression : ExprBaseVisitor<Expression>() {
     override fun visitDeclaration(ctx: ExprParser.DeclarationContext): Expression {
         val idToken = ctx.ID().symbol
 
-        val type = when (ctx.TYPE().text) {
-            "INT" -> VariableType.INT
-            "FLOAT" -> VariableType.FLOAT
+        val type = when (ctx.type.type) {
+            ExprLexer.INT_TYPE -> VariableType.INT
+            ExprLexer.FLOAT_TYPE -> VariableType.FLOAT
+            ExprLexer.STRING_TYPE -> VariableType.STRING
             else -> {
-                val location = TokenLocation(ctx.TYPE().symbol.line, ctx.TYPE().symbol.charPositionInLine)
-                throw SyntaxException("unknown variable type ${ctx.TYPE().text}", location)
+                val location = TokenLocation(ctx.type.line, ctx.type.charPositionInLine)
+                throw SyntaxException("unknown variable type ${ctx.type.text}", location)
             }
         }
 
@@ -39,7 +37,7 @@ internal class AntlrToExpression : ExprBaseVisitor<Expression>() {
             vars[id] = type
         }
         val value = visit(ctx.expr())
-        return Declaration(id, type, value)
+        return Expression.Declaration(id, type, value)
     }
 
     override fun visitAssignment(ctx: ExprParser.AssignmentContext): Expression {
@@ -50,17 +48,17 @@ internal class AntlrToExpression : ExprBaseVisitor<Expression>() {
             semanticErrors += SemanticException("variable $id not defined", location)
         }
         val value = visit(ctx.expr())
-        return Assignment(id, value)
+        return Expression.Assignment(id, value)
     }
 
     override fun visitParenthesizedExpression(ctx: ExprParser.ParenthesizedExpressionContext): Expression {
-        return Parenthesized(visit(ctx.expr()))
+        return Expression.Parenthesized(visit(ctx.expr()))
     }
 
     override fun visitPower(ctx: ExprParser.PowerContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))
-        return Power(left, right)
+        return Expression.Power(left, right)
     }
 
     override fun visitMulDiv(ctx: ExprParser.MulDivContext): Expression {
@@ -68,8 +66,8 @@ internal class AntlrToExpression : ExprBaseVisitor<Expression>() {
         val right: Expression = visit(ctx.getChild(2))
 
         return when (ctx.op.type) {
-            ExprLexer.TIMES -> Multiplication(left, right)
-            ExprLexer.DIV -> Division(left, right)
+            ExprLexer.TIMES -> Expression.Multiplication(left, right)
+            ExprLexer.DIV -> Expression.Division(left, right)
             else -> throw RuntimeException("unknown operator ${ctx.op}")
         }
     }
@@ -79,8 +77,8 @@ internal class AntlrToExpression : ExprBaseVisitor<Expression>() {
         val right: Expression = visit(ctx.getChild(2))
 
         return when (ctx.op.type) {
-            ExprLexer.PLUS -> Addition(left, right)
-            ExprLexer.MINUS -> Subtraction(left, right)
+            ExprLexer.PLUS -> Expression.Addition(left, right)
+            ExprLexer.MINUS -> Expression.Subtraction(left, right)
             else -> throw RuntimeException("unknown operator ${ctx.op}")
         }
     }
@@ -92,17 +90,21 @@ internal class AntlrToExpression : ExprBaseVisitor<Expression>() {
             val location = TokenLocation(idToken.line, idToken.charPositionInLine)
             semanticErrors += SemanticException("variable $id not defined", location)
         }
-        return Variable(id)
+        return Expression.Variable(id)
     }
 
     override fun visitINT(ctx: ExprParser.INTContext): Expression {
         val value = ctx.INT().text.toInt()
-        return Int(value)
+        return Expression.Int(value)
     }
 
     override fun visitFLOAT(ctx: ExprParser.FLOATContext): Expression {
         val value = ctx.FLOAT().text.toDouble()
-        return Float(value)
+        return Expression.Float(value)
     }
 
+    override fun visitSTRING(ctx: ExprParser.STRINGContext): Expression {
+        val value = ctx.STRING().text.let { it.substring(1, it.length - 1) }
+        return Expression.String(value)
+    }
 }

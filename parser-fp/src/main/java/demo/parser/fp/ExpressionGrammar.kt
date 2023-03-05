@@ -9,8 +9,6 @@ import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import demo.parser.domain.*
-import demo.parser.domain.Float
-import demo.parser.domain.Int
 
 internal class ExpressionGrammar : Grammar<Program>() {
 
@@ -19,11 +17,13 @@ internal class ExpressionGrammar : Grammar<Program>() {
 
     private val INT_TYPE by literalToken("INT")
     private val FLOAT_TYPE by literalToken("FLOAT")
-    private val TYPE = INT_TYPE or FLOAT_TYPE
+    private val STRING_TYPE by literalToken("STRING")
+    private val TYPE = INT_TYPE or FLOAT_TYPE or STRING_TYPE
 
     private val ID by regexToken("[a-z][a-zA-Z0-9_]*")
     private val FLOAT by regexToken("0|-?[1-9][0-9]*\\.[0-9]+")
     private val INT by regexToken("0|-?[1-9][0-9]*")
+    private val STRING by regexToken("\"[^\"]*\"")
 
     private val WS by regexToken("\\s+", ignore = true)
     private val COMMENT by regexToken("//[^\r\n]*", ignore = true)
@@ -46,42 +46,43 @@ internal class ExpressionGrammar : Grammar<Program>() {
         PLUS or MINUS
     ) { l, op, r ->
         when (op.text) {
-            "+" -> Addition(l, r)
-            "-" -> Subtraction(l, r)
+            "+" -> Expression.Addition(l, r)
+            "-" -> Expression.Subtraction(l, r)
             else -> throw IllegalArgumentException("unknown operator $op")
         }
     }
 
     private val mulOrDivChain: Parser<Expression> by leftAssociative(parser(this::powChain), TIMES or DIV) { l, op, r ->
         when (op.text) {
-            "*" -> Multiplication(l, r)
-            "/" -> Division(l, r)
+            "*" -> Expression.Multiplication(l, r)
+            "/" -> Expression.Division(l, r)
             else -> throw IllegalArgumentException("unknown operator $op")
         }
     }
 
     private val powChain: Parser<Expression> by rightAssociative(parser(this::term), POW) { l, _, r ->
-        Power(l, r)
+        Expression.Power(l, r)
     }
 
     private val parenthesized: Parser<Expression> by (-LPR * addOrSubChain * -RPR)
-        .map { e -> Parenthesized(e) }
+        .map { e -> Expression.Parenthesized(e) }
 
     private val negation: Parser<Expression> by (-MINUS * parser { term })
-        .map { e -> Negation(e) }
+        .map { e -> Expression.Negation(e) }
 
     // @formatter:off
     private val term: Parser<Expression> by
-        FLOAT.map { Float(it.text.toDouble()) } or
-        INT.map { Int(it.text.toInt()) } or
-        ID.map {idToken -> Variable(checkVarDeclared(idToken)) } or
+        FLOAT.map { Expression.Float(it.text.toDouble()) } or
+        INT.map { Expression.Int(it.text.toInt()) } or
+        STRING.map { Expression.String(it.text.substring(1, it.text.length - 1)) } or
+        ID.map {idToken -> Expression.Variable(checkVarDeclared(idToken)) } or
         negation or
         parenthesized
     // @formatter:on
 
     private val assign: Parser<Expression> by (ID * EQ * addOrSubChain).map { (idToken, _, e) ->
         val id = checkVarDeclared(idToken)
-        Assignment(id, e)
+        Expression.Assignment(id, e)
     }
 
     private val decl: Parser<Expression> by (ID * COLON * TYPE * EQ * addOrSubChain).map { (idToken, _, typeToken, _, e) ->
@@ -90,9 +91,10 @@ internal class ExpressionGrammar : Grammar<Program>() {
         val type = when (typeToken.text) {
             "INT" -> VariableType.INT
             "FLOAT" -> VariableType.FLOAT
+            "STRING" -> VariableType.STRING
             else -> throw IllegalArgumentException("unknown type ${typeToken.text}")
         }
-        Declaration(idToken.text, type, e)
+        Expression.Declaration(idToken.text, type, e)
     }
 
     private val prog: Parser<Program> by oneOrMore(
@@ -124,7 +126,7 @@ internal class ExpressionGrammar : Grammar<Program>() {
 
 fun main() {
     val input = """
-       i:FLOAT = 1.1
+       i:STRING = "A"
     """.trimIndent()
 
     val program = ExpressionGrammar().parseToEnd(input)

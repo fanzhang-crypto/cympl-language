@@ -8,18 +8,23 @@ class Interpreter {
 
     fun interpret(program: Program): Sequence<String> = sequence {
         for (expr in program.expressions) {
-            yield("$expr => ${evaluate(expr).value}")
+            yield("$expr => ${formatTValue(evaluate(expr))}")
         }
         yield("environment:")
         yield(formatCurrentEnv())
     }
 
+    private fun formatTValue(tvalue: TValue) = when(tvalue.type) {
+        VariableType.STRING -> "\"${tvalue.value}\""
+        else -> tvalue.value.toString()
+    }
+
     private fun formatCurrentEnv() = localVariables
-        .map { (k, typeAndValue) -> "$k:${typeAndValue.type} = ${typeAndValue.value}" }
+        .map { (k, tvalue) -> "$k:${tvalue.type} = ${formatTValue(tvalue)}" }
         .joinToString(", ")
 
     private fun evaluate(expr: Expression): TValue = when (expr) {
-        is Declaration -> {
+        is Expression.Declaration -> {
             val id = expr.id
             if (localVariables.contains(id)) {
                 throw SemanticException("variable $id already declared")
@@ -31,8 +36,7 @@ class Interpreter {
                     localVariables[id] = TValue(type, v.value)
                 }
         }
-
-        is Assignment -> {
+        is Expression.Assignment -> {
             val id = expr.id
             val variable = localVariables[id]
                 ?: throw SemanticException("variable $id not defined")
@@ -41,9 +45,9 @@ class Interpreter {
             variable.withValue(value).also { localVariables[id] = it }
         }
 
-        is Parenthesized -> evaluate(expr.expr)
+        is Expression.Parenthesized -> evaluate(expr.expr)
 
-        is Addition -> {
+        is Expression.Addition -> {
             val left = evaluate(expr.left)
             val right = evaluate(expr.right)
             when (left.type) {
@@ -60,7 +64,7 @@ class Interpreter {
                 VariableType.STRING -> TValue(VariableType.STRING, left.asString() + right.asString())
             }
         }
-        is Subtraction -> {
+        is Expression.Subtraction -> {
             val left = evaluate(expr.left)
             val right = evaluate(expr.right)
             when (left.type) {
@@ -77,7 +81,7 @@ class Interpreter {
                 VariableType.STRING -> throw SemanticException("cannot subtract string from string")
             }
         }
-        is Multiplication -> {
+        is Expression.Multiplication -> {
             val left = evaluate(expr.left)
             val right = evaluate(expr.right)
             when (left.type) {
@@ -94,7 +98,7 @@ class Interpreter {
                 VariableType.STRING -> throw SemanticException("cannot multiply string")
             }
         }
-        is Division -> {
+        is Expression.Division -> {
             val left = evaluate(expr.left)
             val right = evaluate(expr.right)
             when (left.type) {
@@ -112,13 +116,13 @@ class Interpreter {
             }
         }
 
-        is Power -> {
+        is Expression.Power -> {
             val left = evaluate(expr.left).asDouble()
             val right = evaluate(expr.right).asDouble()
             TValue(VariableType.FLOAT, left.pow(right))
         }
 
-        is Negation -> {
+        is Expression.Negation -> {
             val tvalue = evaluate(expr.expr)
             when (tvalue.type) {
                 VariableType.INT -> TValue(VariableType.INT, -tvalue.asInt())
@@ -127,12 +131,13 @@ class Interpreter {
             }
         }
 
-        is Variable -> {
+        is Expression.Variable -> {
             val id = expr.id
             localVariables[id] ?: throw SemanticException("variable $id not defined")
         }
 
-        is Float -> TValue(VariableType.FLOAT, expr.value)
-        is Int -> TValue(VariableType.INT, expr.value)
+        is Expression.Float -> TValue(VariableType.FLOAT, expr.value)
+        is Expression.Int -> TValue(VariableType.INT, expr.value)
+        is Expression.String -> TValue(VariableType.STRING, expr.value)
     }
 }

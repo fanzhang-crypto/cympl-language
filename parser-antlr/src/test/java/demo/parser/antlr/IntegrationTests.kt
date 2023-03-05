@@ -73,6 +73,26 @@ class IntegrationTests {
     }
 
     @Test
+    fun `string test`() {
+        val input = """
+            s1:STRING = "a" + "b" + "c"
+            s2:STRING = "d" + 1 + 2 + 3
+            s3:STRING = s1 + s2
+        """.byteInputStream()
+
+        val program = parser.parse(input).shouldBeInstanceOf<ParseResult.Success<Program>>().value
+        val outputs = interpreter.interpret(program)
+
+        outputs.joinToString("\n") shouldBe """
+            s1:STRING = "a" + "b" + "c" => "abc"
+            s2:STRING = "d" + 1 + 2 + 3 => "d123"
+            s3:STRING = s1 + s2 => "abcd123"
+            environment:
+            s1:STRING = "abc", s2:STRING = "d123", s3:STRING = "abcd123"
+        """.trimIndent()
+    }
+
+    @Test
     fun `should report syntax error`() {
         val input = """
             i: INT = 5

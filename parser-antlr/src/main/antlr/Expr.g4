@@ -3,7 +3,7 @@ grammar Expr;
 prog: (decl | expr | assign)+EOF            #Program
 ;
 
-decl: ID ':' TYPE '=' expr                  #Declaration
+decl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE) '=' expr                  #Declaration
 ;
 
 assign: ID '=' expr     # Assignment
@@ -24,12 +24,14 @@ MINUS: '-';
 TIMES: '*';
 DIV: '/';
 
-TYPE: FLOAT_TYPE | INT_TYPE;
-FLOAT_TYPE: 'FLOAT';
 INT_TYPE: 'INT';
+FLOAT_TYPE: 'FLOAT';
+STRING_TYPE: 'STRING';
+
 INT: DIGIT+;
 FLOAT: DIGIT '.' DIGIT* | '.' DIGIT+;
 STRING: '"' (ESC|.)*? '"';
+
 ID: [a-zA-Z_][a-zA-Z0-9_]*;
 COMMENT: '/*' .*? '*/' -> skip;
 LINECOMMENT: '//'~[\r\n]* -> skip;

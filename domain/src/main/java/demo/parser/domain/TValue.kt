@@ -8,13 +8,13 @@ data class TValue(val type: VariableType, val value: Any) {
     }
 
     fun asInt() = when(value) {
-        is kotlin.Int -> value
+        is Int -> value
         is Double -> value.toInt()
         else -> throw SemanticException("cannot convert $value to int")
     }
 
     fun asDouble() = when(value) {
-        is kotlin.Int -> value.toDouble()
+        is Int -> value.toDouble()
         is Double -> value
         else -> throw SemanticException("cannot convert $value to double")
     }
