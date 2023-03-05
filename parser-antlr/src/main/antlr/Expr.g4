@@ -3,24 +3,38 @@ grammar Expr;
 prog: (decl | expr | assign)+EOF            #Program
 ;
 
-decl: ID ':' INT_TYPE '=' expr              #Declaration
+decl: ID ':' TYPE '=' expr                  #Declaration
 ;
 
 assign: ID '=' expr     # Assignment
 ;
 
 expr: '(' expr ')'      # ParenthesizedExpression
-    | <assoc=right> expr '^' expr     # Power
-    | expr '*' expr     # Multiplication
-    | expr '/' expr     # Division
-    | expr '+' expr     # Addition
-    | expr '-' expr     # Substraction
+    | <assoc=right> expr '^' expr       # Power
+    | expr op=(TIMES | DIV) expr        # MulDiv
+    | expr op=(PLUS | MINUS) expr       # AddSub
     | ID                # Variable
-    | NUM               # Number
+    | FLOAT             # FLOAT
+    | INT               # INT
+    | STRING            # STRING
     ;
 
-INT_TYPE : 'INT';
-ID: [a-z][a-zA-Z0-9_]*;
-NUM: '0' | '-'?[1-9][0-9]*;
-COMMENT: '//'~[\r\n]* -> skip;
-WS: [ \t\r\n] -> skip;
+PLUS: '+';
+MINUS: '-';
+TIMES: '*';
+DIV: '/';
+
+TYPE: FLOAT_TYPE | INT_TYPE;
+FLOAT_TYPE: 'FLOAT';
+INT_TYPE: 'INT';
+INT: DIGIT+;
+FLOAT: DIGIT '.' DIGIT* | '.' DIGIT+;
+STRING: '"' (ESC|.)*? '"';
+ID: [a-zA-Z_][a-zA-Z0-9_]*;
+COMMENT: '/*' .*? '*/' -> skip;
+LINECOMMENT: '//'~[\r\n]* -> skip;
+WS: [ \t\r\n]+ -> skip;
+
+fragment DIGIT: [0-9];
+fragment ESC: '\\'[btnr"\\];
+

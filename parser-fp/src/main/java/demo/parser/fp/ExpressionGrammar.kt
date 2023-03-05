@@ -9,6 +9,8 @@ import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import demo.parser.domain.*
+import demo.parser.domain.Float
+import demo.parser.domain.Int
 
 internal class ExpressionGrammar : Grammar<Program>() {
 
@@ -16,8 +18,12 @@ internal class ExpressionGrammar : Grammar<Program>() {
     private val semanticErrors = mutableListOf<SemanticException>()
 
     private val INT_TYPE by literalToken("INT")
+    private val FLOAT_TYPE by literalToken("FLOAT")
+    private val TYPE = INT_TYPE or FLOAT_TYPE
+
     private val ID by regexToken("[a-z][a-zA-Z0-9_]*")
-    private val NUM by regexToken("0|-?[1-9][0-9]*")
+    private val FLOAT by regexToken("0|-?[1-9][0-9]*\\.[0-9]+")
+    private val INT by regexToken("0|-?[1-9][0-9]*")
 
     private val WS by regexToken("\\s+", ignore = true)
     private val COMMENT by regexToken("//[^\r\n]*", ignore = true)
@@ -66,7 +72,8 @@ internal class ExpressionGrammar : Grammar<Program>() {
 
     // @formatter:off
     private val term: Parser<Expression> by
-        NUM.map { Number(it.text.toInt()) } or
+        FLOAT.map { Float(it.text.toDouble()) } or
+        INT.map { Int(it.text.toInt()) } or
         ID.map {idToken -> Variable(checkVarDeclared(idToken)) } or
         negation or
         parenthesized
@@ -77,10 +84,15 @@ internal class ExpressionGrammar : Grammar<Program>() {
         Assignment(id, e)
     }
 
-    private val decl: Parser<Expression> by (ID * COLON * INT_TYPE * EQ * addOrSubChain).map { (idToken, _, type, _, e) ->
+    private val decl: Parser<Expression> by (ID * COLON * TYPE * EQ * addOrSubChain).map { (idToken, _, typeToken, _, e) ->
         val id = checkVarNotDeclared(idToken)
         vars += id
-        Declaration(idToken.text, type.text, e)
+        val type = when (typeToken.text) {
+            "INT" -> VariableType.INT
+            "FLOAT" -> VariableType.FLOAT
+            else -> throw IllegalArgumentException("unknown type ${typeToken.text}")
+        }
+        Declaration(idToken.text, type, e)
     }
 
     private val prog: Parser<Program> by oneOrMore(
@@ -112,7 +124,7 @@ internal class ExpressionGrammar : Grammar<Program>() {
 
 fun main() {
     val input = """
-       ---2
+       i:FLOAT = 1.1
     """.trimIndent()
 
     val program = ExpressionGrammar().parseToEnd(input)

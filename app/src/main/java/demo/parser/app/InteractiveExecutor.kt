@@ -1,6 +1,7 @@
 package demo.parser.app
 
 import demo.parser.domain.*
+import kotlin.system.exitProcess
 
 fun main() {
     val parser = ParserFactory.getParser()
@@ -8,6 +9,9 @@ fun main() {
 
     System.`in`.reader().useLines { lines ->
         lines.forEach { line ->
+            if (line.isBlank()) {
+                return@forEach
+            }
             if (line == "quit") {
                 return@useLines
             }
@@ -19,6 +23,7 @@ fun main() {
                             .forEach(::println)
                     } catch (e:RuntimeException) {
                         System.err.println(e.message)
+                        exitProcess(1)
                     }
                 }
                 is ParseResult.Failure -> {

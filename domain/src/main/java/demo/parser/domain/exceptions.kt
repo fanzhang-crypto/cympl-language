@@ -1,6 +1,6 @@
 package demo.parser.domain
 
-class TokenLocation(private val line: Int, private val position: Int) {
+class TokenLocation(private val line: kotlin.Int, private val position: kotlin.Int) {
     override fun toString() = "($line:$position)"
 }
 

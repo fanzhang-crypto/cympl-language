@@ -15,7 +15,7 @@ class IntegrationTests {
     private val interpreter = Interpreter()
 
     @Test
-    fun testCase0() {
+    fun `integers test`() {
         val input = """
             i:INT = 1  // some comment 1
             //some comment 2
@@ -39,12 +39,41 @@ class IntegrationTests {
             i + j * 2 - k / 3 => 5
             (1 - (i + j)) / 2 => -1
             environment:
-            i = 1, j = 2, k = -1
+            i:INT = 1, j:INT = 2, k:INT = -1
         """.trimIndent()
     }
 
     @Test
-    fun testCase1() {
+    fun `floats and integers test`() {
+        val input = """
+            i:INT = 1  // some comment 1
+            //some comment 2
+            j:FLOAT = 2.0
+            k:FLOAT = 3.0
+            k = i - j // i - j cast to FLOAT because j is FLOAT
+            (i + j) * k
+            i + j * 2 - k/3
+            (1 - (i + j)) / 2
+        """.byteInputStream()
+
+        val program = parser.parse(input).shouldBeInstanceOf<ParseResult.Success<Program>>().value
+        val outputs = interpreter.interpret(program)
+
+        outputs.joinToString("\n") shouldBe """
+            i:INT = 1 => 1
+            j:FLOAT = 2.0 => 2.0
+            k:FLOAT = 3.0 => 3.0
+            k = i - j => -1.0
+            (i + j) * k => -3.0
+            i + j * 2 - k / 3 => 5.333333333333333
+            (1 - (i + j)) / 2 => -1.0
+            environment:
+            i:INT = 1, j:FLOAT = 2.0, k:FLOAT = -1.0
+        """.trimIndent()
+    }
+
+    @Test
+    fun `should report syntax error`() {
         val input = """
             i: INT = 5
             i: INT = 7
@@ -55,11 +84,13 @@ class IntegrationTests {
 
         val errors = parser.parse(input).shouldBeInstanceOf<ParseResult.Failure<*>>().errors
         errors shouldHaveSize 1
-        errors[0].shouldHaveMessage("syntax error at (4:22): extraneous input ':' expecting {<EOF>, '(', ID, NUM}")
+        errors[0].shouldHaveMessage(
+            "syntax error at (4:22): extraneous input ':' expecting {<EOF>, '(', INT, FLOAT, STRING, ID}"
+        )
     }
 
     @Test
-    fun testCase2() {
+    fun `should report semantic error`() {
         val input = """
             i: INT = 5 // some comment here
             i: INT = 7

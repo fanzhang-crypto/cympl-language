@@ -2,11 +2,13 @@ package demo.parser.antlr
 
 import ExprBaseVisitor
 import demo.parser.domain.*
+import demo.parser.domain.Float
+import demo.parser.domain.Int
 
 
-internal class AntlrToExpression: ExprBaseVisitor<Expression>() {
+internal class AntlrToExpression : ExprBaseVisitor<Expression>() {
 
-    private val vars = mutableSetOf<String>()
+    private val vars = mutableMapOf<String, VariableType>()
 
     private val semanticErrors: MutableList<SemanticException> = mutableListOf()
 
@@ -19,15 +21,23 @@ internal class AntlrToExpression: ExprBaseVisitor<Expression>() {
     override fun visitDeclaration(ctx: ExprParser.DeclarationContext): Expression {
         val idToken = ctx.ID().symbol
 
+        val type = when (ctx.TYPE().text) {
+            "INT" -> VariableType.INT
+            "FLOAT" -> VariableType.FLOAT
+            else -> {
+                val location = TokenLocation(ctx.TYPE().symbol.line, ctx.TYPE().symbol.charPositionInLine)
+                throw SyntaxException("unknown variable type ${ctx.TYPE().text}", location)
+            }
+        }
+
         val id = idToken.text
+
         if (vars.contains(id)) {
             val location = TokenLocation(idToken.line, idToken.charPositionInLine)
             semanticErrors += SemanticException("variable $id already declared", location)
         } else {
-            vars += id
+            vars[id] = type
         }
-
-        val type = ctx.INT_TYPE().text
         val value = visit(ctx.expr())
         return Declaration(id, type, value)
     }
@@ -53,28 +63,26 @@ internal class AntlrToExpression: ExprBaseVisitor<Expression>() {
         return Power(left, right)
     }
 
-    override fun visitMultiplication(ctx: ExprParser.MultiplicationContext): Expression {
+    override fun visitMulDiv(ctx: ExprParser.MulDivContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))
-        return Multiplication(left, right)
+
+        return when (ctx.op.type) {
+            ExprLexer.TIMES -> Multiplication(left, right)
+            ExprLexer.DIV -> Division(left, right)
+            else -> throw RuntimeException("unknown operator ${ctx.op}")
+        }
     }
 
-    override fun visitDivision(ctx: ExprParser.DivisionContext): Expression {
+    override fun visitAddSub(ctx: ExprParser.AddSubContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))
-        return Division(left, right)
-    }
 
-    override fun visitAddition(ctx: ExprParser.AdditionContext): Expression {
-        val left: Expression = visit(ctx.getChild(0))
-        val right: Expression = visit(ctx.getChild(2))
-        return Addition(left, right)
-    }
-
-    override fun visitSubstraction(ctx: ExprParser.SubstractionContext): Expression {
-        val left: Expression = visit(ctx.getChild(0))
-        val right: Expression = visit(ctx.getChild(2))
-        return Subtraction(left, right)
+        return when (ctx.op.type) {
+            ExprLexer.PLUS -> Addition(left, right)
+            ExprLexer.MINUS -> Subtraction(left, right)
+            else -> throw RuntimeException("unknown operator ${ctx.op}")
+        }
     }
 
     override fun visitVariable(ctx: ExprParser.VariableContext): Expression {
@@ -84,12 +92,17 @@ internal class AntlrToExpression: ExprBaseVisitor<Expression>() {
             val location = TokenLocation(idToken.line, idToken.charPositionInLine)
             semanticErrors += SemanticException("variable $id not defined", location)
         }
-
         return Variable(id)
     }
 
-    override fun visitNumber(ctx: ExprParser.NumberContext): Expression {
-        val num = ctx.NUM().text.toInt()
-        return Number(num)
+    override fun visitINT(ctx: ExprParser.INTContext): Expression {
+        val value = ctx.INT().text.toInt()
+        return Int(value)
     }
+
+    override fun visitFLOAT(ctx: ExprParser.FLOATContext): Expression {
+        val value = ctx.FLOAT().text.toDouble()
+        return Float(value)
+    }
+
 }

@@ -17,14 +17,7 @@ internal class AntlrToProgram : ExprBaseVisitor<Program>() {
         if (ctx.childCount <= 1) {
             return Program(emptyList())
         }
-
-        val expressions = mutableListOf<Expression>()
-
-        for (i in 0 until ctx.childCount - 1) {
-            val child = ctx.getChild(i)
-            val expr = exprVisitor.visit(child)
-            expressions += expr
-        }
+        val expressions = ctx.children.mapNotNull { exprVisitor.visit(it) }
         return Program(expressions)
     }
 }
