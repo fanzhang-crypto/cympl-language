@@ -1,16 +1,6 @@
 package demo.parser.domain
 
-data class Program(val expressions: List<Expression>)
-
-sealed interface Expression {
-
-    data class Declaration(val id: kotlin.String, val type: VariableType, val value: Expression) : Expression {
-        override fun toString() = "$id:${type.name} = $value"
-    }
-
-    data class Assignment(val id: kotlin.String, val value: Expression) : Expression {
-        override fun toString() = "$id = $value"
-    }
+sealed interface Expression: Statement {
 
     data class Parenthesized(val expr: Expression) : Expression {
         override fun toString() = "($expr)"

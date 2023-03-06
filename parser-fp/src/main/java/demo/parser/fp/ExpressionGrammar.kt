@@ -80,12 +80,12 @@ internal class ExpressionGrammar : Grammar<Program>() {
         parenthesized
     // @formatter:on
 
-    private val assign: Parser<Expression> by (ID * EQ * addOrSubChain).map { (idToken, _, e) ->
+    private val assign: Parser<Statement> by (ID * EQ * addOrSubChain).map { (idToken, _, e) ->
         val id = checkVarDeclared(idToken)
-        Expression.Assignment(id, e)
+        Statement.Assignment(id, e)
     }
 
-    private val decl: Parser<Expression> by (ID * COLON * TYPE * EQ * addOrSubChain).map { (idToken, _, typeToken, _, e) ->
+    private val decl: Parser<Statement> by (ID * COLON * TYPE * EQ * addOrSubChain).map { (idToken, _, typeToken, _, e) ->
         val id = checkVarNotDeclared(idToken)
         vars += id
         val type = when (typeToken.text) {
@@ -94,12 +94,12 @@ internal class ExpressionGrammar : Grammar<Program>() {
             "STRING" -> VariableType.STRING
             else -> throw IllegalArgumentException("unknown type ${typeToken.text}")
         }
-        Expression.Declaration(idToken.text, type, e)
+        Statement.VariableDeclaration(idToken.text, type, e)
     }
 
-    private val prog: Parser<Program> by oneOrMore(
-        decl or assign or addOrSubChain
-    ).map { Program(it) }
+    private val statement: Parser<Statement> by decl or assign or addOrSubChain
+
+    private val prog: Parser<Program> by oneOrMore(statement).map { Program(it) }
 
     override val rootParser: Parser<Program> by prog
 
@@ -130,6 +130,5 @@ fun main() {
     """.trimIndent()
 
     val program = ExpressionGrammar().parseToEnd(input)
-    program.expressions.forEach(::println)
-
+    program.statements.forEach(::println)
 }

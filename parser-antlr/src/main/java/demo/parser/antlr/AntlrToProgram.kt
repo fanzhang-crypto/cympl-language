@@ -3,21 +3,16 @@ package demo.parser.antlr
 import ExprBaseVisitor
 import demo.parser.domain.*
 
-internal class AntlrToProgram : ExprBaseVisitor<Program>() {
+internal class AntlrToProgram(private val semanticChecker: SemanticChecker)
+    : ExprBaseVisitor<Program>() {
 
-    private val exprVisitor = AntlrToExpression()
-
-    fun getSemanticErrors() = exprVisitor.getSemanticErrors()
-
-    fun clearSemanticErrors() {
-        exprVisitor.clearSemanticErrors()
-    }
+    private val statVisitor = AntlrToStatement(semanticChecker)
 
     override fun visitProgram(ctx: ExprParser.ProgramContext): Program {
         if (ctx.childCount <= 1) {
             return Program(emptyList())
         }
-        val expressions = ctx.children.mapNotNull { exprVisitor.visit(it) }
-        return Program(expressions)
+        val statements = ctx.children.mapNotNull { statVisitor.visit(it) }
+        return Program(statements)
     }
 }

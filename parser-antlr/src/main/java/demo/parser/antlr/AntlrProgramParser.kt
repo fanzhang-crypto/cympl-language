@@ -11,7 +11,8 @@ import java.io.InputStream
 
 class AntlrProgramParser: Parser<Program> {
 
-    private val programVisitor = AntlrToProgram()
+    private val semanticChecker = SemanticChecker()
+    private val programVisitor = AntlrToProgram(semanticChecker)
 
     override fun parse(inputStream: InputStream): ParseResult<Program> {
         val errorListener = SyntaxErrorListener()
@@ -31,9 +32,9 @@ class AntlrProgramParser: Parser<Program> {
 
         val program = programVisitor.visit(programAST)
 
-        val semanticErrors = programVisitor.getSemanticErrors()
+        val semanticErrors = semanticChecker.getSemanticErrors()
         if (semanticErrors.isNotEmpty()) {
-            programVisitor.clearSemanticErrors()
+            semanticChecker.clearSemanticErrors()
             return ParseResult.Failure(semanticErrors)
         }
 

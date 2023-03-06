@@ -1,13 +1,17 @@
 grammar Expr;
 
-prog: (decl | expr | assign)+EOF            #Program
+prog: statement+EOF             #Program
 ;
 
-decl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE) '=' expr                  #Declaration
+statement
+    : decl                      #VariableDeclaration
+    | assign                    #Assignment
+    | expr                      #Expression
 ;
 
-assign: ID '=' expr     # Assignment
-;
+decl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE) '=' expr;
+
+assign: ID '=' expr;
 
 expr: '(' expr ')'      # ParenthesizedExpression
     | <assoc=right> expr '^' expr       # Power
