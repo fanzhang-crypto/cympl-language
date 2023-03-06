@@ -11,7 +11,8 @@ typealias BPParseResult<T> = com.github.h0tk3y.betterParse.parser.ParseResult<T>
 
 class FpProgramParser : Parser<Program> {
 
-    private val grammar = ExpressionGrammar()
+    private val semanticChecker = SemanticChecker()
+    private val grammar = ProgramGrammar(semanticChecker)
 
     override fun parse(inputStream: InputStream): ParseResult<Program> {
         val input = String(inputStream.readAllBytes())
@@ -20,10 +21,10 @@ class FpProgramParser : Parser<Program> {
 
     private fun <T> BPParseResult<T>.toParseResult(): ParseResult<T> = when (this) {
         is Parsed<*> -> {
-            val semanticErrors = grammar.getSemanticErrors()
+            val semanticErrors = semanticChecker.getSemanticErrors()
 
             if (semanticErrors.isNotEmpty()) {
-                grammar.clearSemanticErrors()
+                semanticChecker.clearSemanticErrors()
                 ParseResult.Failure(semanticErrors)
             } else
                 @Suppress("UNCHECKED_CAST")

@@ -4,33 +4,55 @@ prog: statement+EOF             #Program
 ;
 
 statement
-    : decl                      #VariableDeclaration
-    | assign                    #Assignment
-    | expr                      #Expression
+    : varDecl                       #VariableDeclaration
+    | funcDecl                      #FunctionDeclaration
+    | assign                        #Assignment
+    | expr';'                       #Expression
+    | returnStat                    #ReturnStatement
+    | ifStat                        #IfStatement
+    | block                         #BlockStatement
 ;
 
-decl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE) '=' expr;
+varDecl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE) '=' expr ';';
 
-assign: ID '=' expr;
+funcDecl: 'func' ID '(' paramDecls? ')' (':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE | VOID_TYPE))? block;
+paramDecls: paramDecl (',' paramDecl)*;
+paramDecl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE);
 
-expr: '(' expr ')'      # ParenthesizedExpression
+returnStat: 'return' expr? ';';
+
+block: '{' statement* '}';
+
+ifStat: 'if' '(' expr ')' thenBranch=statement ('else' elseBranch=statement )?;
+
+assign: ID '=' expr ';';
+
+expr: ID '(' exprlist? ')'              # FunctionCall
+    | '(' expr ')'                      # ParenthesizedExpression
     | <assoc=right> expr '^' expr       # Power
     | expr op=(TIMES | DIV) expr        # MulDiv
     | expr op=(PLUS | MINUS) expr       # AddSub
+    | expr op=(EQ | NEQ) expr           # Equality
     | ID                # Variable
     | FLOAT             # FLOAT
     | INT               # INT
     | STRING            # STRING
     ;
 
+exprlist: expr (',' expr)*;
+
 PLUS: '+';
 MINUS: '-';
 TIMES: '*';
 DIV: '/';
+EQ: '==';
+NEQ: '!=';
+
 
 INT_TYPE: 'INT';
 FLOAT_TYPE: 'FLOAT';
 STRING_TYPE: 'STRING';
+VOID_TYPE: 'VOID';
 
 INT: DIGIT+;
 FLOAT: DIGIT '.' DIGIT* | '.' DIGIT+;

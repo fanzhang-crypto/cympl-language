@@ -1,12 +1,17 @@
 package demo.parser.domain
 
-enum class VariableType {
-    INT, FLOAT, STRING;
+import java.lang.Double
+import java.lang.String
 
-    private fun toJavaClass():Class<*> = when (this) {
+enum class VariableType {
+    VOID, BOOL, INT, FLOAT, STRING;
+
+    fun toJavaClass():Class<*> = when (this) {
         INT -> Integer::class.java
-        FLOAT -> java.lang.Double::class.java
-        STRING -> java.lang.String::class.java
+        FLOAT -> Double::class.java
+        STRING -> String::class.java
+        BOOL -> Boolean::class.java
+        VOID -> Void::class.java
     }
 
     fun checkValue(value: Any) {

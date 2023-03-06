@@ -6,6 +6,16 @@ import demo.parser.domain.*
 internal class AntlrToExpression(private val semanticChecker: SemanticChecker)
     : ExprBaseVisitor<Expression>() {
 
+    override fun visitFunctionCall(ctx: ExprParser.FunctionCallContext): Expression {
+        val idToken = ctx.ID().symbol
+        val id = idToken.text
+        val tokenLocation = TokenLocation(idToken.line, idToken.charPositionInLine)
+        semanticChecker.checkFunctionDeclared(id, tokenLocation)
+
+        val arguments = ctx.exprlist().expr().map { visit(it) }
+        return Expression.FunctionCall(id, arguments)
+    }
+
     override fun visitParenthesizedExpression(ctx: ExprParser.ParenthesizedExpressionContext): Expression {
         return Expression.Parenthesized(visit(ctx.expr()))
     }
@@ -38,10 +48,22 @@ internal class AntlrToExpression(private val semanticChecker: SemanticChecker)
         }
     }
 
+    override fun visitEquality(ctx: ExprParser.EqualityContext): Expression {
+        val left: Expression = visit(ctx.getChild(0))
+        val right: Expression = visit(ctx.getChild(2))
+
+        return when (ctx.op.type) {
+            ExprLexer.EQ -> Expression.Equality(left, right)
+            ExprLexer.NEQ -> Expression.Inequality(left, right)
+            else -> throw RuntimeException("unknown operator ${ctx.op}")
+        }
+    }
+
     override fun visitVariable(ctx: ExprParser.VariableContext): Expression {
         val idToken = ctx.ID().symbol
         val id = idToken.text
-        semanticChecker.checkVariableDeclared(idToken)
+        val location = TokenLocation(idToken.line, idToken.charPositionInLine)
+        semanticChecker.checkVariableDeclared(id, location)
         return Expression.Variable(id)
     }
 

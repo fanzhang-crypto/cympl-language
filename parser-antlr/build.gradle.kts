@@ -21,6 +21,7 @@ kotlin {
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
 }
+
 tasks.compileKotlin {
     dependsOn(tasks.generateGrammarSource)
 }

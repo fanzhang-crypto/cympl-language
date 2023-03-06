@@ -3,7 +3,7 @@ package demo.parser.antlr
 import ExprBaseVisitor
 import demo.parser.domain.*
 
-internal class AntlrToProgram(private val semanticChecker: SemanticChecker)
+internal class AntlrToProgram(semanticChecker: SemanticChecker)
     : ExprBaseVisitor<Program>() {
 
     private val statVisitor = AntlrToStatement(semanticChecker)

@@ -1,6 +1,6 @@
 package demo.parser.domain
 
-sealed interface Expression: Statement {
+sealed interface Expression {
 
     data class Parenthesized(val expr: Expression) : Expression {
         override fun toString() = "($expr)"
@@ -44,6 +44,34 @@ sealed interface Expression: Statement {
 
     data class Negation(val expr: Expression) : Expression {
         override fun toString() = "-$expr"
+    }
+
+    data class Equality(val left: Expression, val right: Expression) : Expression {
+        override fun toString() = "$left == $right"
+    }
+
+    data class GreaterThan(val left: Expression, val right: Expression) : Expression {
+        override fun toString() = "$left > $right"
+    }
+
+    data class LessThan(val left: Expression, val right: Expression) : Expression {
+        override fun toString() = "$left < $right"
+    }
+
+    data class GreaterThanOrEqual(val left: Expression, val right: Expression) : Expression {
+        override fun toString() = "$left >= $right"
+    }
+
+    data class LessThanOrEqual(val left: Expression, val right: Expression) : Expression {
+        override fun toString() = "$left <= $right"
+    }
+
+    data class Inequality(val left: Expression, val right: Expression) : Expression {
+        override fun toString() = "$left != $right"
+    }
+
+    data class FunctionCall(val id: kotlin.String, val args: List<Expression>) : Expression {
+        override fun toString() = "$id(${args.joinToString(", ")})"
     }
 }
 
