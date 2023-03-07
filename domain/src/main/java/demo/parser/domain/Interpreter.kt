@@ -67,7 +67,7 @@ class Interpreter {
             ?: throw SemanticException("variable $id not defined")
 
         val value = evaluate(assignment.expr, scope).value
-        return variable.withValue(value).also { scope.addVariable(id, it) }
+        return variable.withValue(value).also { scope.setVariable(id, it) }
     }
 
     private fun evaluate(variableDeclaration: Statement.VariableDeclaration, scope: Scope): TValue {

@@ -10,6 +10,14 @@ class Scope(private val parent: Scope? = null) {
         variables[name] = value
     }
 
+    fun setVariable(name: String, value: TValue) {
+        if (variables.contains(name)) {
+            variables[name] = value
+        } else {
+            parent?.setVariable(name, value)
+        }
+    }
+
     fun containsVariable(id: String, inCurrentScope:Boolean = false): Boolean =
         if (inCurrentScope)
             variables.contains(id)
