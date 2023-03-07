@@ -48,15 +48,41 @@ internal class AntlrToExpression(private val semanticChecker: SemanticChecker)
         }
     }
 
-    override fun visitEquality(ctx: ExprParser.EqualityContext): Expression {
+    override fun visitNegation(ctx: ExprParser.NegationContext): Expression {
+        val expr: Expression = visit(ctx.getChild(1))
+        return Expression.Negation(expr)
+    }
+
+    override fun visitComparison(ctx: ExprParser.ComparisonContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))
 
         return when (ctx.op.type) {
             ExprLexer.EQ -> Expression.Equality(left, right)
             ExprLexer.NEQ -> Expression.Inequality(left, right)
+            ExprLexer.LT -> Expression.LessThan(left, right)
+            ExprLexer.LTE -> Expression.LessThanOrEqual(left, right)
+            ExprLexer.GT -> Expression.GreaterThan(left, right)
+            ExprLexer.GTE -> Expression.GreaterThanOrEqual(left, right)
             else -> throw RuntimeException("unknown operator ${ctx.op}")
         }
+    }
+
+    override fun visitLogicalNot(ctx: ExprParser.LogicalNotContext): Expression {
+        val expr: Expression = visit(ctx.getChild(1))
+        return Expression.Not(expr)
+    }
+
+    override fun visitLogicalAnd(ctx: ExprParser.LogicalAndContext): Expression {
+        val left: Expression = visit(ctx.getChild(0))
+        val right: Expression = visit(ctx.getChild(2))
+        return Expression.And(left, right)
+    }
+
+    override fun visitLogicalOr(ctx: ExprParser.LogicalOrContext?): Expression {
+        val left: Expression = visit(ctx!!.getChild(0))
+        val right: Expression = visit(ctx.getChild(2))
+        return Expression.Or(left, right)
     }
 
     override fun visitVariable(ctx: ExprParser.VariableContext): Expression {
@@ -65,6 +91,12 @@ internal class AntlrToExpression(private val semanticChecker: SemanticChecker)
         val location = TokenLocation(idToken.line, idToken.charPositionInLine)
         semanticChecker.checkVariableDeclared(id, location)
         return Expression.Variable(id)
+    }
+
+    override fun visitBOOL(ctx: ExprParser.BOOLContext): Expression = when (ctx.bool.type) {
+        ExprLexer.TRUE -> Expression.Bool(true)
+        ExprLexer.FALSE -> Expression.Bool(false)
+        else -> throw RuntimeException("unknown boolean value ${ctx.bool.text}")
     }
 
     override fun visitINT(ctx: ExprParser.INTContext): Expression {

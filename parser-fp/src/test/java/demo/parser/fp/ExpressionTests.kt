@@ -1,5 +1,6 @@
 package demo.parser.fp
 
+import demo.parser.domain.Expression
 import demo.parser.domain.Interpreter
 import demo.parser.domain.ParseResult
 import demo.parser.domain.Program
@@ -26,6 +27,7 @@ class ExpressionTests {
             (i + j) * k;
             i + j * 2 - k/3;
             (1 - (i + j)) / 2;
+            -i;
         """.byteInputStream()
 
         when (val r = parser.parse(input)) {
@@ -44,6 +46,7 @@ class ExpressionTests {
                     (i + j) * k; => -3
                     i + j * 2 - k / 3; => 5
                     (1 - (i + j)) / 2; => -1
+                    -i; => -1
                     environment:
                     i:INT = 1, j:INT = 2, k:INT = -1
                 """.trimIndent()
@@ -140,5 +143,82 @@ class ExpressionTests {
         errors[0].shouldHaveMessage("semantic error at (3:12): variable i already declared")
         errors[1].shouldHaveMessage("semantic error at (5:17): variable k not defined")
         errors[2].shouldHaveMessage("semantic error at (6:12): variable i already declared")
+    }
+
+    @Test
+    fun `support eq, neq, gt, get, lt, lte`() {
+        val input = """
+            i: INT = 5;
+            j: INT = 7;
+            i == j;
+            i != j;
+            i > j;
+            i >= j;
+            i < j;
+            i <= j;
+        """.byteInputStream()
+
+        val program = parser.parse(input).shouldBeInstanceOf<ParseResult.Success<Program>>().value
+        val outputs = interpreter.interpret(program)
+
+        outputs.joinToString("\n") shouldBe """
+            i:INT = 5; => 5
+            j:INT = 7; => 7
+            i == j; => false
+            i != j; => true
+            i > j; => false
+            i >= j; => false
+            i < j; => true
+            i <= j; => true
+            environment:
+            i:INT = 5, j:INT = 7
+        """.trimIndent()
+    }
+
+    @Test
+    fun `support and or not operation`() {
+        val input = """
+            true && false;
+            true || false;
+            !true;
+        """.byteInputStream()
+
+        val program = parser.parse(input).shouldBeInstanceOf<ParseResult.Success<Program>>().value
+        val outputs = interpreter.interpret(program)
+
+        outputs.joinToString("\n") shouldBe """
+            true && false; => false
+            true || false; => true
+            !true; => false
+            environment:
+        """.trimIndent()
+    }
+
+    @Test
+    fun `logical and has a higher priority than or`() {
+        val input = """
+            true && false || true && true;
+        """.byteInputStream()
+
+        when(val r = parser.parse(input)) {
+            is ParseResult.Failure -> {
+                r.errors.forEach { println(it) }
+                fail(r.errors.first())
+            }
+            is ParseResult.Success -> {
+                val program = r.value
+                program.statements shouldHaveSize 1
+                program.statements.first() shouldBe Expression.Or(
+                    Expression.And(
+                        Expression.Bool(true),
+                        Expression.Bool(false)
+                    ),
+                    Expression.And(
+                        Expression.Bool(true),
+                        Expression.Bool(true)
+                    ),
+                ).toStatement()
+            }
+        }
     }
 }

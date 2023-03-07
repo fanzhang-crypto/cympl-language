@@ -28,11 +28,16 @@ ifStat: 'if' '(' expr ')' thenBranch=statement ('else' elseBranch=statement )?;
 assign: ID '=' expr ';';
 
 expr: ID '(' exprlist? ')'              # FunctionCall
+    | MINUS expr                        # Negation
+    | NOT expr                          # LogicalNot
     | '(' expr ')'                      # ParenthesizedExpression
     | <assoc=right> expr '^' expr       # Power
     | expr op=(TIMES | DIV) expr        # MulDiv
     | expr op=(PLUS | MINUS) expr       # AddSub
-    | expr op=(EQ | NEQ) expr           # Equality
+    | expr op=(EQ | NEQ | GT | GTE | LT | LTE) expr           # Comparison
+    | expr AND expr                     # LogicalAnd
+    | expr OR expr                      # LogicalOr
+    | bool=(TRUE | FALSE)               # BOOL
     | ID                # Variable
     | FLOAT             # FLOAT
     | INT               # INT
@@ -47,13 +52,21 @@ TIMES: '*';
 DIV: '/';
 EQ: '==';
 NEQ: '!=';
-
+GT: '>';
+GTE: '>=';
+LT: '<';
+LTE: '<=';
+NOT: '!';
+AND: '&&';
+OR: '||';
 
 INT_TYPE: 'INT';
 FLOAT_TYPE: 'FLOAT';
 STRING_TYPE: 'STRING';
 VOID_TYPE: 'VOID';
 
+TRUE: 'true';
+FALSE: 'false';
 INT: DIGIT+;
 FLOAT: DIGIT '.' DIGIT* | '.' DIGIT+;
 STRING: '"' (ESC|.)*? '"';

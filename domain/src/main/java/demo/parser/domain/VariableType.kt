@@ -2,6 +2,7 @@ package demo.parser.domain
 
 import java.lang.Double
 import java.lang.String
+import java.lang.Boolean
 
 enum class VariableType {
     VOID, BOOL, INT, FLOAT, STRING;

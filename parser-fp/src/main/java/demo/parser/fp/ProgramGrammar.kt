@@ -24,15 +24,17 @@ internal class ProgramGrammar(
     private val FLOAT_TYPE by literalToken("FLOAT")
     private val STRING_TYPE by literalToken("STRING")
 
+    private val TRUE by literalToken("true")
+    private val FALSE by literalToken("false")
+    private val BOOL by TRUE or FALSE
+
     private val ID by regexToken("[a-z][a-zA-Z0-9_]*")
 
     private val FLOAT by regexToken("0.0|-?[1-9][0-9]*\\.[0-9]+")
     private val INT by regexToken("0|-?[1-9][0-9]*")
 
     private val STRING by regexToken("\"[^\"]*\"")
-    private val TRUE by literalToken("true")
-    private val FALSE by literalToken("false")
-    private val BOOL by TRUE or FALSE
+
 
     private val WS by regexToken("\\s+", ignore = true)
     private val COMMENT by regexToken("//[^\r\n]*", ignore = true)
@@ -54,15 +56,30 @@ internal class ProgramGrammar(
 
     private val EQ by literalToken("==")
     private val NEQ by literalToken("!=")
-    private val GT by literalToken(">")
-    private val LT by literalToken("<")
     private val GTE by literalToken(">=")
+    private val GT by literalToken(">")
     private val LTE by literalToken("<=")
+    private val LT by literalToken("<")
     private val ASSIGN by literalToken("=")
 
-    private val expression by parser(this::comparison)
+    private val NOT by literalToken("!")
+    private val AND by literalToken("&&")
+    private val OR by literalToken("||")
 
-    private val comparison by leftAssociative(parser(this::addOrSubChain), EQ or NEQ) { l, op, r ->
+    private val expression by parser(this::logicalOrChain)
+
+    private val logicalOrChain: Parser<Expression> by leftAssociative(parser(this::logicalAndChain), OR) { l, _, r ->
+        Expression.Or(l, r)
+    }
+
+    private val logicalAndChain: Parser<Expression> by leftAssociative(parser(this::comparison), AND) { l, _, r ->
+        Expression.And(l, r)
+    }
+
+    private val logicalNot: Parser<Expression> by (-NOT * parser(this::term))
+        .map { e -> Expression.Not(e) }
+
+    private val comparison by leftAssociative(parser(this::addOrSubChain), EQ or NEQ or GT or GTE or LT or LTE) { l, op, r ->
         when (op.text) {
             "==" -> Expression.Equality(l, r)
             "!=" -> Expression.Inequality(l, r)
@@ -119,12 +136,14 @@ internal class ProgramGrammar(
 
     // @formatter:off
     private val term: Parser<Expression> by
+        BOOL.map { Expression.Bool(it.text.toBoolean()) } or
         INT.map { Expression.Int(it.text.toInt()) } or
         FLOAT.map { Expression.Float(it.text.toDouble()) } or
         STRING.map { Expression.String(it.text.substring(1, it.text.length - 1)) } or
         functionCall or
         variable or
         negation or
+        logicalNot or
         parenthesized
     // @formatter:on
 
@@ -214,7 +233,7 @@ internal class ProgramGrammar(
         @JvmStatic
         fun main(args: Array<String>) {
             val input = """
-                 func f():BOOL { return 1 > 2;}
+            i == j || i < j && true;
             """.trimIndent()
 
             val semanticChecker = SemanticChecker()

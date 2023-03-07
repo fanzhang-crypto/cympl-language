@@ -2,8 +2,14 @@ package demo.parser.domain
 
 sealed interface Expression {
 
+    fun toStatement(): Statement = Statement.ExpressionStatement(this)
+
     data class Parenthesized(val expr: Expression) : Expression {
         override fun toString() = "($expr)"
+    }
+
+    data class Bool(val value: Boolean) : Expression {
+        override fun toString() = value.toString()
     }
 
     data class Int(val value: kotlin.Int) : Expression {
@@ -32,6 +38,10 @@ sealed interface Expression {
 
     data class Division(val left: Expression, val right: Expression) : Expression {
         override fun toString() = "$left / $right"
+    }
+
+    data class Remainder(val left: Expression, val right: Expression) : Expression {
+        override fun toString() = "$left % $right"
     }
 
     data class Addition(val left: Expression, val right: Expression) : Expression {
@@ -68,6 +78,18 @@ sealed interface Expression {
 
     data class Inequality(val left: Expression, val right: Expression) : Expression {
         override fun toString() = "$left != $right"
+    }
+
+    data class And(val left: Expression, val right: Expression) : Expression {
+        override fun toString() = "$left && $right"
+    }
+
+    data class Or(val left: Expression, val right: Expression) : Expression {
+        override fun toString() = "$left || $right"
+    }
+
+    data class Not(val expr: Expression) : Expression {
+        override fun toString() = "!$expr"
     }
 
     data class FunctionCall(val id: kotlin.String, val args: List<Expression>) : Expression {

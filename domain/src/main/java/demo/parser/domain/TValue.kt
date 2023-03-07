@@ -31,4 +31,11 @@ open class TValue(val type: VariableType, val value: Any) {
         is Double -> value != 0.0
         else -> throw SemanticException("cannot convert $value to boolean")
     }
+
+    fun asComparable(): Comparable<*> = when (value) {
+        is Int -> value
+        is Double -> value
+        is String -> value
+        else -> throw SemanticException("cannot convert $value to comparable")
+    }
 }

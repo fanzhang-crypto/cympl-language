@@ -1,7 +1,5 @@
 package demo.parser.domain
 
-import kotlin.math.pow
-
 class Interpreter {
 
     private val globalScope = Scope()
@@ -42,7 +40,7 @@ class Interpreter {
                 else -> throw SemanticException("unknown statement $stat")
             }
         }
-        return  TValue.VOID
+        return TValue.VOID
     }
 
     private fun evaluate(ifStatement: Statement.If, scope: Scope): TValue {
@@ -91,101 +89,59 @@ class Interpreter {
         is Expression.Addition -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)
-            when (left.type) {
-                VariableType.INT -> when (right.type) {
-                    VariableType.INT -> TValue(VariableType.INT, left.asInt() + right.asInt())
-                    VariableType.FLOAT -> TValue(VariableType.FLOAT, left.asInt() + right.asDouble())
-                    VariableType.STRING -> TValue(VariableType.STRING, left.asString() + right.asString())
-                    else -> throw SemanticException("cannot add ${left.type} to ${right.type}")
-                }
-
-                VariableType.FLOAT -> when (right.type) {
-                    VariableType.INT -> TValue(VariableType.FLOAT, left.asDouble() + right.asInt())
-                    VariableType.FLOAT -> TValue(VariableType.FLOAT, left.asDouble() + right.asDouble())
-                    VariableType.STRING -> TValue(VariableType.STRING, left.asString() + right.asString())
-                    else -> throw SemanticException("cannot add ${left.type} to ${right.type}")
-                }
-
-                VariableType.STRING -> TValue(VariableType.STRING, left.asString() + right.asString())
-                else -> {
-                    throw SemanticException("cannot add ${left.type} to ${right.type}")
-                }
-            }
+            BinaryOperation.Arithmetic.Plus.apply(left, right)
         }
 
         is Expression.Subtraction -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)
-            when (left.type) {
-                VariableType.INT -> when (right.type) {
-                    VariableType.INT -> TValue(VariableType.INT, left.asInt() - right.asInt())
-                    VariableType.FLOAT -> TValue(VariableType.FLOAT, left.asDouble() - right.asDouble())
-                    else -> throw SemanticException("cannot subtract ${right.type} from ${left.type}")
-                }
-
-                VariableType.FLOAT -> when (right.type) {
-                    VariableType.INT -> TValue(VariableType.FLOAT, left.asDouble() - right.asDouble())
-                    VariableType.FLOAT -> TValue(VariableType.FLOAT, left.asDouble() - right.asDouble())
-                    else -> throw SemanticException("cannot subtract ${right.type} from ${left.type}")
-                }
-
-                else -> throw SemanticException("cannot subtract ${right.type} from ${left.type}")
-            }
+            BinaryOperation.Arithmetic.Minus.apply(left, right)
         }
 
         is Expression.Multiplication -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)
-            when (left.type) {
-                VariableType.INT -> when (right.type) {
-                    VariableType.INT -> TValue(VariableType.INT, left.asInt() * right.asInt())
-                    VariableType.FLOAT -> TValue(VariableType.FLOAT, left.asInt() * right.asDouble())
-                    else -> throw SemanticException("cannot multiply ${left.type} by ${right.type}")
-                }
-
-                VariableType.FLOAT -> when (right.type) {
-                    VariableType.INT -> TValue(VariableType.FLOAT, left.asDouble() * right.asInt())
-                    VariableType.FLOAT -> TValue(VariableType.FLOAT, left.asDouble() * right.asDouble())
-                    else -> throw SemanticException("cannot multiply ${left.type} by ${right.type}")
-                }
-
-                else -> throw SemanticException("cannot multiply ${left.type} by ${right.type}")
-            }
+            BinaryOperation.Arithmetic.Times.apply(left, right)
         }
 
         is Expression.Division -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)
-            when (left.type) {
-                VariableType.INT -> when (right.type) {
-                    VariableType.INT -> TValue(VariableType.INT, left.asInt() / right.asInt())
-                    VariableType.FLOAT -> TValue(VariableType.FLOAT, left.asInt() / right.asDouble())
-                    else -> throw SemanticException("cannot divide ${left.type} by ${right.type}")
-                }
+            BinaryOperation.Arithmetic.Div.apply(left, right)
+        }
 
-                VariableType.FLOAT -> when (right.type) {
-                    VariableType.INT -> TValue(VariableType.FLOAT, left.asDouble() / right.asDouble())
-                    VariableType.FLOAT -> TValue(VariableType.FLOAT, left.asDouble() / right.asDouble())
-                    else -> throw SemanticException("cannot divide ${left.type} by ${right.type}")
-                }
-
-                else -> throw SemanticException("cannot divide ${left.type} by ${right.type}")
-            }
+        is Expression.Remainder -> {
+            val left = evaluate(expression.left, scope)
+            val right = evaluate(expression.right, scope)
+            BinaryOperation.Arithmetic.Rem.apply(left, right)
         }
 
         is Expression.Power -> {
-            val left = evaluate(expression.left, scope).asDouble()
-            val right = evaluate(expression.right, scope).asDouble()
-            TValue(VariableType.FLOAT, left.pow(right))
+            val left = evaluate(expression.left, scope)
+            val right = evaluate(expression.right, scope)
+            BinaryOperation.Arithmetic.Pow.apply(left, right)
         }
 
         is Expression.Negation -> {
             val tvalue = evaluate(expression.expr, scope)
-            when (tvalue.type) {
-                VariableType.INT -> TValue(VariableType.INT, -tvalue.asInt())
-                VariableType.FLOAT -> TValue(VariableType.FLOAT, -tvalue.asDouble())
-                else -> throw SemanticException("cannot negate $tvalue")
-            }
+            UnaryOperation.Minus.apply(tvalue)
+        }
+
+        is Expression.And -> {
+            val left = evaluate(expression.left, scope)
+            val right = evaluate(expression.right, scope)
+            BinaryOperation.Logical.And.apply(left, right)
+        }
+
+        is Expression.Or -> {
+            val left = evaluate(expression.left, scope)
+            val right = evaluate(expression.right, scope)
+            BinaryOperation.Logical.Or.apply(left, right)
+        }
+
+        is Expression.Not -> {
+            val tvalue = evaluate(expression.expr, scope)
+            UnaryOperation.Not.apply(tvalue)
         }
 
         is Expression.Variable -> {
@@ -193,6 +149,7 @@ class Interpreter {
             scope.resolveVariable(id) ?: throw SemanticException("variable $id not defined")
         }
 
+        is Expression.Bool -> TValue(VariableType.BOOL, expression.value)
         is Expression.Float -> TValue(VariableType.FLOAT, expression.value)
         is Expression.Int -> TValue(VariableType.INT, expression.value)
         is Expression.String -> TValue(VariableType.STRING, expression.value)
@@ -212,7 +169,7 @@ class Interpreter {
 
             val functionScope = Scope(scope).apply {
                 function.args.forEachIndexed { i, (name, type) ->
-                    addVariable(name,  args[i])
+                    addVariable(name, args[i])
                 }
             }
 
@@ -222,24 +179,38 @@ class Interpreter {
         is Expression.Equality -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)
-            if (left.type != right.type) {
-                throw SemanticException("cannot compare ${left.type} to ${right.type}")
-            }
-            TValue(VariableType.BOOL, left.value == right.value)
+            BinaryOperation.Comparison.Eq.apply(left, right)
         }
+
         is Expression.Inequality -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)
-            if (left.type != right.type) {
-                throw SemanticException("cannot compare ${left.type} to ${right.type}")
-            }
-            TValue(VariableType.BOOL, left.value != right.value)
+            BinaryOperation.Comparison.Neq.apply(left, right)
         }
 
-        is Expression.GreaterThan -> TODO()
-        is Expression.GreaterThanOrEqual -> TODO()
-        is Expression.LessThan -> TODO()
-        is Expression.LessThanOrEqual -> TODO()
+        is Expression.GreaterThan -> {
+            val left = evaluate(expression.left, scope)
+            val right = evaluate(expression.right, scope)
+            BinaryOperation.Comparison.Gt.apply(left, right)
+        }
+
+        is Expression.GreaterThanOrEqual -> {
+            val left = evaluate(expression.left, scope)
+            val right = evaluate(expression.right, scope)
+            BinaryOperation.Comparison.Geq.apply(left, right)
+        }
+
+        is Expression.LessThan -> {
+            val left = evaluate(expression.left, scope)
+            val right = evaluate(expression.right, scope)
+            BinaryOperation.Comparison.Lt.apply(left, right)
+        }
+
+        is Expression.LessThanOrEqual -> {
+            val left = evaluate(expression.left, scope)
+            val right = evaluate(expression.right, scope)
+            BinaryOperation.Comparison.Leq.apply(left, right)
+        }
     }
 
     private fun formatTValue(tvalue: TValue) = when (tvalue.type) {
