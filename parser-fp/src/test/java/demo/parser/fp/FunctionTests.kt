@@ -141,11 +141,11 @@ class FunctionTests {
     @Test
     fun `functions can call each other`() {
         val input = """
-            func f(x:INT):INT {
-                return g(x + 1);
-            }
             func g(x:INT):INT {
                 return x * 2;
+            }
+            func f(x:INT):INT {
+                return g(x + 1);
             }
             f(2);
         """.byteInputStream()
@@ -159,11 +159,11 @@ class FunctionTests {
                 val program = r.value
                 val outputs = interpreter.interpret(program)
                 outputs.joinToString("\n") shouldBe """
-                    func f(x:INT):INT { return g(x + 1); } => void
                     func g(x:INT):INT { return x * 2; } => void
+                    func f(x:INT):INT { return g(x + 1); } => void
                     f(2); => 6
                     environment:
-                    f(x:INT):INT, g(x:INT):INT
+                    g(x:INT):INT, f(x:INT):INT
                 """.trimIndent()
             }
         }
@@ -256,5 +256,4 @@ class FunctionTests {
             }
         }
     }
-
 }

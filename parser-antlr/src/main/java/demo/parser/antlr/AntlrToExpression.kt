@@ -33,6 +33,7 @@ internal class AntlrToExpression(private val semanticChecker: SemanticChecker)
         return when (ctx.op.type) {
             ExprLexer.TIMES -> Expression.Multiplication(left, right)
             ExprLexer.DIV -> Expression.Division(left, right)
+            ExprLexer.REM -> Expression.Remainder(left, right)
             else -> throw RuntimeException("unknown operator ${ctx.op}")
         }
     }

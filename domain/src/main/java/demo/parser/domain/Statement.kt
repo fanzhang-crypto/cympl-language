@@ -39,11 +39,11 @@ sealed interface Statement {
     }
 
     data class Break(val label: String? = null) : Statement {
-        override fun toString() = "break${label?.let { " $it" } ?: ""}"
+        override fun toString() = if (label != null) "break $label;" else "break;"
     }
 
     data class Continue(val label: String? = null) : Statement {
-        override fun toString() = "continue${label?.let { " $it" } ?: ""}"
+        override fun toString() = if (label != null) "continue $label;" else "continue;"
     }
 
     data class FunctionDeclaration(

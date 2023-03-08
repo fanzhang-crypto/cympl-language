@@ -11,6 +11,8 @@ statement
     | returnStat                    #ReturnStatement
     | ifStat                        #IfStatement
     | whileStat                     #WhileStatement
+    | breakStat                     #BreakStatement
+    | continueStat                  #ContinueStatement
     | block                         #BlockStatement
 ;
 
@@ -24,8 +26,10 @@ returnStat: 'return' expr? ';';
 
 block: '{' statement* '}';
 
-ifStat: 'if' '(' expr ')' thenBranch=statement ('else' elseBranch=statement )?;
-whileStat: 'while' '(' expr ')' statement;
+ifStat: IF '(' expr ')' thenBranch=statement (ELSE elseBranch=statement )?;
+whileStat: WHILE '(' expr ')' statement;
+breakStat: BREAK ';';
+continueStat: CONTINUE ';';
 
 assign: ID '=' expr ';';
 
@@ -34,7 +38,7 @@ expr: ID '(' exprlist? ')'              # FunctionCall
     | NOT expr                          # LogicalNot
     | '(' expr ')'                      # ParenthesizedExpression
     | <assoc=right> expr '^' expr       # Power
-    | expr op=(TIMES | DIV) expr        # MulDiv
+    | expr op=(TIMES | DIV | REM) expr  # MulDiv
     | expr op=(PLUS | MINUS) expr       # AddSub
     | expr op=(EQ | NEQ | GT | GTE | LT | LTE) expr           # Comparison
     | expr AND expr                     # LogicalAnd
@@ -52,6 +56,7 @@ PLUS: '+';
 MINUS: '-';
 TIMES: '*';
 DIV: '/';
+REM: '%';
 EQ: '==';
 NEQ: '!=';
 GT: '>';
@@ -72,6 +77,12 @@ FALSE: 'false';
 INT: DIGIT+;
 FLOAT: DIGIT '.' DIGIT* | '.' DIGIT+;
 STRING: '"' (ESC|.)*? '"';
+
+IF: 'if';
+ELSE: 'else';
+WHILE: 'while';
+BREAK: 'break';
+CONTINUE: 'continue';
 
 ID: [a-zA-Z_][a-zA-Z0-9_]*;
 COMMENT: '/*' .*? '*/' -> skip;

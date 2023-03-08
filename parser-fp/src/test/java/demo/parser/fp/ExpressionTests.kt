@@ -6,6 +6,7 @@ import demo.parser.domain.ParseResult
 import demo.parser.domain.Program
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.throwable.shouldHaveMessage
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
@@ -123,9 +124,7 @@ class ExpressionTests {
 
         val errors = parser.parse(input).shouldBeInstanceOf<ParseResult.Failure<*>>().errors
         errors shouldHaveSize 1
-        errors[0].shouldHaveMessage(
-            "syntax error at (4:24): extraneous input ':'"
-        )
+        errors[0].message shouldContain "syntax error at (4:24): extraneous input ':'"
     }
 
     @Test

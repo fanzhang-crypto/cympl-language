@@ -17,6 +17,10 @@ internal class ProgramGrammar(
     private val RETURN by literalToken("return")
     private val IF by literalToken("if")
     private val ELSE by literalToken("else")
+    private val WHILE by literalToken("while")
+    private val FOR by literalToken("for")
+    private val BREAK by literalToken("break")
+    private val CONTINUE by literalToken("continue")
 
     private val VOID_TYPE by literalToken("VOID")
     private val BOOL_TYPE by literalToken("BOOL")
@@ -52,6 +56,7 @@ internal class ProgramGrammar(
     private val MINUS by literalToken("-")
     private val TIMES by literalToken("*")
     private val DIV by literalToken("/")
+    private val REM by literalToken("%")
     private val POW by literalToken("^")
 
     private val EQ by literalToken("==")
@@ -79,7 +84,10 @@ internal class ProgramGrammar(
     private val logicalNot: Parser<Expression> by (-NOT * parser(this::term))
         .map { e -> Expression.Not(e) }
 
-    private val comparison by leftAssociative(parser(this::addOrSubChain), EQ or NEQ or GT or GTE or LT or LTE) { l, op, r ->
+    private val comparison by leftAssociative(
+        parser(this::addOrSubChain),
+        EQ or NEQ or GT or GTE or LT or LTE
+    ) { l, op, r ->
         when (op.text) {
             "==" -> Expression.Equality(l, r)
             "!=" -> Expression.Inequality(l, r)
@@ -102,10 +110,11 @@ internal class ProgramGrammar(
         }
     }
 
-    private val mulOrDivChain: Parser<Expression> by leftAssociative(parser(this::powChain), TIMES or DIV) { l, op, r ->
+    private val mulOrDivChain: Parser<Expression> by leftAssociative(parser(this::powChain), TIMES or DIV or REM) { l, op, r ->
         when (op.text) {
             "*" -> Expression.Multiplication(l, r)
             "/" -> Expression.Division(l, r)
+            "%" -> Expression.Remainder(l, r)
             else -> throw IllegalArgumentException("unknown operator $op")
         }
     }
@@ -219,11 +228,30 @@ internal class ProgramGrammar(
                     Statement.FunctionDeclaration(id, type, params ?: emptyList(), body)
                 }
 
-    private val ifStat: Parser<Statement> by (-IF * -LPR * expression * -RPR * block * optional(-ELSE * block))
+    private val ifStat: Parser<Statement> by (-IF * -LPR * expression * -RPR * parser(this::statement) * optional(
+        -ELSE * parser(
+            this::statement
+        )
+    ))
         .map { (cond, thenBlock, elseBlock) -> Statement.If(cond, thenBlock, elseBlock) }
 
-    private val statement: Parser<Statement>
-            by functionDecl or variableDecl or assign or exprStat or returnStat or ifStat or block
+    private val whileStat: Parser<Statement> by (-WHILE * -LPR * expression * -RPR * parser(this::statement))
+        .map { (cond, body) -> Statement.While(cond, body) }
+
+    private val breakStat: Parser<Statement> by (BREAK * SEMICOLON).asJust(Statement.Break())
+
+    private val continueStat: Parser<Statement> by (CONTINUE * SEMICOLON).asJust(Statement.Continue())
+
+    private val statement: Parser<Statement> by functionDecl or
+            variableDecl or
+            assign or
+            exprStat or
+            returnStat or
+            ifStat or
+            whileStat or
+            breakStat or
+            continueStat or
+            block
 
     private val prog: Parser<Program> by oneOrMore(statement).map { Program(it) }
 
@@ -233,7 +261,14 @@ internal class ProgramGrammar(
         @JvmStatic
         fun main(args: Array<String>) {
             val input = """
-            i == j || i < j && true;
+            while (i < 10) {
+                if (i % 2 == 0) {
+                    i = i + 1;
+                    continue;
+                }
+                x = x + i;
+                i = i + 1;
+            }
             """.trimIndent()
 
             val semanticChecker = SemanticChecker()

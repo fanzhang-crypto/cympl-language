@@ -6,6 +6,23 @@ class Scope(private val parent: Scope? = null) {
 
     private val functions = mutableMapOf<String, Statement.FunctionDeclaration>()
 
+    private var inLoop:Boolean = false
+
+    private fun setInLoop(inLoop: Boolean) {
+        this.inLoop = inLoop
+    }
+
+    fun isInLoop(): Boolean {
+        return inLoop || parent?.isInLoop() ?: false
+    }
+
+    fun <T> withinLoop(block: () -> T):T {
+        setInLoop(true)
+        val result = block()
+        setInLoop(false)
+        return result
+    }
+
     fun addVariable(name: String, value: TValue) {
         variables[name] = value
     }
@@ -49,4 +66,6 @@ class Scope(private val parent: Scope? = null) {
     fun getFunctions(): Map<String, Statement.FunctionDeclaration> {
         return functions.toMap()
     }
+
+
 }
