@@ -18,9 +18,8 @@ class BlockTests {
                 x:INT = 1;
                 {
                     x:INT = 2;
-                    x;
                 }
-                x;
+                return x;
             }
         """.byteInputStream()
 
@@ -34,7 +33,7 @@ class BlockTests {
                 val program = r.value
                 val outputs = interpreter.interpret(program)
                 outputs.joinToString("\n") shouldBe """
-                    { x:INT = 1; { x:INT = 2; x; } x; } => 1
+                    { x:INT = 1; { x:INT = 2; } return x; } => 1
                     environment:
                 """.trimIndent()
             }
@@ -47,10 +46,10 @@ class BlockTests {
             x:INT = 1;
             if (x == 1) {
                 x:INT = 2;
-                x;
+                return x;
             } else {
                 x:INT = 3;
-                x;
+                return x;
             }
             x;
         """.byteInputStream()
@@ -66,7 +65,7 @@ class BlockTests {
                 val outputs = interpreter.interpret(program)
                 outputs.joinToString("\n") shouldBe """
                     x:INT = 1; => 1
-                    if (x == 1) { x:INT = 2; x; } else { x:INT = 3; x; } => 2
+                    if (x == 1) { x:INT = 2; return x; } else { x:INT = 3; return x; } => 2
                     x; => 1
                     environment:
                     x:INT = 1
@@ -137,6 +136,70 @@ class BlockTests {
                     x; => 2
                     environment:
                     x:INT = 2
+                """.trimIndent()
+            }
+        }
+    }
+
+    @Test
+    fun `support simple while statement`() {
+        val input = """
+            x:INT = 1;
+            while (x < 10) {
+                x = x + 1;
+            }
+            x;
+        """.byteInputStream()
+
+        when (val r = parser.parse(input)) {
+            is ParseResult.Failure -> {
+                r.errors.forEach { println(it) }
+                fail(r.errors.first())
+            }
+
+            is ParseResult.Success -> {
+                val program = r.value
+                val outputs = interpreter.interpret(program)
+                outputs.joinToString("\n") shouldBe """
+                    x:INT = 1; => 1
+                    while (x < 10) { x = x + 1; } => void
+                    x; => 10
+                    environment:
+                    x:INT = 10
+                """.trimIndent()
+            }
+        }
+    }
+
+    @Test
+    fun `can return early from a while statement in function`() {
+        val input = """
+            func f(x:INT):INT {
+                while (x < 10) {
+                    x = x + 1;
+                    if (x == 5) {
+                        return x;
+                    }
+                }
+                return x;
+            }
+            f(1);
+        """.byteInputStream()
+
+        when (val r = parser.parse(input)) {
+            is ParseResult.Failure -> {
+                r.errors.forEach { println(it) }
+                fail(r.errors.first())
+            }
+
+            is ParseResult.Success -> {
+                val program = r.value
+                val outputs = interpreter.interpret(program)
+                outputs.joinToString("\n") shouldBe """
+                    func f(x:INT):INT { while (x < 10) { x = x + 1; if (x == 5) { return x; } } return x; } => void
+                    f(1); => 5
+                    environment:
+                    f(x:INT):INT
                 """.trimIndent()
             }
         }

@@ -4,161 +4,203 @@ class Interpreter {
 
     private val globalScope = Scope()
 
+    private data class EvaluationResult(val value: TValue, val isReturning: Boolean = false, val isThrowing: Boolean = false)
+
     fun interpret(program: Program): Sequence<String> = sequence {
         for (stat in program.statements) {
             val result = evaluate(stat, globalScope)
-            yield("$stat => ${formatTValue(result)}")
+            yield("$stat => ${formatTValue(result.value)}")
         }
         yield("environment:")
         formatCurrentEnvVariables().takeIf { it.isNotBlank() }?.let { yield(it) }
         formatCurrentEnvFunctions().takeIf { it.isNotBlank() }?.let { yield(it) }
     }
 
-    private fun evaluate(statement: Statement, scope: Scope): TValue = when (statement) {
+    private fun evaluate(statement: Statement, scope: Scope): EvaluationResult = when (statement) {
         is Statement.VariableDeclaration -> evaluate(statement, scope)
         is Statement.Assignment -> evaluate(statement, scope)
         is Statement.FunctionDeclaration -> evaluate(statement, scope)
         is Statement.Block -> evaluate(statement, scope)
-        is Statement.If -> evaluate(statement, scope)
-        is Statement.Return -> evaluate(statement.expr, scope)
+        is Statement.Return -> evaluate(statement.expr, scope).copy(isReturning = true)
         is Statement.ExpressionStatement -> evaluate(statement.expr, scope)
+        is Statement.If -> evaluate(statement, scope)
+        is Statement.While -> evaluate(statement, scope)
         else -> throw SemanticException("unknown statement $statement")
     }
 
-    private fun evaluate(block: Statement.Block, parent: Scope): TValue {
+    private fun evaluate(block: Statement.Block, parent: Scope): EvaluationResult {
         val currentScope = Scope(parent)
 
         for (stat in block.statements) {
-            when (stat) {
-                is Statement.VariableDeclaration -> evaluate(stat, currentScope)
-                is Statement.Assignment -> evaluate(stat, currentScope)
-                is Statement.FunctionDeclaration -> evaluate(stat, currentScope)
-                is Statement.Block -> evaluate(stat, Scope(currentScope))
-                is Statement.ExpressionStatement -> return evaluate(stat, currentScope)
-                is Statement.If -> return evaluate(stat, currentScope)
-                is Statement.Return -> return evaluate(stat.expr, currentScope)
-                else -> throw SemanticException("unknown statement $stat")
+            val result = evaluate(stat, currentScope)
+            if (result.isReturning || result.isThrowing) {
+                return result
             }
         }
-        return TValue.VOID
+
+        return TValue.VOID.asEvaluationResult()
     }
 
-    private fun evaluate(ifStatement: Statement.If, scope: Scope): TValue {
-        val condition = evaluate(ifStatement.condition, scope)
+    private fun evaluate(ifStatement: Statement.If, scope: Scope): EvaluationResult {
+        val condition = evaluate(ifStatement.condition, scope).value
         return if (condition.asBoolean()) {
             evaluate(ifStatement.thenBranch, scope)
         } else {
-            ifStatement.elseBranch?.let { evaluate(it, scope) } ?: TValue.VOID
+            ifStatement.elseBranch?.let { evaluate(it, scope) }
+                ?: TValue.VOID.asEvaluationResult()
         }
     }
 
-    private fun evaluate(functionDeclaration: Statement.FunctionDeclaration, scope: Scope): TValue {
+    private fun evaluate(whileStat: Statement.While, scope: Scope): EvaluationResult {
+        while (evaluate(whileStat.condition, scope).value.asBoolean()) {
+            val result = evaluate(whileStat.body, scope)
+            if (result.isReturning || result.isThrowing) {
+                return result
+            }
+        }
+        return TValue.VOID.asEvaluationResult()
+    }
+
+    private fun evaluate(functionDeclaration: Statement.FunctionDeclaration, scope: Scope): EvaluationResult {
         val id = functionDeclaration.id
         if (scope.containsFunction(id)) {
             throw SemanticException("function $id already declared")
         }
         scope.addFunction(id, functionDeclaration)
-        return TValue.VOID
+        return TValue.VOID.asEvaluationResult()
     }
 
-    private fun evaluate(assignment: Statement.Assignment, scope: Scope): TValue {
+    private fun evaluate(assignment: Statement.Assignment, scope: Scope): EvaluationResult {
         val id = assignment.id
         val variable = scope.resolveVariable(id)
             ?: throw SemanticException("variable $id not defined")
 
         val value = evaluate(assignment.expr, scope).value
-        return variable.withValue(value).also { scope.setVariable(id, it) }
+        return variable.withValue(value.value).also { scope.setVariable(id, it) }.asEvaluationResult()
     }
 
-    private fun evaluate(variableDeclaration: Statement.VariableDeclaration, scope: Scope): TValue {
+    private fun evaluate(variableDeclaration: Statement.VariableDeclaration, scope: Scope): EvaluationResult {
         val id = variableDeclaration.id
         if (scope.containsVariable(id, true)) {
             throw SemanticException("variable $id already declared")
         }
         val type = variableDeclaration.type
         return evaluate(variableDeclaration.expr!!, scope)
-            .also { v ->
-                type.checkValue(v.value)
-                scope.addVariable(id, TValue(type, v.value))
+            .also { result ->
+                type.checkValue(result.value.value)
+                scope.addVariable(id, TValue(type, result.value.value))
             }
     }
 
-    private fun evaluate(expression: Expression, scope: Scope): TValue = when (expression) {
+    private fun evaluate(expression: Expression, scope: Scope): EvaluationResult = when (expression) {
         is Expression.Parenthesized -> evaluate(expression.expr, scope)
 
         is Expression.Addition -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Arithmetic.Plus.apply(left, right)
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Arithmetic.Plus.apply(left, right).asEvaluationResult()
         }
 
         is Expression.Subtraction -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Arithmetic.Minus.apply(left, right)
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Arithmetic.Minus.apply(left, right).asEvaluationResult()
         }
 
         is Expression.Multiplication -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Arithmetic.Times.apply(left, right)
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Arithmetic.Times.apply(left, right).asEvaluationResult()
         }
 
         is Expression.Division -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Arithmetic.Div.apply(left, right)
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Arithmetic.Div.apply(left, right).asEvaluationResult()
         }
 
         is Expression.Remainder -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Arithmetic.Rem.apply(left, right)
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Arithmetic.Rem.apply(left, right).asEvaluationResult()
         }
 
         is Expression.Power -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Arithmetic.Pow.apply(left, right)
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Arithmetic.Pow.apply(left, right).asEvaluationResult()
         }
 
         is Expression.Negation -> {
-            val tvalue = evaluate(expression.expr, scope)
-            UnaryOperation.Minus.apply(tvalue)
+            val tvalue = evaluate(expression.expr, scope).value
+            UnaryOperation.Minus.apply(tvalue).asEvaluationResult()
         }
 
         is Expression.And -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Logical.And.apply(left, right)
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Logical.And.apply(left, right).asEvaluationResult()
         }
 
         is Expression.Or -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Logical.Or.apply(left, right)
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Logical.Or.apply(left, right).asEvaluationResult()
         }
 
         is Expression.Not -> {
-            val tvalue = evaluate(expression.expr, scope)
-            UnaryOperation.Not.apply(tvalue)
+            val tvalue = evaluate(expression.expr, scope).value
+            UnaryOperation.Not.apply(tvalue).asEvaluationResult()
         }
 
         is Expression.Variable -> {
             val id = expression.id
-            scope.resolveVariable(id) ?: throw SemanticException("variable $id not defined")
+            scope.resolveVariable(id)?.asEvaluationResult()
+                ?: throw SemanticException("variable $id not defined")
         }
 
-        is Expression.Bool -> TValue(VariableType.BOOL, expression.value)
-        is Expression.Float -> TValue(VariableType.FLOAT, expression.value)
-        is Expression.Int -> TValue(VariableType.INT, expression.value)
-        is Expression.String -> TValue(VariableType.STRING, expression.value)
+        is Expression.Bool -> TValue(VariableType.BOOL, expression.value).asEvaluationResult()
+        is Expression.Float -> TValue(VariableType.FLOAT, expression.value).asEvaluationResult()
+        is Expression.Int -> TValue(VariableType.INT, expression.value).asEvaluationResult()
+        is Expression.String -> TValue(VariableType.STRING, expression.value).asEvaluationResult()
+
+        is Expression.Equality -> {
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Comparison.Eq.apply(left, right).asEvaluationResult()
+        }
+        is Expression.Inequality -> {
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Comparison.Neq.apply(left, right).asEvaluationResult()
+        }
+        is Expression.GreaterThan -> {
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Comparison.Gt.apply(left, right).asEvaluationResult()
+        }
+        is Expression.GreaterThanOrEqual -> {
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Comparison.Geq.apply(left, right).asEvaluationResult()
+        }
+        is Expression.LessThan -> {
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Comparison.Lt.apply(left, right).asEvaluationResult()
+        }
+        is Expression.LessThanOrEqual -> {
+            val left = evaluate(expression.left, scope).value
+            val right = evaluate(expression.right, scope).value
+            BinaryOperation.Comparison.Leq.apply(left, right).asEvaluationResult()
+        }
+
         is Expression.FunctionCall -> {
             val id = expression.id
             val function = scope.resolveFunction(id)
                 ?: throw SemanticException("function $id not defined")
 
-            val args = expression.args.map { evaluate(it, scope) }
+            val args = expression.args.map { evaluate(it, scope).value }
             if (args.size != function.args.size) {
                 throw SemanticException("function $id expects ${function.args.size} arguments, got ${args.size}")
             }
@@ -175,43 +217,9 @@ class Interpreter {
 
             evaluate(function.body, functionScope)
         }
-
-        is Expression.Equality -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Comparison.Eq.apply(left, right)
-        }
-
-        is Expression.Inequality -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Comparison.Neq.apply(left, right)
-        }
-
-        is Expression.GreaterThan -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Comparison.Gt.apply(left, right)
-        }
-
-        is Expression.GreaterThanOrEqual -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Comparison.Geq.apply(left, right)
-        }
-
-        is Expression.LessThan -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Comparison.Lt.apply(left, right)
-        }
-
-        is Expression.LessThanOrEqual -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
-            BinaryOperation.Comparison.Leq.apply(left, right)
-        }
     }
+
+    private fun TValue.asEvaluationResult() = EvaluationResult(this)
 
     private fun formatTValue(tvalue: TValue) = when (tvalue.type) {
         VariableType.STRING -> "\"${tvalue.value}\""

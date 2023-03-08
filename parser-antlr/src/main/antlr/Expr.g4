@@ -10,6 +10,7 @@ statement
     | expr';'                       #Expression
     | returnStat                    #ReturnStatement
     | ifStat                        #IfStatement
+    | whileStat                     #WhileStatement
     | block                         #BlockStatement
 ;
 
@@ -24,6 +25,7 @@ returnStat: 'return' expr? ';';
 block: '{' statement* '}';
 
 ifStat: 'if' '(' expr ')' thenBranch=statement ('else' elseBranch=statement )?;
+whileStat: 'while' '(' expr ')' statement;
 
 assign: ID '=' expr ';';
 

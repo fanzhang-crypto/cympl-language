@@ -79,6 +79,12 @@ internal class AntlrToStatement(private val semanticChecker: SemanticChecker) : 
         return Statement.If(condition, thenBranch, elseBranch)
     }
 
+    override fun visitWhileStatement(ctx: ExprParser.WhileStatementContext): Statement {
+        val condition = antlrToExpression.visit(ctx.whileStat().expr())
+        val body = visit(ctx.whileStat().statement())
+        return Statement.While(condition, body)
+    }
+
     private fun resolveType(typeToken: Token): VariableType = when (typeToken.type) {
         ExprLexer.INT_TYPE -> VariableType.INT
         ExprLexer.FLOAT_TYPE -> VariableType.FLOAT
