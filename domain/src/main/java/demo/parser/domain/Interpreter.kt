@@ -4,7 +4,7 @@ class Interpreter {
 
     private val globalScope = Scope()
 
-    sealed class Jump: Throwable() {
+    sealed class Jump : Throwable() {
         data class Return(val value: TValue) : Jump()
         object Break : Jump()
         object Continue : Jump()
@@ -36,18 +36,21 @@ class Interpreter {
         is Statement.ExpressionStatement -> evaluate(statement.expr, scope)
         is Statement.If -> evaluate(statement, scope)
         is Statement.While -> evaluate(statement, scope)
+        is Statement.For -> evaluate(statement, scope)
         is Statement.Break -> {
             if (scope.isInLoop())
                 throw Jump.Break
             else
                 throw SemanticException("break outside of loop")
         }
+
         is Statement.Continue -> {
             if (scope.isInLoop())
                 throw Jump.Continue
             else
                 throw SemanticException("continue outside of loop")
         }
+
         is Statement.Return -> throw Jump.Return(evaluate(statement.expr, scope))
 
         else -> throw SemanticException("unknown statement $statement")
@@ -81,9 +84,26 @@ class Interpreter {
                 when (jump) {
                     is Jump.Return -> return@withinLoop jump.value
                     is Jump.Break -> break
-                    is Jump.Continue -> continue
+                    is Jump.Continue -> {}
                 }
             }
+        }
+        return@withinLoop TValue.VOID
+    }
+
+    private fun evaluate(forStat: Statement.For, scope: Scope): TValue = scope.withinLoop {
+        forStat.init?.let { evaluate(it, scope) }
+        while (forStat.condition?.let { evaluate(it, scope).asBoolean() } != false) {
+            try {
+                evaluate(forStat.body, scope)
+            } catch (jump: Jump) {
+                when (jump) {
+                    is Jump.Return -> return@withinLoop jump.value
+                    is Jump.Break -> break
+                    is Jump.Continue -> {}
+                }
+            }
+            forStat.update?.let { evaluate(it, scope) }
         }
         return@withinLoop TValue.VOID
     }
@@ -195,26 +215,31 @@ class Interpreter {
             val right = evaluate(expression.right, scope)
             BinaryOperation.Comparison.Eq.apply(left, right)
         }
+
         is Expression.Inequality -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)
             BinaryOperation.Comparison.Neq.apply(left, right)
         }
+
         is Expression.GreaterThan -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)
             BinaryOperation.Comparison.Gt.apply(left, right)
         }
+
         is Expression.GreaterThanOrEqual -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)
             BinaryOperation.Comparison.Geq.apply(left, right)
         }
+
         is Expression.LessThan -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)
             BinaryOperation.Comparison.Lt.apply(left, right)
         }
+
         is Expression.LessThanOrEqual -> {
             val left = evaluate(expression.left, scope)
             val right = evaluate(expression.right, scope)

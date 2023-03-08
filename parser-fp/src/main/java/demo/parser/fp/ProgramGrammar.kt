@@ -39,7 +39,6 @@ internal class ProgramGrammar(
 
     private val STRING by regexToken("\"[^\"]*\"")
 
-
     private val WS by regexToken("\\s+", ignore = true)
     private val COMMENT by regexToken("//[^\r\n]*", ignore = true)
     private val NEWLINE by regexToken("[\r\n]+", ignore = true)
@@ -110,7 +109,10 @@ internal class ProgramGrammar(
         }
     }
 
-    private val mulOrDivChain: Parser<Expression> by leftAssociative(parser(this::powChain), TIMES or DIV or REM) { l, op, r ->
+    private val mulOrDivChain: Parser<Expression> by leftAssociative(
+        parser(this::powChain),
+        TIMES or DIV or REM
+    ) { l, op, r ->
         when (op.text) {
             "*" -> Expression.Multiplication(l, r)
             "/" -> Expression.Division(l, r)
@@ -156,7 +158,7 @@ internal class ProgramGrammar(
         parenthesized
     // @formatter:on
 
-    private val assign: Parser<Statement> by (ID * -ASSIGN * expression * -SEMICOLON).map { (idToken, e) ->
+    private val assign: Parser<Statement> by (ID * -ASSIGN * expression).map { (idToken, e) ->
         val id = idToken.text
         val location = TokenLocation(idToken.row, idToken.column - 1)
         semanticChecker.checkVariableDeclared(id, location)
@@ -176,7 +178,7 @@ internal class ProgramGrammar(
     }
 
     private val variableDecl: Parser<Statement>
-            by (ID * -COLON * parser(this::type) * -ASSIGN * expression * -SEMICOLON)
+            by (ID * -COLON * parser(this::type) * -ASSIGN * expression)
                 .map { (idToken, type, e) ->
                     val id = idToken.text
                     val location = TokenLocation(idToken.row, idToken.column - 1)
@@ -228,27 +230,33 @@ internal class ProgramGrammar(
                     Statement.FunctionDeclaration(id, type, params ?: emptyList(), body)
                 }
 
-    private val ifStat: Parser<Statement> by (-IF * -LPR * expression * -RPR * parser(this::statement) * optional(
-        -ELSE * parser(
-            this::statement
-        )
-    ))
-        .map { (cond, thenBlock, elseBlock) -> Statement.If(cond, thenBlock, elseBlock) }
+    private val ifStat: Parser<Statement>
+            by (-IF * -LPR * expression * -RPR * parser(this::statement) * optional(-ELSE * parser(this::statement)))
+                .map { (cond, thenBlock, elseBlock) -> Statement.If(cond, thenBlock, elseBlock) }
 
-    private val whileStat: Parser<Statement> by (-WHILE * -LPR * expression * -RPR * parser(this::statement))
-        .map { (cond, body) -> Statement.While(cond, body) }
+    private val whileStat: Parser<Statement>
+            by (-WHILE * -LPR * expression * -RPR * parser(this::statement))
+                .map { (cond, body) -> Statement.While(cond, body) }
 
     private val breakStat: Parser<Statement> by (BREAK * SEMICOLON).asJust(Statement.Break())
 
     private val continueStat: Parser<Statement> by (CONTINUE * SEMICOLON).asJust(Statement.Continue())
 
+    private val forInit: Parser<Statement> by (variableDecl or assign)
+
+    private val forStat: Parser<Statement>
+            by (-FOR * -LPR * optional(forInit) * -SEMICOLON * optional(expression) * -SEMICOLON * optional(assign) * -RPR
+                    * parser(this::statement))
+                .map { (init, cond, update, body) -> Statement.For(init, cond, update, body) }
+
     private val statement: Parser<Statement> by functionDecl or
-            variableDecl or
-            assign or
+            (variableDecl * -SEMICOLON) or
+            (assign * -SEMICOLON) or
             exprStat or
             returnStat or
             ifStat or
             whileStat or
+            forStat or
             breakStat or
             continueStat or
             block
@@ -261,13 +269,8 @@ internal class ProgramGrammar(
         @JvmStatic
         fun main(args: Array<String>) {
             val input = """
-            while (i < 10) {
-                if (i % 2 == 0) {
-                    i = i + 1;
-                    continue;
-                }
+            for (i:INT = 0; i < 10; i = i + 1) {
                 x = x + i;
-                i = i + 1;
             }
             """.trimIndent()
 

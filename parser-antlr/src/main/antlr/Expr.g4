@@ -4,22 +4,25 @@ prog: statement+EOF             #Program
 ;
 
 statement
-    : varDecl                       #VariableDeclaration
+    : varDecl ';'                   #VariableDeclaration
     | funcDecl                      #FunctionDeclaration
-    | assign                        #Assignment
+    | assign ';'                    #Assignment
     | expr';'                       #Expression
     | returnStat                    #ReturnStatement
     | ifStat                        #IfStatement
     | whileStat                     #WhileStatement
+    | forStat                       #ForStatement
     | breakStat                     #BreakStatement
     | continueStat                  #ContinueStatement
     | block                         #BlockStatement
 ;
 
-varDecl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE) '=' expr ';';
+varDecl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE) '=' expr;
 
 funcDecl: 'func' ID '(' paramDecls? ')' (':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE | VOID_TYPE))? block;
+
 paramDecls: paramDecl (',' paramDecl)*;
+
 paramDecl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE);
 
 returnStat: 'return' expr? ';';
@@ -27,11 +30,17 @@ returnStat: 'return' expr? ';';
 block: '{' statement* '}';
 
 ifStat: IF '(' expr ')' thenBranch=statement (ELSE elseBranch=statement )?;
+
 whileStat: WHILE '(' expr ')' statement;
+
+forInit: varDecl | assign;
+forStat: FOR '(' forInit? ';' cond=expr? ';' update=assign? ')' statement;
+
 breakStat: BREAK ';';
+
 continueStat: CONTINUE ';';
 
-assign: ID '=' expr ';';
+assign: ID '=' expr;
 
 expr: ID '(' exprlist? ')'              # FunctionCall
     | MINUS expr                        # Negation
@@ -81,6 +90,7 @@ STRING: '"' (ESC|.)*? '"';
 IF: 'if';
 ELSE: 'else';
 WHILE: 'while';
+FOR: 'for';
 BREAK: 'break';
 CONTINUE: 'continue';
 

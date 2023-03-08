@@ -1,17 +1,12 @@
 package demo.parser.fp
 
-import demo.parser.domain.Interpreter
 import demo.parser.domain.ParseResult
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
-class FunctionTests {
-
-    private val parser = FpProgramParser()
-    private val interpreter = Interpreter()
+class FunctionTests : InterpreterTest() {
 
     @Test
     fun `function call test`() {
@@ -23,26 +18,16 @@ class FunctionTests {
                 return x * 2;
             }
             f(g(2));
-        """.byteInputStream()
+        """
 
-        when (val r = parser.parse(input)) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-
-            is ParseResult.Success -> {
-                val program = r.value
-                val outputs = interpreter.interpret(program)
-                outputs.joinToString("\n") shouldBe """
-                    func f(x:INT):INT { return x + 1; } => void
-                    func g(x:INT):INT { return x * 2; } => void
-                    f(g(2)); => 5
-                    environment:
-                    f(x:INT):INT, g(x:INT):INT
-                """.trimIndent()
-            }
-        }
+        val output = """
+            func f(x:INT):INT { return x + 1; } => void
+            func g(x:INT):INT { return x * 2; } => void
+            f(g(2)); => 5
+            environment:
+            f(x:INT):INT, g(x:INT):INT
+        """
+        verify(input, output)
     }
 
     @Test
@@ -52,25 +37,14 @@ class FunctionTests {
                 return x + y;
             }
             f(1, 2);
-        """.byteInputStream()
-
-        when (val r = parser.parse(input)) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-
-            is ParseResult.Success -> {
-                val program = r.value
-                val outputs = interpreter.interpret(program)
-                outputs.joinToString("\n") shouldBe """
+        """
+        val output = """
                     func f(x:INT, y:INT):INT { return x + y; } => void
                     f(1, 2); => 3
                     environment:
                     f(x:INT, y:INT):INT
                 """.trimIndent()
-            }
-        }
+        verify(input, output)
     }
 
     @Test
@@ -84,27 +58,17 @@ class FunctionTests {
                 return x * 2;
             }
             f(g(2));
-        """.byteInputStream()
-
-        when (val r = parser.parse(input)) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-            is ParseResult.Success -> {
-                val program = r.value
-                val outputs = interpreter.interpret(program)
-                outputs.joinToString("\n") shouldBe """
-                    x:INT = 1; => 1
-                    func f(x:INT):INT { return x + 1; } => void
-                    func g(x:INT):INT { return x * 2; } => void
-                    f(g(2)); => 5
-                    environment:
-                    x:INT = 1
-                    f(x:INT):INT, g(x:INT):INT
-                """.trimIndent()
-            }
-        }
+        """
+        val output = """
+            x:INT = 1; => 1
+            func f(x:INT):INT { return x + 1; } => void
+            func g(x:INT):INT { return x * 2; } => void
+            f(g(2)); => 5
+            environment:
+            x:INT = 1
+            f(x:INT):INT, g(x:INT):INT
+        """.trimIndent()
+        verify(input, output)
     }
 
     @Test
@@ -118,24 +82,14 @@ class FunctionTests {
                 }
             }
             f(5);
-        """.byteInputStream()
-
-        when (val r = parser.parse(input)) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-            is ParseResult.Success -> {
-                val program = r.value
-                val outputs = interpreter.interpret(program)
-                outputs.joinToString("\n") shouldBe """
-                    func f(x:INT):INT { if (x == 0) { return 1; } else { return x * f(x - 1); } } => void
-                    f(5); => 120
-                    environment:
-                    f(x:INT):INT
-                """.trimIndent()
-            }
-        }
+        """
+        val output = """
+            func f(x:INT):INT { if (x == 0) { return 1; } else { return x * f(x - 1); } } => void
+            f(5); => 120
+            environment:
+            f(x:INT):INT
+        """
+        verify(input, output)
     }
 
     @Test
@@ -148,25 +102,15 @@ class FunctionTests {
                 return g(x + 1);
             }
             f(2);
-        """.byteInputStream()
-
-        when (val r = parser.parse(input)) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-            is ParseResult.Success -> {
-                val program = r.value
-                val outputs = interpreter.interpret(program)
-                outputs.joinToString("\n") shouldBe """
-                    func g(x:INT):INT { return x * 2; } => void
-                    func f(x:INT):INT { return g(x + 1); } => void
-                    f(2); => 6
-                    environment:
-                    g(x:INT):INT, f(x:INT):INT
-                """.trimIndent()
-            }
-        }
+        """
+        val output = """
+            func g(x:INT):INT { return x * 2; } => void
+            func f(x:INT):INT { return g(x + 1); } => void
+            f(2); => 6
+            environment:
+            g(x:INT):INT, f(x:INT):INT
+        """
+        verify(input, output)
     }
 
     @Test
@@ -176,24 +120,14 @@ class FunctionTests {
                 return x + " world";
             }
             f("hello");
-        """.byteInputStream()
-
-        when (val r = parser.parse(input)) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-            is ParseResult.Success -> {
-                val program = r.value
-                val outputs = interpreter.interpret(program)
-                outputs.joinToString("\n") shouldBe """
-                    func f(x:STRING):STRING { return x + " world"; } => void
-                    f("hello"); => "hello world"
-                    environment:
-                    f(x:STRING):STRING
-                """.trimIndent()
-            }
-        }
+        """
+        val output = """
+            func f(x:STRING):STRING { return x + " world"; } => void
+            f("hello"); => "hello world"
+            environment:
+            f(x:STRING):STRING
+        """
+        verify(input, output)
     }
 
     @Test

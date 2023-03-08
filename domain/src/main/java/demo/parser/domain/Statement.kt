@@ -30,8 +30,13 @@ sealed interface Statement {
         override fun toString() = "while ($condition) $body"
     }
 
-    data class For(val id: String, val from: Expression, val to: Expression, val body: Statement) : Statement {
-        override fun toString() = "for ($id = $from; $id < $to; $id++) $body"
+    data class For(
+        val init: Statement?,
+        val condition: Expression?,
+        val update: Statement?,
+        val body: Statement
+    ) : Statement {
+        override fun toString() = "for (${init ?: ""} ${condition ?: ""}; ${update ?: ""}) $body"
     }
 
     data class Return(val expr: Expression) : Statement {

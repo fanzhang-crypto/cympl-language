@@ -12,10 +12,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
-class ExpressionTests {
-
-    private val parser = FpProgramParser()
-    private val interpreter = Interpreter()
+class ExpressionTests: InterpreterTest() {
 
     @Test
     fun `integers test`() {
@@ -29,30 +26,20 @@ class ExpressionTests {
             i + j * 2 - k/3;
             (1 - (i + j)) / 2;
             -i;
-        """.byteInputStream()
-
-        when (val r = parser.parse(input)) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-            is ParseResult.Success -> {
-                val program = r.value
-                val outputs = interpreter.interpret(program)
-                outputs.joinToString("\n") shouldBe """
-                    i:INT = 1; => 1
-                    j:INT = 2; => 2
-                    k:INT = 3; => 3
-                    k = i - j; => -1
-                    (i + j) * k; => -3
-                    i + j * 2 - k / 3; => 5
-                    (1 - (i + j)) / 2; => -1
-                    -i; => -1
-                    environment:
-                    i:INT = 1, j:INT = 2, k:INT = -1
-                """.trimIndent()
-            }
-        }
+        """
+        val output = """
+            i:INT = 1; => 1
+            j:INT = 2; => 2
+            k:INT = 3; => 3
+            k = i - j; => -1
+            (i + j) * k; => -3
+            i + j * 2 - k / 3; => 5
+            (1 - (i + j)) / 2; => -1
+            -i; => -1
+            environment:
+            i:INT = 1, j:INT = 2, k:INT = -1
+        """
+        verify(input, output)
     }
 
     @Test
@@ -66,30 +53,19 @@ class ExpressionTests {
             (i + j) * k;
             i + j * 2 - k/3;
             (1 - (i + j)) / 2;
-        """.byteInputStream()
-
-        when (val r = parser.parse(input)) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-            is ParseResult.Success -> {
-                val program = r.value
-                val outputs = interpreter.interpret(program)
-                outputs.joinToString("\n") shouldBe """
-                    i:INT = 1; => 1
-                    j:FLOAT = 2.0; => 2.0
-                    k:FLOAT = 3.0; => 3.0
-                    k = i - j; => -1.0
-                    (i + j) * k; => -3.0
-                    i + j * 2 - k / 3; => 5.333333333333333
-                    (1 - (i + j)) / 2; => -1.0
-                    environment:
-                    i:INT = 1, j:FLOAT = 2.0, k:FLOAT = -1.0
-                """.trimIndent()
-            }
-        }
-
+        """
+        val output = """
+            i:INT = 1; => 1
+            j:FLOAT = 2.0; => 2.0
+            k:FLOAT = 3.0; => 3.0
+            k = i - j; => -1.0
+            (i + j) * k; => -3.0
+            i + j * 2 - k / 3; => 5.333333333333333
+            (1 - (i + j)) / 2; => -1.0
+            environment:
+            i:INT = 1, j:FLOAT = 2.0, k:FLOAT = -1.0
+        """
+        verify(input, output)
     }
 
     @Test
@@ -98,18 +74,15 @@ class ExpressionTests {
             s1:STRING = "a" + "b" + "c";
             s2:STRING = "d" + 1 + 2 + 3;
             s3:STRING = s1 + s2;
-        """.byteInputStream()
-
-        val program = parser.parse(input).shouldBeInstanceOf<ParseResult.Success<Program>>().value
-        val outputs = interpreter.interpret(program)
-
-        outputs.joinToString("\n") shouldBe """
+        """
+        val output = """
             s1:STRING = "a" + "b" + "c"; => "abc"
             s2:STRING = "d" + 1 + 2 + 3; => "d123"
             s3:STRING = s1 + s2; => "abcd123"
             environment:
             s1:STRING = "abc", s2:STRING = "d123", s3:STRING = "abcd123"
-        """.trimIndent()
+        """
+        verify(input, output)
     }
 
     @Test
@@ -155,12 +128,8 @@ class ExpressionTests {
             i >= j;
             i < j;
             i <= j;
-        """.byteInputStream()
-
-        val program = parser.parse(input).shouldBeInstanceOf<ParseResult.Success<Program>>().value
-        val outputs = interpreter.interpret(program)
-
-        outputs.joinToString("\n") shouldBe """
+        """
+        val output = """
             i:INT = 5; => 5
             j:INT = 7; => 7
             i == j; => false
@@ -171,7 +140,8 @@ class ExpressionTests {
             i <= j; => true
             environment:
             i:INT = 5, j:INT = 7
-        """.trimIndent()
+        """
+        verify(input, output)
     }
 
     @Test
@@ -180,17 +150,14 @@ class ExpressionTests {
             true && false;
             true || false;
             !true;
-        """.byteInputStream()
-
-        val program = parser.parse(input).shouldBeInstanceOf<ParseResult.Success<Program>>().value
-        val outputs = interpreter.interpret(program)
-
-        outputs.joinToString("\n") shouldBe """
+        """
+        val output = """
             true && false; => false
             true || false; => true
             !true; => false
             environment:
-        """.trimIndent()
+        """
+        verify(input, output)
     }
 
     @Test
