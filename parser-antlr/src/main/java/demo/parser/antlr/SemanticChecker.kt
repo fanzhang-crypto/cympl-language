@@ -13,9 +13,9 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker
 
 object SemanticChecker {
 
-    private val walker = ParseTreeWalker.DEFAULT
-
     fun check(programAST: ParseTree): List<SemanticException> {
+        val walker = ParseTreeWalker.DEFAULT
+
         val defPhase = DefPhase()
         walker.walk(defPhase, programAST)
 
@@ -24,7 +24,6 @@ object SemanticChecker {
 
         return (defPhase.semanticErrors + refPhase.semanticErrors).sorted()
     }
-
 }
 
 private class DefPhase: ExprBaseListener() {

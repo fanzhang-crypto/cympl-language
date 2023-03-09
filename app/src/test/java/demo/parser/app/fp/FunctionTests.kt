@@ -11,6 +11,23 @@ import demo.parser.app.fp.FpInterpretVerifier.verify
 class FunctionTests {
 
     @Test
+    fun `function can't be called without being defined`() {
+        val input = """
+            f(1);
+        """.byteInputStream()
+
+        when (val r = parser().parse(input)) {
+            is ParseResult.Failure -> {
+                r.errors shouldHaveSize 1
+                r.errors[0].shouldHaveMessage("semantic error at (2:12): function: f not defined")
+            }
+            is ParseResult.Success -> {
+                fail("should throw semantic error, but not")
+            }
+        }
+    }
+
+    @Test
     fun `function call test`() {
         val input = """
             func f(x:INT):INT {
@@ -33,7 +50,7 @@ class FunctionTests {
     }
 
     @Test
-    fun `function call test with multiple arguments`() {
+    fun `function can be called with multiple arguments`() {
         val input = """
             func f(x:INT, y:INT):INT {
                 return x + y;
@@ -95,22 +112,22 @@ class FunctionTests {
     }
 
     @Test
-    fun `functions can call each other`() {
+    fun `function can be called before defined`() {
         val input = """
-            func g(x:INT):INT {
-                return x * 2;
-            }
             func f(x:INT):INT {
                 return g(x + 1);
+            }
+            func g(x:INT):INT {
+                return x * 2;
             }
             f(2);
         """
         val output = """
-            func g(x:INT):INT { return x * 2; } => void
             func f(x:INT):INT { return g(x + 1); } => void
+            func g(x:INT):INT { return x * 2; } => void
             f(2); => 6
             environment:
-            g(x:INT):INT, f(x:INT):INT
+            f(x:INT):INT, g(x:INT):INT
         """
         verify(input, output)
     }
@@ -146,8 +163,9 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors.first().shouldHaveMessage("semantic error at (5:17): function f already declared")
+                r.errors.first().shouldHaveMessage("semantic error at (5:17): function f already defined")
             }
+
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
             }
@@ -165,8 +183,9 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors.first().shouldHaveMessage("semantic error at (2:26): variable x already declared")
+                r.errors.first().shouldHaveMessage("semantic error at (2:26): variable x already defined")
             }
+
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
             }
@@ -174,10 +193,11 @@ class FunctionTests {
     }
 
     @Test
-    fun `can't declare variable with same name as param in function`() {
+    fun `can't define variables with same name in function`() {
         val input = """
             func f(x:INT):INT {
                 x:INT = 1;
+                x:INT = 2;
                 return x + 1;
             }
         """.byteInputStream()
@@ -185,8 +205,32 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors.first().shouldHaveMessage("semantic error at (3:16): variable x already declared")
+                r.errors.first().shouldHaveMessage("semantic error at (4:16): variable x already defined")
             }
+
+            is ParseResult.Success -> {
+                fail("should throw semantic error, but not")
+            }
+        }
+    }
+
+    @Test
+    fun `can't use function as variable`() {
+        val input = """
+            func f(x:INT):INT {
+                return x + 1;
+            }
+            f = 1;
+            return f;
+        """.byteInputStream()
+
+        when (val r = parser().parse(input)) {
+            is ParseResult.Failure -> {
+                r.errors shouldHaveSize 2
+                r.errors[0].shouldHaveMessage("semantic error at (5:12): f is not a variable")
+                r.errors[1].shouldHaveMessage("semantic error at (6:19): f is not a variable")
+            }
+
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
             }

@@ -1,40 +1,14 @@
 package demo.parser.fp
 
+import com.github.h0tk3y.betterParse.lexer.TokenMatch
 import demo.parser.domain.SemanticException
-import demo.parser.domain.Statement
 import demo.parser.domain.TokenLocation
 import demo.parser.domain.Type
+import demo.parser.domain.symbol.*
 
 internal class SemanticChecker {
 
-    class Scope(val parent: Scope? = null, vararg initialVariables: Statement.VariableDeclaration) {
-
-        val vars = initialVariables.associate { it.id to it.type }.toMutableMap()
-        val functionNames = mutableSetOf<String>()
-
-        fun containsVariable(id: String, inSameScope: Boolean = false): Boolean =
-            if (inSameScope)
-                vars.contains(id)
-            else
-                vars.contains(id) || parent?.containsVariable(id, false) ?: false
-
-        fun containsFunction(id: String, inSameScope: Boolean = false): Boolean =
-            if (inSameScope)
-                functionNames.contains(id)
-            else
-                functionNames.contains(id) || parent?.containsFunction(id, false) ?: false
-
-
-        fun addVariable(id: String, type: Type) {
-            vars[id] = type
-        }
-
-        fun addFunction(id: String) {
-            functionNames += id
-        }
-    }
-
-    private var currentScope = Scope()
+    private var currentScope: Scope? = GlobalScope()
 
     private val semanticErrors: MutableList<SemanticException> = mutableListOf()
 
@@ -44,45 +18,86 @@ internal class SemanticChecker {
         semanticErrors.clear()
     }
 
-    fun checkVariableDefined(id: String, tokenLocation: TokenLocation) {
-        if (!currentScope.containsVariable(id)) {
-            semanticErrors += SemanticException("variable $id not defined", tokenLocation)
+    fun checkVariableRef(idToken: TokenMatch) {
+        val varName: String = idToken.text
+        val variableSymbol: Symbol? = currentScope?.resolve(varName)
+
+        if (variableSymbol == null) {
+            val location = getLocation(idToken)
+            semanticErrors += SemanticException("variable $varName not defined", location)
+        } else if (variableSymbol !is VariableSymbol) {
+            val location = getLocation(idToken)
+            semanticErrors += SemanticException("$varName is not a variable", location)
         }
     }
 
-    fun checkVariableUndeclared(id: String, type: Type, tokenLocation: TokenLocation) {
-        if (currentScope.containsVariable(id, true)) {
-            semanticErrors += SemanticException("variable $id already defined", tokenLocation)
-        } else {
-            currentScope.addVariable(id, type)
+    fun checkFunctionRef(idToken: TokenMatch) {
+        val functionName = idToken.text
+        val functionSymbol: Symbol? = currentScope?.resolve(functionName)
+
+        if (functionSymbol == null) {
+            val location = getLocation(idToken)
+            semanticErrors += SemanticException("function: $functionName not defined", location)
+        } else if (functionSymbol !is FunctionSymbol) {
+            val location = getLocation(idToken)
+            semanticErrors += SemanticException("$functionName is not a function", location)
         }
     }
 
-    fun checkFunctionUndeclared(id: String, location: TokenLocation) {
-        if (currentScope.containsFunction(id, true)) {
-            semanticErrors += SemanticException("function $id already defined", location)
-        } else {
-            currentScope.addFunction(id)
+    fun enterFuncDecl(idToken: TokenMatch, type: Type) {
+        val function = defineFunc(idToken, type)
+//        saveScope(ctx, function)
+        currentScope = function
+    }
+
+    fun exitFuncDecl() {
+        println(currentScope)
+        currentScope = currentScope?.enclosingScope
+    }
+
+    fun enterBlock() {
+        currentScope = LocalScope(currentScope)
+//        saveScope(ctx, currentScope)
+    }
+
+    fun exitBlock() {
+        currentScope = currentScope?.enclosingScope
+    }
+
+    private fun defineFunc(idToken: TokenMatch, type: Type): FunctionSymbol {
+        val name: String = idToken.text
+        val functionSymbol: Symbol? = currentScope?.resolve(name)
+
+        if (functionSymbol != null) {
+            val location = getLocation(idToken)
+            if (functionSymbol.scope == currentScope) {
+                semanticErrors += SemanticException("function $name already defined", location)
+            } else {
+                println("function shadowed at $location: $name")
+            }
         }
+
+        return FunctionSymbol(name, type, currentScope)
+            .also { currentScope?.define(it) }
     }
 
-    fun checkFunctionDeclared(id: String, location: TokenLocation) {
-        if (!currentScope.containsFunction(id)) {
-            semanticErrors += SemanticException("function $id not defined", location)
+    fun defineVar(idToken: TokenMatch, type: Type) {
+        val name: String = idToken.text
+        val variableSymbol: Symbol? = currentScope?.resolve(name)
+
+        if (variableSymbol != null) {
+            val location = getLocation(idToken)
+            if (variableSymbol.scope == currentScope) {
+                semanticErrors += SemanticException("variable $name already defined", location)
+            } else {
+                println("variable shadowed at $location: $name")
+            }
         }
+
+        val id = idToken.text
+        val symbol = VariableSymbol(id, type, currentScope)
+        currentScope?.define(symbol)
     }
 
-    fun <T> inNewScope(vararg initialVariables: Statement.VariableDeclaration, block: () -> T): T {
-        openScope(*initialVariables)
-        return block().also { closeScope() }
-    }
-
-    fun openScope(vararg initialVariables: Statement.VariableDeclaration) {
-        currentScope = Scope(currentScope, *initialVariables)
-    }
-
-    fun closeScope() {
-        currentScope = currentScope.parent!!
-    }
-
+    private fun getLocation(token: TokenMatch) = TokenLocation(token.row, token.column - 1)
 }

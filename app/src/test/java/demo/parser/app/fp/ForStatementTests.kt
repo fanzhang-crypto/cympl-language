@@ -89,11 +89,11 @@ class ForStatementTests {
             f(1);
         """
         val output = """
-            func f(x:INT):INT { for (i:INT = 0; i < 10; i = i + 1;) { x = x + 1; if (x == 5) { return x; } } return x; } => void
-            f(1); => 5
-            environment:
-            f(x:INT):INT
-        """
+                    func f(x:INT):INT { for (i:INT = 0; i < 10; i = i + 1;) { x = x + 1; if (x == 5) { return x; } } return x; } => void
+                    f(1); => 5
+                    environment:
+                    f(x:INT):INT
+                """
         verify(input, output)
     }
 

@@ -108,13 +108,15 @@ class ExpressionTests {
             i + 23;
             24 * k;
             i: INT = 9;
+            j = i + 23;
         """.byteInputStream()
 
         val errors = parser().parse(input).shouldBeInstanceOf<ParseResult.Failure<*>>().errors
-        errors shouldHaveSize 3
-        errors[0].shouldHaveMessage("semantic error at (3:12): variable i already declared")
+        errors shouldHaveSize 4
+        errors[0].shouldHaveMessage("semantic error at (3:12): variable i already defined")
         errors[1].shouldHaveMessage("semantic error at (5:17): variable k not defined")
-        errors[2].shouldHaveMessage("semantic error at (6:12): variable i already declared")
+        errors[2].shouldHaveMessage("semantic error at (6:12): variable i already defined")
+        errors[3].shouldHaveMessage("semantic error at (7:12): variable j not defined")
     }
 
     @Test

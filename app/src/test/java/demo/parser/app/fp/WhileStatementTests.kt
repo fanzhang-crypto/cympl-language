@@ -3,7 +3,7 @@ package demo.parser.app.fp
 import org.junit.jupiter.api.Test
 import demo.parser.app.fp.FpInterpretVerifier.verify
 
-class WhileStatementTests{
+class WhileStatementTests {
 
     @Test
     fun `support simple while statement`() {
