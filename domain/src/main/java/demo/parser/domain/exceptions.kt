@@ -1,19 +1,27 @@
 package demo.parser.domain
 
-class TokenLocation(private val line: Int, private val position: Int) {
+class TokenLocation(private val line: Int, private val position: Int) : Comparable<TokenLocation> {
+
+    companion object {
+        private val COMPARATOR = compareBy<TokenLocation> { it.line }.thenBy { it.position }
+    }
+
+    override fun compareTo(other: TokenLocation): Int {
+        return COMPARATOR.compare(this, other)
+    }
+
     override fun toString() = "($line:$position)"
 }
 
-sealed class ParseException(message: String): RuntimeException(message)
-
-class SemanticException : ParseException {
-
-    constructor(message: String, location: TokenLocation)
-            : super("semantic error at $location: $message")
-
-    constructor(message: String)
-            : super("semantic error: $message")
+interface Located : Comparable<Located> {
+    val location: TokenLocation
+    override fun compareTo(other: Located): Int = location.compareTo(other.location)
 }
 
-class SyntaxException(message: String, location: TokenLocation)
-    : ParseException("syntax error at $location: $message")
+sealed class ParseException(message: String) : RuntimeException(message), Located
+
+class SemanticException(message: String, override val location: TokenLocation) :
+    ParseException("semantic error at $location: $message")
+
+class SyntaxException(message: String, override val location: TokenLocation) :
+    ParseException("syntax error at $location: $message")

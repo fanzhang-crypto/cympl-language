@@ -141,7 +141,7 @@ internal class ProgramGrammar(
     private val variable by ID.map { idToken ->
         val id = idToken.text
         val location = TokenLocation(idToken.row, idToken.column - 1)
-        semanticChecker.checkVariableDeclared(id, location)
+        semanticChecker.checkVariableDefined(id, location)
         Expression.Variable(id)
     }
 
@@ -161,18 +161,18 @@ internal class ProgramGrammar(
     private val assign: Parser<Statement> by (ID * -ASSIGN * expression).map { (idToken, e) ->
         val id = idToken.text
         val location = TokenLocation(idToken.row, idToken.column - 1)
-        semanticChecker.checkVariableDeclared(id, location)
+        semanticChecker.checkVariableDefined(id, location)
 
         Statement.Assignment(id, e)
     }
 
     private val type = (BOOL_TYPE or INT_TYPE or FLOAT_TYPE or STRING_TYPE or VOID_TYPE).map {
         when (it.text) {
-            "VOID" -> VariableType.VOID
-            "BOOL" -> VariableType.BOOL
-            "INT" -> VariableType.INT
-            "FLOAT" -> VariableType.FLOAT
-            "STRING" -> VariableType.STRING
+            "VOID" -> Type.VOID
+            "BOOL" -> Type.BOOL
+            "INT" -> Type.INT
+            "FLOAT" -> Type.FLOAT
+            "STRING" -> Type.STRING
             else -> throw IllegalArgumentException("unknown type ${it.text}")
         }
     }

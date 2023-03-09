@@ -7,12 +7,14 @@ import demo.parser.domain.Parser
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.atn.ATNSimulator
 import org.antlr.v4.runtime.tree.ParseTree
+import org.antlr.v4.runtime.tree.ParseTreeWalker
 import java.io.InputStream
+import java.util.SortedSet
+import java.util.TreeSet
 
 class AntlrProgramParser: Parser<Program> {
 
-    private val semanticChecker = SemanticChecker()
-    private val programVisitor = AntlrToProgram(semanticChecker)
+    private val programVisitor = AntlrToProgram()
 
     override fun parse(inputStream: InputStream): ParseResult<Program> {
         val errorListener = SyntaxErrorListener()
@@ -30,14 +32,12 @@ class AntlrProgramParser: Parser<Program> {
             return ParseResult.Failure(syntaxErrors)
         }
 
-        val program = programVisitor.visit(programAST)
-
-        val semanticErrors = semanticChecker.getSemanticErrors()
+        val semanticErrors:List<SemanticException> = SemanticChecker.check(programAST)
         if (semanticErrors.isNotEmpty()) {
-            semanticChecker.clearSemanticErrors()
             return ParseResult.Failure(semanticErrors)
         }
 
+        val program = programVisitor.visit(programAST)
         return ParseResult.Success(program)
     }
 

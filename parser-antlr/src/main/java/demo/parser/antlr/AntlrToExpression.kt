@@ -3,15 +3,12 @@ package demo.parser.antlr
 import ExprBaseVisitor
 import demo.parser.domain.*
 
-internal class AntlrToExpression(private val semanticChecker: SemanticChecker)
+internal class AntlrToExpression
     : ExprBaseVisitor<Expression>() {
 
     override fun visitFunctionCall(ctx: ExprParser.FunctionCallContext): Expression {
         val idToken = ctx.ID().symbol
         val id = idToken.text
-        val tokenLocation = TokenLocation(idToken.line, idToken.charPositionInLine)
-        semanticChecker.checkFunctionDeclared(id, tokenLocation)
-
         val arguments = ctx.exprlist().expr().map { visit(it) }
         return Expression.FunctionCall(id, arguments)
     }
@@ -90,7 +87,6 @@ internal class AntlrToExpression(private val semanticChecker: SemanticChecker)
         val idToken = ctx.ID().symbol
         val id = idToken.text
         val location = TokenLocation(idToken.line, idToken.charPositionInLine)
-        semanticChecker.checkVariableDeclared(id, location)
         return Expression.Variable(id)
     }
 

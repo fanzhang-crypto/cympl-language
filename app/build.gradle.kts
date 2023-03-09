@@ -5,6 +5,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":interpreter"))
     implementation(project(":domain"))
     implementation(project(":parser-antlr"))
     implementation(project(":parser-fp"))
@@ -17,6 +18,11 @@ dependencies {
 
 kotlin {
     jvmToolchain(17)
+}
+
+
+tasks.getByName<Test>("test") {
+    useJUnitPlatform()
 }
 
 //application {

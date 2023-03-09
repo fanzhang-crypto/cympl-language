@@ -1,12 +1,12 @@
 package demo.parser.antlr
 
 import ExprBaseVisitor
+import demo.parser.antlr.TypeResolver.resolveType
 import demo.parser.domain.*
-import org.antlr.v4.runtime.Token
 
-internal class AntlrToStatement(private val semanticChecker: SemanticChecker) : ExprBaseVisitor<Statement>() {
+internal class AntlrToStatement : ExprBaseVisitor<Statement>() {
 
-    private val antlrToExpression = AntlrToExpression(semanticChecker)
+    private val antlrToExpression = AntlrToExpression()
 
     override fun visitExpression(ctx: ExprParser.ExpressionContext): Statement =
         antlrToExpression.visit(ctx.expr()).let { Statement.ExpressionStatement(it) }
@@ -16,10 +16,6 @@ internal class AntlrToStatement(private val semanticChecker: SemanticChecker) : 
 
         val id = idToken.text
         val type = resolveType(ctx.type)
-        val location = TokenLocation(idToken.line, idToken.charPositionInLine)
-
-        semanticChecker.checkVariableUndeclared(id, type, location)
-
         val value = antlrToExpression.visit(ctx.expr())
         return Statement.VariableDeclaration(id, type, value)
     }
@@ -27,9 +23,6 @@ internal class AntlrToStatement(private val semanticChecker: SemanticChecker) : 
     override fun visitAssign(ctx: ExprParser.AssignContext): Statement {
         val idToken = ctx.ID().symbol
         val id = idToken.text
-        val location = TokenLocation(idToken.line, idToken.charPositionInLine)
-        semanticChecker.checkVariableDeclared(id, location)
-
         val value = antlrToExpression.visit(ctx.expr())
         return Statement.Assignment(id, value)
     }
@@ -38,17 +31,11 @@ internal class AntlrToStatement(private val semanticChecker: SemanticChecker) : 
         val idToken = ctx.ID().symbol
 
         val id = idToken.text
-        val location = TokenLocation(idToken.line, idToken.charPositionInLine)
-        semanticChecker.checkFunctionUndeclared(id, location)
-
         val returnType = resolveType(ctx.type)
+        val parameters = ctx.paramDecls().paramDecl().map { visitParamDecl(it) }
+        val body = ctx.block().statement().map { visit(it) }.let { Statement.Block(it) }
 
-        return semanticChecker.inNewScope {
-            val parameters = ctx.paramDecls().paramDecl().map { visitParamDecl(it) }
-            val body = ctx.block().statement().map { visit(it) }.let { Statement.Block(it) }
-
-            Statement.FunctionDeclaration(id, returnType, parameters, body)
-        }
+        return Statement.FunctionDeclaration(id, returnType, parameters, body)
     }
 
     override fun visitIfStat(ctx: ExprParser.IfStatContext): Statement {
@@ -90,16 +77,13 @@ internal class AntlrToStatement(private val semanticChecker: SemanticChecker) : 
 
         val paramId = paramIdToken.text
         val paramType = resolveType(ctx.type)
-        val location = TokenLocation(paramIdToken.line, paramIdToken.charPositionInLine)
-
-        semanticChecker.checkVariableUndeclared(paramId, paramType, location)
 
         return Statement.VariableDeclaration(paramId, paramType)
     }
 
-    override fun visitBlock(ctx: ExprParser.BlockContext): Statement.Block = semanticChecker.inNewScope {
+    override fun visitBlock(ctx: ExprParser.BlockContext): Statement.Block {
         val statements = ctx.statement().map { visit(it) }
-        Statement.Block(statements)
+        return Statement.Block(statements)
     }
 
     override fun visitReturnStat(ctx: ExprParser.ReturnStatContext) =
@@ -116,13 +100,5 @@ internal class AntlrToStatement(private val semanticChecker: SemanticChecker) : 
 
     override fun visitContinueStatement(ctx: ExprParser.ContinueStatementContext) = Statement.Continue()
 
-    private fun resolveType(typeToken: Token): VariableType = when (typeToken.type) {
-        ExprLexer.INT_TYPE -> VariableType.INT
-        ExprLexer.FLOAT_TYPE -> VariableType.FLOAT
-        ExprLexer.STRING_TYPE -> VariableType.STRING
-        else -> {
-            val location = TokenLocation(typeToken.line, typeToken.charPositionInLine)
-            throw SyntaxException("unknown type ${typeToken.text}", location)
-        }
-    }
+
 }

@@ -1,6 +1,7 @@
 package demo.parser.app
 
 import demo.parser.domain.*
+import demo.parser.interpret.Interpreter
 import kotlin.system.exitProcess
 
 fun main() {
@@ -15,7 +16,11 @@ fun main() {
             if (line == "quit") {
                 return@useLines
             }
-
+            if (line == "help") {
+                println("quit: quit the program")
+                println("help: show this help")
+                return@forEach
+            }
             when (val r = parser.parse(line.byteInputStream())) {
                 is ParseResult.Success -> {
                     try {

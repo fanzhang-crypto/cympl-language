@@ -3,10 +3,9 @@ package demo.parser.antlr
 import ExprBaseVisitor
 import demo.parser.domain.*
 
-internal class AntlrToProgram(semanticChecker: SemanticChecker)
-    : ExprBaseVisitor<Program>() {
+internal class AntlrToProgram : ExprBaseVisitor<Program>() {
 
-    private val statVisitor = AntlrToStatement(semanticChecker)
+    private val statVisitor = AntlrToStatement()
 
     override fun visitProgram(ctx: ExprParser.ProgramContext): Program {
         if (ctx.childCount <= 1) {
