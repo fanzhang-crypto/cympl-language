@@ -6,6 +6,7 @@ import demo.parser.domain.TokenLocation
 import demo.parser.domain.Type
 import demo.parser.domain.symbol.*
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeProperty
@@ -61,11 +62,31 @@ class SemanticChecker {
             defineVar(ctx.ID().symbol, ctx.type)
         }
 
+        override fun exitReturnStat(ctx: ExprParser.ReturnStatContext) {
+            getFunctionDeclarationScope()?.let { function ->
+                if (function.type == Type.VOID && ctx.expr() != null) {
+                    val location = getLocation(ctx.expr().start)
+                    semanticErrors += SemanticException("return value in a void function", location)
+                }
+            }
+        }
+
+        private fun getFunctionDeclarationScope(): FunctionSymbol? {
+            var scope = currentScope
+            while (scope != null) {
+                if (scope is FunctionSymbol) {
+                    return scope as FunctionSymbol
+                }
+                scope = scope.enclosingScope
+            }
+            return null
+        }
+
         private fun saveScope(ctx: ParserRuleContext, s: Scope?) {
             scopes.put(ctx, s)
         }
 
-        private fun defineFunc(idToken: Token, typeToken: Token): FunctionSymbol {
+        private fun defineFunc(idToken: Token, typeToken: Token?): FunctionSymbol {
             val name: String = idToken.text
             val functionSymbol: Symbol? = currentScope?.resolve(name)
 

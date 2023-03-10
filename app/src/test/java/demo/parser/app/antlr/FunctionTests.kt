@@ -1,6 +1,5 @@
 package demo.parser.app.antlr
 
-import demo.parser.app.InterpretVerifier
 import demo.parser.domain.ParseResult
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.throwable.shouldHaveMessage
@@ -8,6 +7,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import demo.parser.app.antlr.AntlrInterpretVerifier.parser
 import demo.parser.app.antlr.AntlrInterpretVerifier.verify
+import demo.parser.domain.Statement
+import demo.parser.domain.Type
+import demo.parser.interpret.InterpretException
+import demo.parser.interpret.Interpreter
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 
 class FunctionTests {
 
@@ -213,6 +219,74 @@ class FunctionTests {
             }
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
+            }
+        }
+    }
+
+    @Test
+    fun `treat empty return type as VOID`() {
+        val input = """
+            func f(x:INT) {
+                x + 1;
+            }
+        """.byteInputStream()
+
+        when (val r = parser().parse(input)) {
+            is ParseResult.Failure -> {
+                fail(r.errors[0].message)
+            }
+            is ParseResult.Success -> {
+                val program = r.value
+                program.statements shouldHaveSize 1
+                val funcDecl = program.statements[0].shouldBeInstanceOf<Statement.FunctionDeclaration>()
+                funcDecl.returnType shouldBe Type.VOID
+            }
+        }
+    }
+
+    @Test
+    fun `should check function's return type against its declaration type`() {
+        val input = """
+            func f(x:INT) {
+                if (true) {
+                    return 1;
+                } else {
+                    return;
+                }
+                return x + 1.0;
+            }
+        """.byteInputStream()
+
+        when (val r = parser().parse(input)) {
+            is ParseResult.Failure -> {
+                r.errors shouldHaveSize 2
+                r.errors[0].shouldHaveMessage("semantic error at (4:27): return value in a void function")
+                r.errors[1].shouldHaveMessage("semantic error at (8:23): return value in a void function")
+            }
+            is ParseResult.Success -> {
+                fail("should throw semantic error, but not")
+            }
+        }
+    }
+
+    @Test
+    fun `check type of function's return value`() {
+        val input = """
+            func f():INT {
+                1+2;
+            }
+            i:INT = f();
+        """
+
+        when (val r = parser().parse(input.byteInputStream())) {
+            is ParseResult.Failure -> {
+                r.errors.forEach { println(it) }
+                fail(r.errors.first())
+            }
+            is ParseResult.Success -> {
+                val program = r.value
+                shouldThrow<InterpretException> {  Interpreter().interpret(program).joinToString() }
+                    .shouldHaveMessage("type mismatch: expected INT, got VOID")
             }
         }
     }

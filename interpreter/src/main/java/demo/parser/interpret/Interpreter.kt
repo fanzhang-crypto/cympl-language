@@ -136,9 +136,15 @@ class Interpreter {
         val type = variableDeclaration.type
         return evaluate(variableDeclaration.expr!!, scope)
             .also { result ->
-                type.checkValue(result.value)
+                checkType(result, type)
                 scope.defineVariable(id, TValue(type, result.value))
             }
+    }
+
+    private fun checkType(tvalue: TValue, expectedType: Type) {
+        if (tvalue.type != expectedType) {
+            throw InterpretException("type mismatch: expected $expectedType, got ${tvalue.type}")
+        }
     }
 
     private fun evaluate(expression: Expression, scope: Scope): TValue = when (expression) {
