@@ -11,7 +11,10 @@ import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeProperty
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
-object SemanticChecker {
+class SemanticChecker {
+
+    val globals: GlobalScope = GlobalScope()
+    val scopes: ParseTreeProperty<Scope> = ParseTreeProperty<Scope>()
 
     fun check(programAST: ParseTree): List<SemanticException> {
         val walker = ParseTreeWalker.DEFAULT
@@ -19,163 +22,154 @@ object SemanticChecker {
         val defPhase = DefPhase()
         walker.walk(defPhase, programAST)
 
-        val refPhase = RefPhase(defPhase)
+        val refPhase = RefPhase()
         walker.walk(refPhase, programAST)
 
         return (defPhase.semanticErrors + refPhase.semanticErrors).sorted()
     }
-}
 
-private class DefPhase: ExprBaseListener() {
+    private inner class DefPhase: ExprBaseListener() {
 
-    val semanticErrors = mutableListOf<SemanticException>()
+        val semanticErrors = mutableListOf<SemanticException>()
 
-    val scopes: ParseTreeProperty<Scope> = ParseTreeProperty<Scope>()
+        private var currentScope: Scope? = globals
 
-    val globals: GlobalScope = GlobalScope()
+        override fun enterFuncDecl(ctx: ExprParser.FuncDeclContext) {
+            val function = defineFunc(ctx.ID().symbol, ctx.type)
+            saveScope(ctx, function)
+            currentScope = function
+        }
 
-    private var currentScope: Scope? = globals
+        override fun exitFuncDecl(ctx: ExprParser.FuncDeclContext) {
+            currentScope = currentScope?.enclosingScope
+        }
 
-    override fun exitProgram(ctx: ExprParser.ProgramContext) {
-        println(globals)
+        override fun enterBlock(ctx: ExprParser.BlockContext) {
+            currentScope = LocalScope(currentScope)
+            saveScope(ctx, currentScope)
+        }
+
+        override fun exitBlock(ctx: ExprParser.BlockContext) {
+            currentScope = currentScope?.enclosingScope
+        }
+
+        override fun exitParamDecl(ctx: ExprParser.ParamDeclContext) {
+            defineVar(ctx.ID().symbol, ctx.type)
+        }
+
+        override fun exitVarDecl(ctx: ExprParser.VarDeclContext) {
+            defineVar(ctx.ID().symbol, ctx.type)
+        }
+
+        private fun saveScope(ctx: ParserRuleContext, s: Scope?) {
+            scopes.put(ctx, s)
+        }
+
+        private fun defineFunc(idToken: Token, typeToken: Token): FunctionSymbol {
+            val name: String = idToken.text
+            val functionSymbol: Symbol? = currentScope?.resolve(name)
+
+            if (functionSymbol != null) {
+                val location = getLocation(idToken)
+                if (functionSymbol.scope == currentScope) {
+                    semanticErrors += SemanticException("function $name already defined", location)
+                } else {
+                    println("function shadowed at $location: $name")
+                }
+            }
+
+            val type: Type = TypeResolver.resolveType(typeToken)
+
+            return FunctionSymbol(name, type, currentScope)
+                .also { currentScope?.define(it) }
+        }
+
+        private fun defineVar(idToken: Token, typeToken: Token) {
+            val name: String = idToken.text
+            val variableSymbol: Symbol? = currentScope?.resolve(name)
+
+            if (variableSymbol != null) {
+                val location = getLocation(idToken)
+                if (variableSymbol.scope == currentScope) {
+                    semanticErrors += SemanticException("variable $name already defined", location)
+                } else {
+                    println("variable shadowed at $location: $name")
+                }
+            }
+
+            val id = idToken.text
+            val type = TypeResolver.resolveType(typeToken)
+            val symbol = VariableSymbol(id, type, currentScope)
+            currentScope?.define(symbol)
+        }
     }
 
-    override fun enterFuncDecl(ctx: ExprParser.FuncDeclContext) {
-        val function = defineFunc(ctx.ID().symbol, ctx.type)
-        saveScope(ctx, function)
-        currentScope = function
-    }
+    private inner class RefPhase : ExprBaseListener() {
 
-    override fun exitFuncDecl(ctx: ExprParser.FuncDeclContext) {
-        println(currentScope)
-        currentScope = currentScope?.enclosingScope
-    }
+        val semanticErrors = mutableListOf<SemanticException>()
 
-    override fun enterBlock(ctx: ExprParser.BlockContext) {
-        currentScope = LocalScope(currentScope)
-        saveScope(ctx, currentScope)
-    }
+        private var currentScope: Scope? = globals
 
-    override fun exitBlock(ctx: ExprParser.BlockContext) {
-        println(currentScope)
-        currentScope = currentScope?.enclosingScope
-    }
+        override fun enterFuncDecl(ctx: ExprParser.FuncDeclContext?) {
+            currentScope = scopes[ctx]
+        }
 
-    override fun exitParamDecl(ctx: ExprParser.ParamDeclContext) {
-        defineVar(ctx.ID().symbol, ctx.type)
-    }
+        override fun exitFuncDecl(ctx: ExprParser.FuncDeclContext?) {
+            currentScope = currentScope?.enclosingScope
+        }
 
-    override fun exitVarDecl(ctx: ExprParser.VarDeclContext) {
-        defineVar(ctx.ID().symbol, ctx.type)
-    }
+        override fun enterBlock(ctx: ExprParser.BlockContext?) {
+            currentScope = scopes[ctx]
+        }
 
-    private fun saveScope(ctx: ParserRuleContext, s: Scope?) {
-        scopes.put(ctx, s)
-    }
+        override fun exitBlock(ctx: ExprParser.BlockContext?) {
+            currentScope = currentScope?.enclosingScope
+        }
 
-    private fun defineFunc(idToken: Token, typeToken: Token): FunctionSymbol {
-        val name: String = idToken.text
-        val functionSymbol: Symbol? = currentScope?.resolve(name)
+        override fun exitVariable(ctx: ExprParser.VariableContext) {
+            val idToken = ctx.ID()
+            val varName: String = idToken.text
+            val variableSymbol: Symbol? = currentScope?.resolve(varName)
 
-        if (functionSymbol != null) {
-            val location = getLocation(idToken)
-            if (functionSymbol.scope == currentScope) {
-                semanticErrors += SemanticException("function $name already defined", location)
-            } else {
-                println("function shadowed at $location: $name")
+            if (variableSymbol == null) {
+                val location = getLocation(ctx.ID().symbol)
+                semanticErrors += SemanticException("variable $varName not defined", location)
+            } else if (variableSymbol !is VariableSymbol) {
+                val location = getLocation(ctx.ID().symbol)
+                semanticErrors += SemanticException("$varName is not a variable", location)
             }
         }
 
-        val type: Type = TypeResolver.resolveType(typeToken)
+        override fun exitAssign(ctx: ExprParser.AssignContext) {
+            val idToken = ctx.ID()
+            val varName: String = idToken.text
+            val variableSymbol: Symbol? = currentScope?.resolve(varName)
 
-        return FunctionSymbol(name, type, currentScope)
-            .also { currentScope?.define(it) }
-    }
-
-    private fun defineVar(idToken: Token, typeToken: Token) {
-        val name: String = idToken.text
-        val variableSymbol: Symbol? = currentScope?.resolve(name)
-
-        if (variableSymbol != null) {
-            val location = getLocation(idToken)
-            if (variableSymbol.scope == currentScope) {
-                semanticErrors += SemanticException("variable $name already defined", location)
-            } else {
-                println("variable shadowed at $location: $name")
+            if (variableSymbol == null) {
+                val location = getLocation(ctx.ID().symbol)
+                semanticErrors += SemanticException("variable $varName not defined", location)
+            } else if (variableSymbol !is VariableSymbol) {
+                val location = getLocation(ctx.ID().symbol)
+                semanticErrors += SemanticException("$varName is not a variable", location)
             }
         }
 
-        val id = idToken.text
-        val type = TypeResolver.resolveType(typeToken)
-        val symbol = VariableSymbol(id, type, currentScope)
-        currentScope?.define(symbol)
-    }
-}
+        override fun exitFunctionCall(ctx: ExprParser.FunctionCallContext) {
+            val idToken = ctx.ID()
+            val functionName = idToken.text
+            val functionSymbol: Symbol? = currentScope?.resolve(functionName)
 
-private class RefPhase(predecessor: DefPhase) : ExprBaseListener() {
-
-    val semanticErrors = mutableListOf<SemanticException>()
-
-    private val scopes: ParseTreeProperty<Scope> = predecessor.scopes
-    private var currentScope: Scope? = predecessor.globals
-
-    override fun enterFuncDecl(ctx: ExprParser.FuncDeclContext?) {
-        currentScope = scopes[ctx]
-    }
-
-    override fun exitFuncDecl(ctx: ExprParser.FuncDeclContext?) {
-        currentScope = currentScope?.enclosingScope
-    }
-
-    override fun enterBlock(ctx: ExprParser.BlockContext?) {
-        currentScope = scopes[ctx]
-    }
-
-    override fun exitBlock(ctx: ExprParser.BlockContext?) {
-        currentScope = currentScope?.enclosingScope
-    }
-
-    override fun exitVariable(ctx: ExprParser.VariableContext) {
-        val idToken = ctx.ID()
-        val varName: String = idToken.text
-        val variableSymbol: Symbol? = currentScope?.resolve(varName)
-
-        if (variableSymbol == null) {
-            val location = getLocation(ctx.ID().symbol)
-            semanticErrors += SemanticException("variable $varName not defined", location)
-        } else if (variableSymbol !is VariableSymbol) {
-            val location = getLocation(ctx.ID().symbol)
-            semanticErrors += SemanticException("$varName is not a variable", location)
-        }
-    }
-
-    override fun exitAssign(ctx: ExprParser.AssignContext) {
-        val idToken = ctx.ID()
-        val varName: String = idToken.text
-        val variableSymbol: Symbol? = currentScope?.resolve(varName)
-
-        if (variableSymbol == null) {
-            val location = getLocation(ctx.ID().symbol)
-            semanticErrors += SemanticException("variable $varName not defined", location)
-        } else if (variableSymbol !is VariableSymbol) {
-            val location = getLocation(ctx.ID().symbol)
-            semanticErrors += SemanticException("$varName is not a variable", location)
-        }
-    }
-
-    override fun exitFunctionCall(ctx: ExprParser.FunctionCallContext) {
-        val idToken = ctx.ID()
-        val functionName = idToken.text
-        val functionSymbol: Symbol? = currentScope?.resolve(functionName)
-
-        if (functionSymbol == null) {
-            val location = getLocation(idToken.symbol)
-            semanticErrors += SemanticException("function: $functionName not defined", location)
-        } else if (functionSymbol !is FunctionSymbol) {
-            val location = getLocation(idToken.symbol)
-            semanticErrors += SemanticException("$functionName is not a function", location)
+            if (functionSymbol == null) {
+                val location = getLocation(idToken.symbol)
+                semanticErrors += SemanticException("function: $functionName not defined", location)
+            } else if (functionSymbol !is FunctionSymbol) {
+                val location = getLocation(idToken.symbol)
+                semanticErrors += SemanticException("$functionName is not a function", location)
+            }
         }
     }
 }
+
+
 
 private fun getLocation(token: Token): TokenLocation = TokenLocation(token.line, token.charPositionInLine)

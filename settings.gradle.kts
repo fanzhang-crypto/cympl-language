@@ -8,3 +8,4 @@ include(
     "parser-fp",
     "antlr-sample"
 )
+include("analyzer")

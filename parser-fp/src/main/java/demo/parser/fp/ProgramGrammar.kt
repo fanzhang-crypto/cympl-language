@@ -75,8 +75,8 @@ internal class ProgramGrammar(
 
     private val ID by regexToken("[a-z][a-zA-Z0-9_]*")
 
-    private val FLOAT by regexToken("0.0|-?[1-9][0-9]*\\.[0-9]+")
-    private val INT by regexToken("0|-?[1-9][0-9]*")
+    private val FLOAT by regexToken("0.0|[1-9][0-9]*\\.[0-9]+")
+    private val INT by regexToken("0|[1-9][0-9]*")
 
     private val STRING by regexToken("\"[^\"]*\"")
 
@@ -175,10 +175,10 @@ internal class ProgramGrammar(
             by (expression * zeroOrMore(-COMMA * expression))
                 .map { (first, rest) -> listOf(first) + rest }
 
-    private val functionCall by (ID * -LPR * exprList * -RPR)
+    private val functionCall by (ID * -LPR * optional(exprList) * -RPR)
         .map { (idToken, e) ->
             semanticChecker.checkFunctionRef(idToken)
-            Expression.FunctionCall(idToken.text, e)
+            Expression.FunctionCall(idToken.text, e ?: emptyList())
         }
 
     private val variable by ID.map { idToken ->
@@ -298,10 +298,10 @@ internal class ProgramGrammar(
 
 fun main() {
     val input = """
-            func f(x:INT, y:INT):INT {
-                return x + y;
-            }
-            """.trimIndent()
+        func main(n:INT):INT { 
+            a(); 
+        }
+    """.trimIndent()
 
     val semanticChecker = SemanticChecker()
     val program = ProgramGrammar(semanticChecker).parseToEnd(input)

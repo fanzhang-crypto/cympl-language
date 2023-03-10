@@ -1,7 +1,0 @@
-i:INT = 1
-j:INT = 2
-k:INT = 3
-k = i - j
-(i + j) * k
-i + j * 2 - k/3
-(1 - (i + j)) / 2

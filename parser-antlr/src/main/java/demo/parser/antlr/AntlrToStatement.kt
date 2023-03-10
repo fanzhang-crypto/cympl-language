@@ -32,7 +32,7 @@ internal class AntlrToStatement : ExprBaseVisitor<Statement>() {
 
         val id = idToken.text
         val returnType = resolveType(ctx.type)
-        val parameters = ctx.paramDecls().paramDecl().map { visitParamDecl(it) }
+        val parameters = ctx.paramDecls()?.paramDecl()?.map { visitParamDecl(it) } ?: emptyList()
         val body = ctx.block().statement().map { visit(it) }.let { Statement.Block(it) }
 
         return Statement.FunctionDeclaration(id, returnType, parameters, body)

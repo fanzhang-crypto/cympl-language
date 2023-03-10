@@ -9,7 +9,7 @@ internal class AntlrToExpression
     override fun visitFunctionCall(ctx: ExprParser.FunctionCallContext): Expression {
         val idToken = ctx.ID().symbol
         val id = idToken.text
-        val arguments = ctx.exprlist().expr().map { visit(it) }
+        val arguments = ctx.exprlist()?.expr()?.map { visit(it) } ?: emptyList()
         return Expression.FunctionCall(id, arguments)
     }
 
