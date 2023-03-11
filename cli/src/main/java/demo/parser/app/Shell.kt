@@ -3,24 +3,30 @@ package demo.parser.app
 import demo.parser.antlr.AntlrProgramParser
 import demo.parser.domain.Parser
 import demo.parser.domain.Program
-import org.jline.builtins.Completers.FileNameCompleter
-import org.jline.reader.Completer
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.convert.ApplicationConversionService
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
-import org.springframework.shell.boot.TerminalCustomizer
-import org.springframework.shell.standard.ValueProvider
+import org.springframework.core.convert.converter.Converter
+import java.io.File
 
 @SpringBootApplication(proxyBeanMethods = false)
 open class ShellApplication {
 
     @Bean
-    open fun parserFactory(): () -> Parser<Program> = ::AntlrProgramParser
+    open fun parserProvider(): () -> Parser<Program> = ::AntlrProgramParser
 
 //    @Bean
 //    open fun terminalCustomizer(): TerminalCustomizer = TerminalCustomizer { terminal ->
 //        terminal.color()
 //    }
+
+    @Bean
+    open fun stingToFileConverter() = object : Converter<String, File> { // use object instead of lambda to avoid type erasure
+        override fun convert(source: String): File? {
+            return ApplicationConversionService.getSharedInstance().convert(source, File::class.java)
+        }
+    }
 }
 
 fun main(args: Array<String>) {

@@ -1,3 +1,5 @@
+#! prog-cli interpret
+
 i:INT = 1;
 j:INT = 2;
 k:INT = 3;

@@ -5,7 +5,7 @@ plugins {
 dependencies {
     implementation(project(":domain"))
     api("guru.nidi:graphviz-kotlin:0.18.1")
-    implementation("ch.qos.logback:logback-classic:1.2.6")
+    implementation("ch.qos.logback:logback-classic:1.2.9")
 
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.1.0")

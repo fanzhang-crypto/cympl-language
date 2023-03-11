@@ -1,7 +1,15 @@
 rootProject.name = "parser-demo"
 
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
 include(
-    "app",
+    "cli",
     "interpreter",
     "domain",
     "parser-antlr",

@@ -9,5 +9,6 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+//        maven { setUrl("https://repo.spring.io/libs-release") }
     }
 }

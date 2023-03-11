@@ -18,7 +18,7 @@ import java.lang.Exception
 
 @ShellComponent
 class InterpretCommand(
-    @Autowired private val parserFactory: () -> Parser<Program>,
+    @Autowired private val parserProvider: () -> Parser<Program>,
     @Autowired @Lazy private val lineReader: LineReader,
     @Autowired private val terminal: Terminal
 ) {
@@ -41,12 +41,11 @@ class InterpretCommand(
     }
 
     private fun interpretInteractively() {
-        val parser = parserFactory()
+        val parser = parserProvider()
         val interpreter = Interpreter()
 
-        val prompt = AttributedString("interpreter:>", AttributedStyle.DEFAULT.foreground(AttributedStyle.BLUE))
         while (true) {
-            lineReader.readLine(prompt.toAnsi())?.let { line ->
+            lineReader.readLine(prompt)?.let { line ->
                 if (line.isBlank()) {
                     return@let
                 }
@@ -65,7 +64,6 @@ class InterpretCommand(
                             interpreter.interpret(r.value).forEach(::printResult)
                         } catch (e: RuntimeException) {
                             printError(e)
-                            return
                         }
                     }
 
@@ -78,14 +76,19 @@ class InterpretCommand(
     }
 
     private fun interpretInBatch(file: File) {
-        val parser = parserFactory()
+        val parser = parserProvider()
         val interpreter = Interpreter()
 
         FileInputStream(file).use {
             when (val r = parser.parse(it)) {
-                is ParseResult.Success<Program> -> interpreter.interpret(r.value).forEach(::printResult)
-                is ParseResult.Failure<*> -> r.errors.forEach(::printError)
+                is ParseResult.Success<Program> -> {
+                    interpreter.interpret(r.value).forEach(::printResult)
+                }
+                is ParseResult.Failure<*> -> {
+                    r.errors.forEach(::printError)
+                }
             }
+            terminal.writer().flush()
         }
     }
 
@@ -97,5 +100,11 @@ class InterpretCommand(
     private fun printError(e: Exception) {
         val message = AttributedString(e.message, AttributedStyle.DEFAULT.foreground(AttributedStyle.RED))
         terminal.writer().println(message.toAnsi())
+    }
+
+    companion object {
+        private val prompt = AttributedString(
+            ">>> ", AttributedStyle.DEFAULT.foreground(AttributedStyle.BLUE)
+        ).toAnsi()
     }
 }

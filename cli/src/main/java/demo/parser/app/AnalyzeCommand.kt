@@ -24,9 +24,9 @@ class AnalyzeCommand(
             value = ["-f"],
             help = "program file path to analyze",
             valueProvider = FileValueProvider::class
-        ) fileName: String
+        ) file: File
     ): Unit =
-        FileInputStream(fileName).use {
+        FileInputStream(file).use {
             when (val r = parserFactory().parse(it)) {
                 is ParseResult.Success<Program> -> {
                     analyzer.analyze(r.value)

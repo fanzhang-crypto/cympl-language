@@ -1,3 +1,5 @@
+#! prog-cli interpret
+
 func main():VOID { fact(); a(); }
 
 func fact(n:INT):INT {
