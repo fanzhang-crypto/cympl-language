@@ -13,6 +13,12 @@ internal class AntlrToExpression
         return Expression.FunctionCall(id, arguments)
     }
 
+    override fun visitIndex(ctx: CymplParser.IndexContext): Expression {
+        val array = visit(ctx.arrayExpr)
+        val index = visit(ctx.indexExpr)
+        return Expression.Index(array, index)
+    }
+
     override fun visitParenthesizedExpression(ctx: CymplParser.ParenthesizedExpressionContext): Expression {
         return Expression.Parenthesized(visit(ctx.expr()))
     }
@@ -108,5 +114,10 @@ internal class AntlrToExpression
     override fun visitSTRING(ctx: CymplParser.STRINGContext): Expression {
         val value = ctx.STRING().text.let { it.substring(1, it.length - 1) }
         return Expression.String(value)
+    }
+
+    override fun visitArray(ctx: CymplParser.ArrayContext): Expression {
+        val elements = ctx.exprlist()?.expr()?.map { visit(it) } ?: emptyList()
+        return Expression.Array(elements)
     }
 }

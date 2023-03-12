@@ -7,6 +7,7 @@ statement
     : varDecl ';'                   #VariableDeclaration
     | funcDecl                      #FunctionDeclaration
     | assign ';'                    #Assignment
+    | indexAssign ';'               #IndexAssignment
     | expr';'                       #Expression
     | returnStat                    #ReturnStatement
     | ifStat                        #IfStatement
@@ -17,17 +18,15 @@ statement
     | block                         #BlockStatement
 ;
 
-TYPE: INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE;
+type: INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE | type '[]';
 
-arrayType: TYPE '[]' | arrayType '[]';
+varDecl: ID ':' type '=' expr;
 
-varDecl: ID ':' (TYPE | arrayType) '=' expr;
-
-funcDecl: 'func' ID '(' paramDecls? ')' (':' (TYPE | VOID_TYPE))? block;
+funcDecl: 'func' ID '(' paramDecls? ')' (':' (type | VOID_TYPE))? block;
 
 paramDecls: paramDecl (',' paramDecl)*;
 
-paramDecl: ID ':' TYPE;
+paramDecl: ID ':' type;
 
 returnStat: 'return' expr? ';';
 
@@ -46,24 +45,27 @@ continueStat: CONTINUE ';';
 
 assign: ID '=' expr;
 
+indexAssign: arrayExpr=expr '[' indexExpr=expr ']' '=' valueExpr=expr;
+
 array: '[' exprlist? ']';
 
-expr: ID '(' exprlist? ')'              # FunctionCall
-    | MINUS expr                        # Negation
-    | NOT expr                          # LogicalNot
-    | '(' expr ')'                      # ParenthesizedExpression
-    | <assoc=right> expr '^' expr       # Power
-    | expr op=(TIMES | DIV | REM) expr  # MulDiv
-    | expr op=(PLUS | MINUS) expr       # AddSub
-    | expr op=(EQ | NEQ | GT | GTE | LT | LTE) expr           # Comparison
-    | expr AND expr                     # LogicalAnd
-    | expr OR expr                      # LogicalOr
-    | bool=(TRUE | FALSE)               # BOOL
-    | array             # ArrayExpression
-    | ID                # Variable
-    | FLOAT             # FLOAT
-    | INT               # INT
-    | STRING            # STRING
+expr: ID '(' exprlist? ')'                              # FunctionCall
+    | arrayExpr=expr '[' indexExpr=expr ']'             # Index
+    | MINUS expr                                        # Negation
+    | NOT expr                                          # LogicalNot
+    | '(' expr ')'                                      # ParenthesizedExpression
+    | <assoc=right> expr '^' expr                       # Power
+    | expr op=(TIMES | DIV | REM) expr                  # MulDiv
+    | expr op=(PLUS | MINUS) expr                       # AddSub
+    | expr op=(EQ | NEQ | GT | GTE | LT | LTE) expr     # Comparison
+    | expr AND expr                                     # LogicalAnd
+    | expr OR expr                                      # LogicalOr
+    | bool=(TRUE | FALSE)                               # BOOL
+    | array                                             # ArrayExpression
+    | ID                                                # Variable
+    | FLOAT                                             # FLOAT
+    | INT                                               # INT
+    | STRING                                            # STRING
     ;
 
 exprlist: expr (',' expr)*;

@@ -1,17 +1,17 @@
 package demo.parser.interpret
 
 import demo.parser.domain.*
+import demo.parser.interpret.TypeChecker.assertValueType
 
 open class TValue(val type: Type, val value: Any) {
+
+    object EmptyArray : TValue(Type.ARRAY(Type.VOID), emptyList<TValue>())
 
     object VOID : TValue(Type.VOID, "void") {
         override fun toString() = "void"
     }
 
-    fun withValue(value: Any): TValue {
-        type.checkValue(value)
-        return TValue(type, value)
-    }
+    fun withValue(value: Any): TValue = TValue(type, value).also { assertValueType(it, type) }
 
     fun asInt() = when (value) {
         is Int -> value
@@ -25,7 +25,11 @@ open class TValue(val type: Type, val value: Any) {
         else -> throw InterpretException("cannot convert $value to double")
     }
 
-    fun asString() = value.toString()
+    @Suppress("UNCHECKED_CAST")
+    fun asString() = when (type) {
+        is Type.ARRAY -> "[" + (value as List<TValue>).joinToString(", ") + "]"
+        else -> value.toString()
+    }
 
     fun asBoolean(): Boolean = when (value) {
         is Boolean -> value
@@ -40,4 +44,6 @@ open class TValue(val type: Type, val value: Any) {
         is String -> value
         else -> throw InterpretException("cannot convert $value to comparable")
     }
+
+    override fun toString() = asString()
 }

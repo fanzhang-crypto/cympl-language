@@ -99,6 +99,10 @@ sealed interface Expression {
     data class FunctionCall(val id: kotlin.String, val args: List<Expression>) : Expression {
         override fun toString() = "$id(${args.joinToString(", ")})"
     }
+
+    data class Index(val arrayExpr: Expression, val indexExpr: Expression) : Expression {
+        override fun toString() = "$arrayExpr[$indexExpr]"
+    }
 }
 
 

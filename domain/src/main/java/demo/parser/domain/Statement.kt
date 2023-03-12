@@ -10,6 +10,10 @@ sealed interface Statement {
         override fun toString() = "$id = $expr;"
     }
 
+    data class IndexAssignment(val arrayExpr: Expression, val indexExpr: Expression, val valueExpr: Expression) : Statement {
+        override fun toString() = "$arrayExpr[$indexExpr] = $valueExpr"
+    }
+
     data class ExpressionStatement(val expr: Expression) : Statement {
         override fun toString() = "$expr;"
     }

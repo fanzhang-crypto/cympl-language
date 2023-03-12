@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
+
 plugins {
     kotlin("jvm")
     id("org.springframework.boot") version "3.0.1"
@@ -26,6 +28,14 @@ kotlin {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+}
+
+graalvmNative {
+    binaries {
+        named("main") {
+            imageName.set("cympl")
+        }
+    }
 }
 
 tasks.bootJar {

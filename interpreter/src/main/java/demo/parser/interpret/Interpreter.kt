@@ -1,6 +1,7 @@
 package demo.parser.interpret
 
 import demo.parser.domain.*
+import demo.parser.interpret.TypeChecker.assertValueType
 
 class Interpreter {
 
@@ -33,6 +34,7 @@ class Interpreter {
     private fun evaluate(statement: Statement, scope: Scope): TValue = when (statement) {
         is Statement.VariableDeclaration -> evaluate(statement, scope)
         is Statement.Assignment -> evaluate(statement, scope)
+        is Statement.IndexAssignment -> evaluate(statement, scope)
         is Statement.FunctionDeclaration -> evaluate(statement, scope)
         is Statement.Block -> evaluate(statement, scope)
         is Statement.ExpressionStatement -> evaluate(statement.expr, scope)
@@ -128,6 +130,32 @@ class Interpreter {
         return variable.withValue(value.value).also { scope.setVariable(id, it) }
     }
 
+    private fun evaluate(stat: Statement.IndexAssignment, scope: Scope): TValue {
+        val array = evaluate(stat.arrayExpr, scope)
+        val index = evaluate(stat.indexExpr, scope)
+
+        if (array.type !is Type.ARRAY) {
+            throw InterpretException("indexing non-array type ${array.type}")
+        }
+        if (index.type != Type.INT) {
+            throw InterpretException("indexing array with non-int type ${index.type}")
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        val elements = array.value as MutableList<TValue>
+        val i = index.value as Int
+
+        if (i < 0 || i >= elements.size) {
+            throw InterpretException("index $i out of bounds for array of size ${elements.size}")
+        }
+
+        val value = evaluate(stat.valueExpr, scope)
+        assertValueType(value, array.type.elementType)
+
+        elements[i] = value
+        return value
+    }
+
     private fun evaluate(variableDeclaration: Statement.VariableDeclaration, scope: Scope): TValue {
         val id = variableDeclaration.id
         if (scope.containsVariable(id, true)) {
@@ -136,15 +164,9 @@ class Interpreter {
         val type = variableDeclaration.type
         return evaluate(variableDeclaration.expr!!, scope)
             .also { result ->
-                checkType(result, type)
+                assertValueType(result, type)
                 scope.defineVariable(id, TValue(type, result.value))
             }
-    }
-
-    private fun checkType(tvalue: TValue, expectedType: Type) {
-        if (tvalue.type != expectedType) {
-            throw InterpretException("type mismatch: expected $expectedType, got ${tvalue.type}")
-        }
     }
 
     private fun evaluate(expression: Expression, scope: Scope): TValue = when (expression) {
@@ -256,7 +278,12 @@ class Interpreter {
 
         is Expression.Array -> {
             val elements = expression.elements.map { evaluate(it, scope) }
-            TValue(Type.ARRAY, elements)
+            if (elements.isEmpty()) {
+                TValue.EmptyArray
+            } else {
+                val elementType = elements.firstOrNull()?.type ?: Type.VOID
+                TValue(Type.ARRAY(elementType), elements)
+            }
         }
 
         is Expression.FunctionCall -> {
@@ -271,7 +298,7 @@ class Interpreter {
 
             val functionScope = Scope(scope).apply {
                 function.args.forEachIndexed { i, (name, type) ->
-                    type.checkValue(args[i].value)
+                    assertValueType(args[i], type)
                     defineVariable(name, args[i])
                 }
             }
@@ -281,6 +308,25 @@ class Interpreter {
             } catch (ret: Jump.Return) {
                 ret.value
             }
+        }
+
+        is Expression.Index -> {
+            val array = evaluate(expression.arrayExpr, scope)
+            val index = evaluate(expression.indexExpr, scope)
+            if (array.type !is Type.ARRAY) {
+                throw InterpretException("indexing non-array type ${array.type}")
+            }
+            if (index.type != Type.INT) {
+                throw InterpretException("indexing array with non-int type ${index.type}")
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            val elements = array.value as List<TValue>
+            val i = index.value as Int
+            if (i < 0 || i >= elements.size) {
+                throw InterpretException("index $i out of bounds for array of size ${elements.size}")
+            }
+            elements[i]
         }
     }
 

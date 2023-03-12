@@ -83,6 +83,11 @@ class CallGraphAnalyzer {
                 }
             }
 
+            is Expression.Index -> {
+                analyze(expression.arrayExpr)
+                analyze(expression.indexExpr)
+            }
+
             is Expression.Not -> {
                 analyze(expression.expr)
             }
@@ -177,6 +182,7 @@ class CallGraphAnalyzer {
             is Expression.Float,
             is Expression.Int -> {
             }
+
         }
     }
 

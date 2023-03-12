@@ -1,6 +1,7 @@
 package demo.parser.antlr
 
 import CymplBaseListener
+import CymplParser.TypeContext
 import demo.parser.domain.SemanticException
 import demo.parser.domain.TokenLocation
 import demo.parser.domain.Type
@@ -35,7 +36,7 @@ class SemanticChecker {
         private var currentScope: Scope? = globals
 
         override fun enterFuncDecl(ctx: CymplParser.FuncDeclContext) {
-            val function = defineFunc(ctx.ID().symbol, ctx.TYPE()?.symbol)
+            val function = defineFunc(ctx.ID().symbol, ctx.type())
             saveScope(ctx, function)
             currentScope = function
         }
@@ -58,11 +59,11 @@ class SemanticChecker {
         }
 
         override fun exitParamDecl(ctx: CymplParser.ParamDeclContext) {
-            defineVar(ctx.ID().symbol, ctx.TYPE().symbol)
+            defineVar(ctx.ID().symbol, ctx.type())
         }
 
         override fun exitVarDecl(ctx: CymplParser.VarDeclContext) {
-            defineVar(ctx.ID().symbol, ctx.TYPE().symbol)
+            defineVar(ctx.ID().symbol, ctx.type())
         }
 
         override fun exitReturnStat(ctx: CymplParser.ReturnStatContext) {
@@ -89,7 +90,7 @@ class SemanticChecker {
             scopes.put(ctx, s)
         }
 
-        private fun defineFunc(idToken: Token, typeToken: Token?): FunctionSymbol {
+        private fun defineFunc(idToken: Token, typeContext: TypeContext?): FunctionSymbol {
             val name: String = idToken.text
             val functionSymbol: Symbol? = currentScope?.resolve(name)
 
@@ -102,13 +103,13 @@ class SemanticChecker {
                 }
             }
 
-            val type: Type = TypeResolver.resolveType(typeToken)
+            val type: Type = TypeResolver.resolveType(typeContext)
 
             return FunctionSymbol(name, type, currentScope)
                 .also { currentScope?.define(it) }
         }
 
-        private fun defineVar(idToken: Token, typeToken: Token) {
+        private fun defineVar(idToken: Token, typeContext: TypeContext) {
             val name: String = idToken.text
             val variableSymbol: Symbol? = currentScope?.resolve(name)
 
@@ -122,7 +123,7 @@ class SemanticChecker {
             }
 
             val id = idToken.text
-            val type = TypeResolver.resolveType(typeToken)
+            val type = TypeResolver.resolveType(typeContext)
             val symbol = VariableSymbol(id, type, currentScope)
             currentScope?.define(symbol)
         }

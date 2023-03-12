@@ -1,4 +1,4 @@
-#! prog-cli interpret
+#! cympl interpret
 
 func main():VOID { fact(); a(); }
 

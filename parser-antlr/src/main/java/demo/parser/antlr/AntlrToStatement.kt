@@ -15,7 +15,7 @@ internal class AntlrToStatement : CymplBaseVisitor<Statement>() {
         val idToken = ctx.ID().symbol
 
         val id = idToken.text
-        val type = resolveType(ctx.TYPE().symbol)
+        val type = resolveType(ctx.type())
         val value = antlrToExpression.visit(ctx.expr())
         return Statement.VariableDeclaration(id, type, value)
     }
@@ -27,11 +27,18 @@ internal class AntlrToStatement : CymplBaseVisitor<Statement>() {
         return Statement.Assignment(id, value)
     }
 
+    override fun visitIndexAssign(ctx: CymplParser.IndexAssignContext): Statement {
+        val array = antlrToExpression.visit(ctx.arrayExpr)
+        val index = antlrToExpression.visit(ctx.indexExpr)
+        val value = antlrToExpression.visit(ctx.valueExpr)
+        return Statement.IndexAssignment(array, index, value)
+    }
+
     override fun visitFuncDecl(ctx: CymplParser.FuncDeclContext): Statement {
         val idToken = ctx.ID().symbol
 
         val id = idToken.text
-        val returnType = resolveType(ctx.TYPE()?.symbol)
+        val returnType = resolveType(ctx.type())
         val parameters = ctx.paramDecls()?.paramDecl()?.map { visitParamDecl(it) } ?: emptyList()
         val body = ctx.block().statement().map { visit(it) }.let { Statement.Block(it) }
 
@@ -68,6 +75,8 @@ internal class AntlrToStatement : CymplBaseVisitor<Statement>() {
 
     override fun visitAssignment(ctx: CymplParser.AssignmentContext) = visitAssign(ctx.assign())
 
+    override fun visitIndexAssignment(ctx: CymplParser.IndexAssignmentContext) = visitIndexAssign(ctx.indexAssign())
+
     override fun visitVariableDeclaration(ctx: CymplParser.VariableDeclarationContext) = visitVarDecl(ctx.varDecl())
 
     override fun visitFunctionDeclaration(ctx: CymplParser.FunctionDeclarationContext) = visitFuncDecl(ctx.funcDecl())
@@ -76,7 +85,7 @@ internal class AntlrToStatement : CymplBaseVisitor<Statement>() {
         val paramIdToken = ctx.ID().symbol
 
         val paramId = paramIdToken.text
-        val paramType = resolveType(ctx.TYPE().symbol)
+        val paramType = resolveType(ctx.type())
 
         return Statement.VariableDeclaration(paramId, paramType)
     }
