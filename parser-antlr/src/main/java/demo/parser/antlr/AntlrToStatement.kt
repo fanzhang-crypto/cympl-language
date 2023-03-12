@@ -1,64 +1,64 @@
 package demo.parser.antlr
 
-import ExprBaseVisitor
+import CymplBaseVisitor
 import demo.parser.antlr.TypeResolver.resolveType
 import demo.parser.domain.*
 
-internal class AntlrToStatement : ExprBaseVisitor<Statement>() {
+internal class AntlrToStatement : CymplBaseVisitor<Statement>() {
 
     private val antlrToExpression = AntlrToExpression()
 
-    override fun visitExpression(ctx: ExprParser.ExpressionContext): Statement =
+    override fun visitExpression(ctx: CymplParser.ExpressionContext): Statement =
         antlrToExpression.visit(ctx.expr()).let { Statement.ExpressionStatement(it) }
 
-    override fun visitVarDecl(ctx: ExprParser.VarDeclContext): Statement {
+    override fun visitVarDecl(ctx: CymplParser.VarDeclContext): Statement {
         val idToken = ctx.ID().symbol
 
         val id = idToken.text
-        val type = resolveType(ctx.type)
+        val type = resolveType(ctx.TYPE().symbol)
         val value = antlrToExpression.visit(ctx.expr())
         return Statement.VariableDeclaration(id, type, value)
     }
 
-    override fun visitAssign(ctx: ExprParser.AssignContext): Statement {
+    override fun visitAssign(ctx: CymplParser.AssignContext): Statement {
         val idToken = ctx.ID().symbol
         val id = idToken.text
         val value = antlrToExpression.visit(ctx.expr())
         return Statement.Assignment(id, value)
     }
 
-    override fun visitFuncDecl(ctx: ExprParser.FuncDeclContext): Statement {
+    override fun visitFuncDecl(ctx: CymplParser.FuncDeclContext): Statement {
         val idToken = ctx.ID().symbol
 
         val id = idToken.text
-        val returnType = resolveType(ctx.type)
+        val returnType = resolveType(ctx.TYPE()?.symbol)
         val parameters = ctx.paramDecls()?.paramDecl()?.map { visitParamDecl(it) } ?: emptyList()
         val body = ctx.block().statement().map { visit(it) }.let { Statement.Block(it) }
 
         return Statement.FunctionDeclaration(id, returnType, parameters, body)
     }
 
-    override fun visitIfStat(ctx: ExprParser.IfStatContext): Statement {
+    override fun visitIfStat(ctx: CymplParser.IfStatContext): Statement {
         val condition = antlrToExpression.visit(ctx.expr())
         val thenBranch = visit(ctx.thenBranch)
         val elseBranch = ctx.elseBranch?.let { visit(it) }
         return Statement.If(condition, thenBranch, elseBranch)
     }
 
-    override fun visitWhileStat(ctx: ExprParser.WhileStatContext): Statement {
+    override fun visitWhileStat(ctx: CymplParser.WhileStatContext): Statement {
         val condition = antlrToExpression.visit(ctx.expr())
         val body = visit(ctx.statement())
         return Statement.While(condition, body)
     }
 
-    override fun visitForInit(ctx: ExprParser.ForInitContext): Statement =
+    override fun visitForInit(ctx: CymplParser.ForInitContext): Statement =
         if (ctx.varDecl() != null) {
             visit(ctx.varDecl())
         } else {
             visit(ctx.assign())
         }
 
-    override fun visitForStat(ctx: ExprParser.ForStatContext): Statement {
+    override fun visitForStat(ctx: CymplParser.ForStatContext): Statement {
         val init = ctx.forInit()?.let { visit(it) }
         val condition = ctx.cond?.let { antlrToExpression.visit(it) }
         val update = ctx.update?.let { visit(it) }
@@ -66,39 +66,39 @@ internal class AntlrToStatement : ExprBaseVisitor<Statement>() {
         return Statement.For(init, condition, update, body)
     }
 
-    override fun visitAssignment(ctx: ExprParser.AssignmentContext) = visitAssign(ctx.assign())
+    override fun visitAssignment(ctx: CymplParser.AssignmentContext) = visitAssign(ctx.assign())
 
-    override fun visitVariableDeclaration(ctx: ExprParser.VariableDeclarationContext) = visitVarDecl(ctx.varDecl())
+    override fun visitVariableDeclaration(ctx: CymplParser.VariableDeclarationContext) = visitVarDecl(ctx.varDecl())
 
-    override fun visitFunctionDeclaration(ctx: ExprParser.FunctionDeclarationContext) = visitFuncDecl(ctx.funcDecl())
+    override fun visitFunctionDeclaration(ctx: CymplParser.FunctionDeclarationContext) = visitFuncDecl(ctx.funcDecl())
 
-    override fun visitParamDecl(ctx: ExprParser.ParamDeclContext): Statement.VariableDeclaration {
+    override fun visitParamDecl(ctx: CymplParser.ParamDeclContext): Statement.VariableDeclaration {
         val paramIdToken = ctx.ID().symbol
 
         val paramId = paramIdToken.text
-        val paramType = resolveType(ctx.type)
+        val paramType = resolveType(ctx.TYPE().symbol)
 
         return Statement.VariableDeclaration(paramId, paramType)
     }
 
-    override fun visitBlock(ctx: ExprParser.BlockContext): Statement.Block {
+    override fun visitBlock(ctx: CymplParser.BlockContext): Statement.Block {
         val statements = ctx.statement().map { visit(it) }
         return Statement.Block(statements)
     }
 
-    override fun visitReturnStat(ctx: ExprParser.ReturnStatContext) =
+    override fun visitReturnStat(ctx: CymplParser.ReturnStatContext) =
         Statement.Return(antlrToExpression.visit(ctx.expr()))
 
-    override fun visitIfStatement(ctx: ExprParser.IfStatementContext) = visitIfStat(ctx.ifStat())
+    override fun visitIfStatement(ctx: CymplParser.IfStatementContext) = visitIfStat(ctx.ifStat())
 
-    override fun visitWhileStatement(ctx: ExprParser.WhileStatementContext) =
+    override fun visitWhileStatement(ctx: CymplParser.WhileStatementContext) =
         visitWhileStat(ctx.whileStat())
 
-    override fun visitForStatement(ctx: ExprParser.ForStatementContext) = visitForStat(ctx.forStat())
+    override fun visitForStatement(ctx: CymplParser.ForStatementContext) = visitForStat(ctx.forStat())
 
-    override fun visitBreakStatement(ctx: ExprParser.BreakStatementContext) = Statement.Break()
+    override fun visitBreakStatement(ctx: CymplParser.BreakStatementContext) = Statement.Break()
 
-    override fun visitContinueStatement(ctx: ExprParser.ContinueStatementContext) = Statement.Continue()
+    override fun visitContinueStatement(ctx: CymplParser.ContinueStatementContext) = Statement.Continue()
 
 
 }

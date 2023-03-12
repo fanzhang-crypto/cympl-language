@@ -1,12 +1,11 @@
 package demo.parser.antlr
 
-import ExprBaseListener
+import CymplBaseListener
 import demo.parser.domain.SemanticException
 import demo.parser.domain.TokenLocation
 import demo.parser.domain.Type
 import demo.parser.domain.symbol.*
 import org.antlr.v4.runtime.ParserRuleContext
-import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeProperty
@@ -29,40 +28,44 @@ class SemanticChecker {
         return (defPhase.semanticErrors + refPhase.semanticErrors).sorted()
     }
 
-    private inner class DefPhase: ExprBaseListener() {
+    private inner class DefPhase: CymplBaseListener() {
 
         val semanticErrors = mutableListOf<SemanticException>()
 
         private var currentScope: Scope? = globals
 
-        override fun enterFuncDecl(ctx: ExprParser.FuncDeclContext) {
-            val function = defineFunc(ctx.ID().symbol, ctx.type)
+        override fun enterFuncDecl(ctx: CymplParser.FuncDeclContext) {
+            val function = defineFunc(ctx.ID().symbol, ctx.TYPE()?.symbol)
             saveScope(ctx, function)
             currentScope = function
         }
 
-        override fun exitFuncDecl(ctx: ExprParser.FuncDeclContext) {
+        override fun exitFuncDecl(ctx: CymplParser.FuncDeclContext) {
             currentScope = currentScope?.enclosingScope
+            if (semanticErrors.isNotEmpty()) {
+                // remove function from scope if there are errors
+                currentScope?.remove(ctx.ID().text)
+            }
         }
 
-        override fun enterBlock(ctx: ExprParser.BlockContext) {
+        override fun enterBlock(ctx: CymplParser.BlockContext) {
             currentScope = LocalScope(currentScope)
             saveScope(ctx, currentScope)
         }
 
-        override fun exitBlock(ctx: ExprParser.BlockContext) {
+        override fun exitBlock(ctx: CymplParser.BlockContext) {
             currentScope = currentScope?.enclosingScope
         }
 
-        override fun exitParamDecl(ctx: ExprParser.ParamDeclContext) {
-            defineVar(ctx.ID().symbol, ctx.type)
+        override fun exitParamDecl(ctx: CymplParser.ParamDeclContext) {
+            defineVar(ctx.ID().symbol, ctx.TYPE().symbol)
         }
 
-        override fun exitVarDecl(ctx: ExprParser.VarDeclContext) {
-            defineVar(ctx.ID().symbol, ctx.type)
+        override fun exitVarDecl(ctx: CymplParser.VarDeclContext) {
+            defineVar(ctx.ID().symbol, ctx.TYPE().symbol)
         }
 
-        override fun exitReturnStat(ctx: ExprParser.ReturnStatContext) {
+        override fun exitReturnStat(ctx: CymplParser.ReturnStatContext) {
             getFunctionDeclarationScope()?.let { function ->
                 if (function.type == Type.VOID && ctx.expr() != null) {
                     val location = getLocation(ctx.expr().start)
@@ -75,7 +78,7 @@ class SemanticChecker {
             var scope = currentScope
             while (scope != null) {
                 if (scope is FunctionSymbol) {
-                    return scope as FunctionSymbol
+                    return scope
                 }
                 scope = scope.enclosingScope
             }
@@ -125,29 +128,29 @@ class SemanticChecker {
         }
     }
 
-    private inner class RefPhase : ExprBaseListener() {
+    private inner class RefPhase : CymplBaseListener() {
 
         val semanticErrors = mutableListOf<SemanticException>()
 
         private var currentScope: Scope? = globals
 
-        override fun enterFuncDecl(ctx: ExprParser.FuncDeclContext?) {
+        override fun enterFuncDecl(ctx: CymplParser.FuncDeclContext?) {
             currentScope = scopes[ctx]
         }
 
-        override fun exitFuncDecl(ctx: ExprParser.FuncDeclContext?) {
+        override fun exitFuncDecl(ctx: CymplParser.FuncDeclContext?) {
             currentScope = currentScope?.enclosingScope
         }
 
-        override fun enterBlock(ctx: ExprParser.BlockContext?) {
+        override fun enterBlock(ctx: CymplParser.BlockContext?) {
             currentScope = scopes[ctx]
         }
 
-        override fun exitBlock(ctx: ExprParser.BlockContext?) {
+        override fun exitBlock(ctx: CymplParser.BlockContext?) {
             currentScope = currentScope?.enclosingScope
         }
 
-        override fun exitVariable(ctx: ExprParser.VariableContext) {
+        override fun exitVariable(ctx: CymplParser.VariableContext) {
             val idToken = ctx.ID()
             val varName: String = idToken.text
             val variableSymbol: Symbol? = currentScope?.resolve(varName)
@@ -161,7 +164,7 @@ class SemanticChecker {
             }
         }
 
-        override fun exitAssign(ctx: ExprParser.AssignContext) {
+        override fun exitAssign(ctx: CymplParser.AssignContext) {
             val idToken = ctx.ID()
             val varName: String = idToken.text
             val variableSymbol: Symbol? = currentScope?.resolve(varName)
@@ -175,7 +178,7 @@ class SemanticChecker {
             }
         }
 
-        override fun exitFunctionCall(ctx: ExprParser.FunctionCallContext) {
+        override fun exitFunctionCall(ctx: CymplParser.FunctionCallContext) {
             val idToken = ctx.ID()
             val functionName = idToken.text
             val functionSymbol: Symbol? = currentScope?.resolve(functionName)

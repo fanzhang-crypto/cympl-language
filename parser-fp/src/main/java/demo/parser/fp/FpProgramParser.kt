@@ -12,7 +12,7 @@ typealias BPParseResult<T> = com.github.h0tk3y.betterParse.parser.ParseResult<T>
 class FpProgramParser : Parser<Program> {
 
     private val semanticChecker = SemanticChecker()
-    private val grammar = ProgramGrammar(semanticChecker)
+    private val grammar = CymplGrammar(semanticChecker)
 
     override fun parse(inputStream: InputStream): ParseResult<Program> {
         val input = String(inputStream.readAllBytes())

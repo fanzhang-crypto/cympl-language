@@ -10,12 +10,12 @@ object TypeResolver {
         if (typeToken == null) {
             return Type.VOID
         }
-        return when (typeToken.type) {
-            ExprLexer.VOID_TYPE -> Type.VOID
-            ExprLexer.BOOL_TYPE -> Type.BOOL
-            ExprLexer.INT_TYPE -> Type.INT
-            ExprLexer.FLOAT_TYPE -> Type.FLOAT
-            ExprLexer.STRING_TYPE -> Type.STRING
+        return when (typeToken.text) {
+            "VOID" -> Type.VOID
+            "BOOL" -> Type.BOOL
+            "INT" -> Type.INT
+            "FLOAT" -> Type.FLOAT
+            "STRING" -> Type.STRING
 
             else -> {
                 val location = TokenLocation(typeToken.line, typeToken.charPositionInLine)

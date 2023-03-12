@@ -165,6 +165,12 @@ class CallGraphAnalyzer {
                 analyze(expression.expr)
             }
 
+            is Expression.Array -> {
+                for (element in expression.elements) {
+                    analyze(element)
+                }
+            }
+
             is Expression.Variable,
             is Expression.String,
             is Expression.Bool,

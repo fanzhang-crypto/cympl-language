@@ -1,7 +1,7 @@
 package demo.parser.antlr
 
-import ExprLexer
-import ExprParser
+import CymplLexer
+import CymplParser
 import demo.parser.domain.*
 import demo.parser.domain.Parser
 import org.antlr.v4.runtime.*
@@ -18,10 +18,10 @@ class AntlrProgramParser: Parser<Program> {
         val errorListener = SyntaxErrorListener()
 
         val cs: CharStream = CharStreams.fromStream(inputStream)
-        val lexer = ExprLexer(cs).setErrorListener(errorListener) as ExprLexer
+        val lexer = CymplLexer(cs).setErrorListener(errorListener) as CymplLexer
 
         val tokens = CommonTokenStream(lexer)
-        val parser = ExprParser(tokens).setErrorListener(errorListener) as ExprParser
+        val parser = CymplParser(tokens).setErrorListener(errorListener) as CymplParser
 
         val programAST: ParseTree = parser.prog()
 

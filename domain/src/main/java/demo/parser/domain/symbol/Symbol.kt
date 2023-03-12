@@ -20,6 +20,10 @@ class FunctionSymbol(name: String, type: Type, override val enclosingScope: Scop
     override fun resolve(name: String): Symbol? =
         arguments[name] ?: enclosingScope?.resolve(name)
 
+    override fun remove(text: String) {
+        throw UnsupportedOperationException("cannot remove argument from function")
+    }
+
     override val scopeName: String = name
 
     override fun toString(): String = "function${super.toString()}:${arguments.values}"

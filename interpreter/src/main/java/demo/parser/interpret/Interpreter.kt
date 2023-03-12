@@ -254,6 +254,11 @@ class Interpreter {
             BinaryOperation.Comparison.Leq.apply(left, right)
         }
 
+        is Expression.Array -> {
+            val elements = expression.elements.map { evaluate(it, scope) }
+            TValue(Type.ARRAY, elements)
+        }
+
         is Expression.FunctionCall -> {
             val id = expression.id
             val function = scope.resolveFunction(id)

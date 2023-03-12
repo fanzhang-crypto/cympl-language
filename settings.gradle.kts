@@ -1,4 +1,4 @@
-rootProject.name = "parser-demo"
+rootProject.name = "cympl-parser"
 
 pluginManagement {
     repositories {

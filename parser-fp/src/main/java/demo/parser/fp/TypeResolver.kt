@@ -7,11 +7,11 @@ import demo.parser.domain.Type
 
 object TypeResolver {
     fun resolveType(typeToken: TokenMatch): Type = when (typeToken.text) {
-        ProgramGrammar.VOID_TYPE -> Type.VOID
-        ProgramGrammar.BOOL_TYPE -> Type.BOOL
-        ProgramGrammar.INT_TYPE -> Type.INT
-        ProgramGrammar.FLOAT_TYPE -> Type.FLOAT
-        ProgramGrammar.STRING_TYPE -> Type.STRING
+        CymplGrammar.VOID_TYPE -> Type.VOID
+        CymplGrammar.BOOL_TYPE -> Type.BOOL
+        CymplGrammar.INT_TYPE -> Type.INT
+        CymplGrammar.FLOAT_TYPE -> Type.FLOAT
+        CymplGrammar.STRING_TYPE -> Type.STRING
         else -> {
             val location = TokenLocation(typeToken.row, typeToken.column)
             throw SyntaxException("unknown type ${typeToken.text}", location)

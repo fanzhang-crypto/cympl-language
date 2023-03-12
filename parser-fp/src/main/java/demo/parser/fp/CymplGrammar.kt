@@ -9,7 +9,7 @@ import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
 import demo.parser.domain.*
 
-internal class ProgramGrammar(
+internal class CymplGrammar(
     private val semanticChecker: SemanticChecker
 ) : Grammar<Program>() {
 
@@ -304,6 +304,6 @@ fun main() {
     """.trimIndent()
 
     val semanticChecker = SemanticChecker()
-    val program = ProgramGrammar(semanticChecker).parseToEnd(input)
+    val program = CymplGrammar(semanticChecker).parseToEnd(input)
     program.statements.forEach(::println)
 }

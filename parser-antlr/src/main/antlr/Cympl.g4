@@ -1,4 +1,4 @@
-grammar Expr;
+grammar Cympl;
 
 prog: statement+EOF             #Program
 ;
@@ -17,13 +17,17 @@ statement
     | block                         #BlockStatement
 ;
 
-varDecl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE) '=' expr;
+TYPE: INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE;
 
-funcDecl: 'func' ID '(' paramDecls? ')' (':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE | VOID_TYPE))? block;
+arrayType: TYPE '[]' | arrayType '[]';
+
+varDecl: ID ':' (TYPE | arrayType) '=' expr;
+
+funcDecl: 'func' ID '(' paramDecls? ')' (':' (TYPE | VOID_TYPE))? block;
 
 paramDecls: paramDecl (',' paramDecl)*;
 
-paramDecl: ID ':' type=(FLOAT_TYPE | INT_TYPE | STRING_TYPE);
+paramDecl: ID ':' TYPE;
 
 returnStat: 'return' expr? ';';
 
@@ -42,6 +46,8 @@ continueStat: CONTINUE ';';
 
 assign: ID '=' expr;
 
+array: '[' exprlist? ']';
+
 expr: ID '(' exprlist? ')'              # FunctionCall
     | MINUS expr                        # Negation
     | NOT expr                          # LogicalNot
@@ -53,6 +59,7 @@ expr: ID '(' exprlist? ')'              # FunctionCall
     | expr AND expr                     # LogicalAnd
     | expr OR expr                      # LogicalOr
     | bool=(TRUE | FALSE)               # BOOL
+    | array             # ArrayExpression
     | ID                # Variable
     | FLOAT             # FLOAT
     | INT               # INT

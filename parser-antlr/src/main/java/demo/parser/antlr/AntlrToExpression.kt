@@ -1,112 +1,111 @@
 package demo.parser.antlr
 
-import ExprBaseVisitor
+import CymplBaseVisitor
 import demo.parser.domain.*
 
 internal class AntlrToExpression
-    : ExprBaseVisitor<Expression>() {
+    : CymplBaseVisitor<Expression>() {
 
-    override fun visitFunctionCall(ctx: ExprParser.FunctionCallContext): Expression {
+    override fun visitFunctionCall(ctx: CymplParser.FunctionCallContext): Expression {
         val idToken = ctx.ID().symbol
         val id = idToken.text
         val arguments = ctx.exprlist()?.expr()?.map { visit(it) } ?: emptyList()
         return Expression.FunctionCall(id, arguments)
     }
 
-    override fun visitParenthesizedExpression(ctx: ExprParser.ParenthesizedExpressionContext): Expression {
+    override fun visitParenthesizedExpression(ctx: CymplParser.ParenthesizedExpressionContext): Expression {
         return Expression.Parenthesized(visit(ctx.expr()))
     }
 
-    override fun visitPower(ctx: ExprParser.PowerContext): Expression {
+    override fun visitPower(ctx: CymplParser.PowerContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))
         return Expression.Power(left, right)
     }
 
-    override fun visitMulDiv(ctx: ExprParser.MulDivContext): Expression {
+    override fun visitMulDiv(ctx: CymplParser.MulDivContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))
 
         return when (ctx.op.type) {
-            ExprLexer.TIMES -> Expression.Multiplication(left, right)
-            ExprLexer.DIV -> Expression.Division(left, right)
-            ExprLexer.REM -> Expression.Remainder(left, right)
+            CymplLexer.TIMES -> Expression.Multiplication(left, right)
+            CymplLexer.DIV -> Expression.Division(left, right)
+            CymplLexer.REM -> Expression.Remainder(left, right)
             else -> throw RuntimeException("unknown operator ${ctx.op}")
         }
     }
 
-    override fun visitAddSub(ctx: ExprParser.AddSubContext): Expression {
+    override fun visitAddSub(ctx: CymplParser.AddSubContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))
 
         return when (ctx.op.type) {
-            ExprLexer.PLUS -> Expression.Addition(left, right)
-            ExprLexer.MINUS -> Expression.Subtraction(left, right)
+            CymplLexer.PLUS -> Expression.Addition(left, right)
+            CymplLexer.MINUS -> Expression.Subtraction(left, right)
             else -> throw RuntimeException("unknown operator ${ctx.op}")
         }
     }
 
-    override fun visitNegation(ctx: ExprParser.NegationContext): Expression {
+    override fun visitNegation(ctx: CymplParser.NegationContext): Expression {
         val expr: Expression = visit(ctx.getChild(1))
         return Expression.Negation(expr)
     }
 
-    override fun visitComparison(ctx: ExprParser.ComparisonContext): Expression {
+    override fun visitComparison(ctx: CymplParser.ComparisonContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))
 
         return when (ctx.op.type) {
-            ExprLexer.EQ -> Expression.Equality(left, right)
-            ExprLexer.NEQ -> Expression.Inequality(left, right)
-            ExprLexer.LT -> Expression.LessThan(left, right)
-            ExprLexer.LTE -> Expression.LessThanOrEqual(left, right)
-            ExprLexer.GT -> Expression.GreaterThan(left, right)
-            ExprLexer.GTE -> Expression.GreaterThanOrEqual(left, right)
+            CymplLexer.EQ -> Expression.Equality(left, right)
+            CymplLexer.NEQ -> Expression.Inequality(left, right)
+            CymplLexer.LT -> Expression.LessThan(left, right)
+            CymplLexer.LTE -> Expression.LessThanOrEqual(left, right)
+            CymplLexer.GT -> Expression.GreaterThan(left, right)
+            CymplLexer.GTE -> Expression.GreaterThanOrEqual(left, right)
             else -> throw RuntimeException("unknown operator ${ctx.op}")
         }
     }
 
-    override fun visitLogicalNot(ctx: ExprParser.LogicalNotContext): Expression {
+    override fun visitLogicalNot(ctx: CymplParser.LogicalNotContext): Expression {
         val expr: Expression = visit(ctx.getChild(1))
         return Expression.Not(expr)
     }
 
-    override fun visitLogicalAnd(ctx: ExprParser.LogicalAndContext): Expression {
+    override fun visitLogicalAnd(ctx: CymplParser.LogicalAndContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))
         return Expression.And(left, right)
     }
 
-    override fun visitLogicalOr(ctx: ExprParser.LogicalOrContext?): Expression {
+    override fun visitLogicalOr(ctx: CymplParser.LogicalOrContext?): Expression {
         val left: Expression = visit(ctx!!.getChild(0))
         val right: Expression = visit(ctx.getChild(2))
         return Expression.Or(left, right)
     }
 
-    override fun visitVariable(ctx: ExprParser.VariableContext): Expression {
+    override fun visitVariable(ctx: CymplParser.VariableContext): Expression {
         val idToken = ctx.ID().symbol
         val id = idToken.text
-        val location = TokenLocation(idToken.line, idToken.charPositionInLine)
         return Expression.Variable(id)
     }
 
-    override fun visitBOOL(ctx: ExprParser.BOOLContext): Expression = when (ctx.bool.type) {
-        ExprLexer.TRUE -> Expression.Bool(true)
-        ExprLexer.FALSE -> Expression.Bool(false)
+    override fun visitBOOL(ctx: CymplParser.BOOLContext): Expression = when (ctx.bool.type) {
+        CymplLexer.TRUE -> Expression.Bool(true)
+        CymplLexer.FALSE -> Expression.Bool(false)
         else -> throw RuntimeException("unknown boolean value ${ctx.bool.text}")
     }
 
-    override fun visitINT(ctx: ExprParser.INTContext): Expression {
+    override fun visitINT(ctx: CymplParser.INTContext): Expression {
         val value = ctx.INT().text.toInt()
         return Expression.Int(value)
     }
 
-    override fun visitFLOAT(ctx: ExprParser.FLOATContext): Expression {
+    override fun visitFLOAT(ctx: CymplParser.FLOATContext): Expression {
         val value = ctx.FLOAT().text.toDouble()
         return Expression.Float(value)
     }
 
-    override fun visitSTRING(ctx: ExprParser.STRINGContext): Expression {
+    override fun visitSTRING(ctx: CymplParser.STRINGContext): Expression {
         val value = ctx.STRING().text.let { it.substring(1, it.length - 1) }
         return Expression.String(value)
     }

@@ -12,6 +12,8 @@ sealed interface Scope {
 
     /** Look up name in this scope or in enclosing scope if not here  */
     fun resolve(name: String): Symbol?
+
+    fun remove(text: String)
 }
 
 abstract class BaseScope(override val enclosingScope: Scope?) : Scope {
@@ -25,6 +27,10 @@ abstract class BaseScope(override val enclosingScope: Scope?) : Scope {
 
     override fun resolve(name: String): Symbol? =
         symbols[name] ?: enclosingScope?.resolve(name)
+
+    override fun remove(text: String) {
+        symbols.remove(text)
+    }
 }
 
 class GlobalScope : BaseScope(null) {

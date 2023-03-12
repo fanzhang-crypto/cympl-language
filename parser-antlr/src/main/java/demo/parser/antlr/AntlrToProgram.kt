@@ -1,13 +1,13 @@
 package demo.parser.antlr
 
-import ExprBaseVisitor
+import CymplBaseVisitor
 import demo.parser.domain.*
 
-internal class AntlrToProgram : ExprBaseVisitor<Program>() {
+internal class AntlrToProgram : CymplBaseVisitor<Program>() {
 
     private val statVisitor = AntlrToStatement()
 
-    override fun visitProgram(ctx: ExprParser.ProgramContext): Program {
+    override fun visitProgram(ctx: CymplParser.ProgramContext): Program {
         if (ctx.childCount <= 1) {
             return Program(emptyList())
         }

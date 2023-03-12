@@ -24,6 +24,10 @@ sealed interface Expression {
         override fun toString() = "\"$value\""
     }
 
+    data class Array(val elements: List<Expression>) : Expression {
+        override fun toString() = "[${elements.joinToString(", ")}]"
+    }
+
     data class Variable(val id: kotlin.String) : Expression {
         override fun toString() = id
     }
