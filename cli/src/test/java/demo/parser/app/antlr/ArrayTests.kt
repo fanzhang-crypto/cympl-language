@@ -130,19 +130,16 @@ class ArrayTests {
         val input = """
             arr:INT[] = [1, 2, 3];
             arr[3] = 4;
-        """
+        """.trimIndent()
 
-        when (val r = parser().parse(input.byteInputStream())) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-            is ParseResult.Success -> {
-                val program = r.value
-                val e = shouldThrow<InterpretException> { Interpreter().interpret(program).joinToString() }
-                e shouldHaveMessage "index 3 out of bounds for array of size 3"
-            }
-        }
+        val output = """
+            arr:INT[] = [1, 2, 3]; => [1, 2, 3]
+            arr[3] = 4 failed => index 3 out of bounds for array of size 3
+            environment:
+            arr:INT[] = [1, 2, 3]
+        """.trimIndent()
+
+        verify(input, output)
     }
 
     @Test

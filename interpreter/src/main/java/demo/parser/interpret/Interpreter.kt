@@ -7,6 +7,8 @@ class Interpreter {
 
     private val globalScope = Scope()
 
+    val globalSymbols: Set<String> get() = globalScope.getVariables().keys + globalScope.getFunctions().keys
+
     sealed class Jump : Throwable() {
         data class Return(val value: TValue) : Jump()
         object Break : Jump()
@@ -24,6 +26,8 @@ class Interpreter {
                     is Jump.Break -> throw IllegalStateException("break outside of loop")
                     is Jump.Continue -> throw IllegalStateException("continue outside of loop")
                 }
+            } catch (e: InterpretException) {
+                yield("$stat failed => ${e.message}")
             }
         }
         yield("environment:")
@@ -218,13 +222,13 @@ class Interpreter {
 
         is Expression.And -> {
             val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val right = { evaluate(expression.right, scope) }
             BinaryOperation.Logical.And.apply(left, right)
         }
 
         is Expression.Or -> {
             val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val right = { evaluate(expression.right, scope) }
             BinaryOperation.Logical.Or.apply(left, right)
         }
 

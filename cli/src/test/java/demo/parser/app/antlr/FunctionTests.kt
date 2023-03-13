@@ -195,6 +195,7 @@ class FunctionTests {
                 r.errors shouldHaveSize 1
                 r.errors.first().shouldHaveMessage("semantic error at (4:16): variable x already defined")
             }
+
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
             }
@@ -217,6 +218,7 @@ class FunctionTests {
                 r.errors[0].shouldHaveMessage("semantic error at (5:12): f is not a variable")
                 r.errors[1].shouldHaveMessage("semantic error at (6:12): f is not a variable")
             }
+
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
             }
@@ -235,6 +237,7 @@ class FunctionTests {
             is ParseResult.Failure -> {
                 fail(r.errors[0].message)
             }
+
             is ParseResult.Success -> {
                 val program = r.value
                 program.statements shouldHaveSize 1
@@ -251,18 +254,48 @@ class FunctionTests {
                 1+2;
             }
             i:INT = f();
-        """
+        """.trimIndent()
 
-        when (val r = parser().parse(input.byteInputStream())) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
+        val output = """
+            func f():INT { 1 + 2; } => void
+            i:INT = f(); failed => type mismatch: expected INT, got VOID
+            environment:
+            f():INT
+        """.trimIndent()
+
+        verify(input, output)
+    }
+
+    @Test
+    fun `insert sort test`() {
+        val input = """
+            func insertionSort(arr:INT[], n:INT):INT[] {
+                for(i:INT = 1; i < n; i = i + 1) {
+                    key:INT = arr[i];
+                    j:INT = i - 1;
+
+                    /* Move elements of arr[0..i-1], that are
+                       greater than key, to one position ahead
+                       of their current position */
+                    while (j >= 0 && arr[j] > key) {
+                        arr[j+1] = arr[j];
+                        j = j - 1;
+                    }
+                    arr[j+1] = key;
+                }
+                return arr;
             }
-            is ParseResult.Success -> {
-                val program = r.value
-                shouldThrow<InterpretException> {  Interpreter().interpret(program).joinToString() }
-                    .shouldHaveMessage("type mismatch: expected INT, got VOID")
-            }
-        }
+
+            insertionSort([2,3,9,1,11,32,17,23,15,21], 10);
+        """.trimIndent()
+
+        val output = """
+            func insertionSort(arr:INT[], n:INT):INT[] { for (i:INT = 1; i < n; i = i + 1;) { key:INT = arr[i]; j:INT = i - 1; while (j >= 0 && arr[j] > key) { arr[j + 1] = arr[j] j = j - 1; } arr[j + 1] = key } return arr; } => void
+            insertionSort([2, 3, 9, 1, 11, 32, 17, 23, 15, 21], 10); => [1, 2, 3, 9, 11, 15, 17, 21, 23, 32]
+            environment:
+            insertionSort(arr:INT[], n:INT):INT[]
+        """.trimIndent()
+
+        verify(input, output)
     }
 }

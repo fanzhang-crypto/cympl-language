@@ -5,9 +5,8 @@ import kotlin.math.pow
 
 sealed interface BinaryOperation {
 
-    fun apply(left: TValue, right: TValue): TValue
-
     sealed interface Arithmetic : BinaryOperation {
+        fun apply(left: TValue, right: TValue): TValue
 
         object Plus : Arithmetic {
             override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
@@ -113,21 +112,23 @@ sealed interface BinaryOperation {
         }
     }
 
-    sealed class Logical : BinaryOperation {
-        override fun apply(left: TValue, right: TValue): TValue {
-            val leftValue = left.asBoolean()
-            val rightValue = right.asBoolean()
+    sealed interface Logical : BinaryOperation {
+
+        fun apply(left: TValue, right: () -> TValue): TValue {
             return when (this) {
-                is And -> left.withValue(leftValue && rightValue)
-                is Or -> left.withValue(leftValue || rightValue)
+                is And -> left.withValue(left.asBoolean() && right().asBoolean())
+                is Or -> left.withValue(left.asBoolean() || right().asBoolean())
             }
         }
 
-        object And : Logical()
-        object Or : Logical()
+        object And : Logical
+        object Or : Logical
     }
 
     sealed interface Comparison : BinaryOperation {
+
+        fun apply(left: TValue, right: TValue): TValue
+
         object Eq : Comparison {
             override fun apply(left: TValue, right: TValue): TValue {
                 if (left.type != right.type) {
@@ -159,6 +160,7 @@ sealed interface BinaryOperation {
                 }
             }
         }
+
         object Lt : Comparison {
             override fun apply(left: TValue, right: TValue): TValue {
                 if (left.type != right.type) {
@@ -172,6 +174,7 @@ sealed interface BinaryOperation {
                 }
             }
         }
+
         object Leq : Comparison {
             override fun apply(left: TValue, right: TValue): TValue {
                 if (left.type != right.type) {
@@ -185,6 +188,7 @@ sealed interface BinaryOperation {
                 }
             }
         }
+
         object Geq : Comparison {
             override fun apply(left: TValue, right: TValue): TValue {
                 if (left.type != right.type) {

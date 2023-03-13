@@ -1,0 +1,37 @@
+#! cympl interpret
+
+func quickSort(arr:INT[], n:INT):INT[] {
+    func swap(arr:INT[], i:INT, j:INT):INT
+    {
+        temp:INT = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+
+    func partition(arr:INT[], low:INT, high:INT):INT
+    {
+        pivot:INT = arr[high]; // pivot
+        i:INT = low - 1;
+        for (j:INT = low; j <= high - 1; j = j + 1) {
+            if (arr[j] < pivot) {
+                i = i + 1;
+                swap(arr, i, j);
+            }
+        }
+        swap(arr, i + 1, high);
+        return (i + 1);
+    }
+
+    func quickSortInternal(arr:INT[], low:INT, high:INT) {
+        if (low < high) {
+            pi:INT = partition(arr, low, high);
+            quickSortInternal(arr, low, pi - 1);
+            quickSortInternal(arr, pi + 1, high);
+        }
+    }
+
+    quickSortInternal(arr, 0, n - 1);
+    return arr;
+}
+
+quickSort([2,3,9,1,11,32,17,23,15,21], 10);
