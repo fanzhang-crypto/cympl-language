@@ -36,7 +36,7 @@ class CallGraphAnalyzer {
             }
 
             is Statement.Return -> {
-                analyze(statement.expr)
+                statement.expr?.let { analyze(it) }
             }
 
             is Statement.VariableDeclaration -> {

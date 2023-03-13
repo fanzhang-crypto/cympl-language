@@ -95,8 +95,10 @@ internal class AntlrToStatement : CymplBaseVisitor<Statement>() {
         return Statement.Block(statements)
     }
 
-    override fun visitReturnStat(ctx: CymplParser.ReturnStatContext) =
-        Statement.Return(antlrToExpression.visit(ctx.expr()))
+    override fun visitReturnStat(ctx: CymplParser.ReturnStatContext): Statement.Return {
+        val value = ctx.expr()?.let { antlrToExpression.visit(it) }
+        return Statement.Return(value)
+    }
 
     override fun visitIfStatement(ctx: CymplParser.IfStatementContext) = visitIfStat(ctx.ifStat())
 

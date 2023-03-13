@@ -55,7 +55,10 @@ class Interpreter {
                 throw InterpretException("continue outside of loop")
         }
 
-        is Statement.Return -> throw Jump.Return(evaluate(statement.expr, scope))
+        is Statement.Return -> {
+            val value = statement.expr?.let { evaluate(it, scope) } ?: TValue.VOID
+            throw Jump.Return(value)
+        }
 
         else -> throw InterpretException("unknown statement $statement")
     }
@@ -134,10 +137,10 @@ class Interpreter {
         val array = evaluate(stat.arrayExpr, scope)
         val index = evaluate(stat.indexExpr, scope)
 
-        if (array.type !is Type.ARRAY) {
+        if (array.type !is BuiltinType.ARRAY) {
             throw InterpretException("indexing non-array type ${array.type}")
         }
-        if (index.type != Type.INT) {
+        if (index.type != BuiltinType.INT) {
             throw InterpretException("indexing array with non-int type ${index.type}")
         }
 
@@ -235,10 +238,10 @@ class Interpreter {
             scope.resolveVariable(id) ?: throw InterpretException("variable $id not defined")
         }
 
-        is Expression.Bool -> TValue(Type.BOOL, expression.value)
-        is Expression.Float -> TValue(Type.FLOAT, expression.value)
-        is Expression.Int -> TValue(Type.INT, expression.value)
-        is Expression.String -> TValue(Type.STRING, expression.value)
+        is Expression.Bool -> TValue(BuiltinType.BOOL, expression.value)
+        is Expression.Float -> TValue(BuiltinType.FLOAT, expression.value)
+        is Expression.Int -> TValue(BuiltinType.INT, expression.value)
+        is Expression.String -> TValue(BuiltinType.STRING, expression.value)
 
         is Expression.Equality -> {
             val left = evaluate(expression.left, scope)
@@ -279,10 +282,10 @@ class Interpreter {
         is Expression.Array -> {
             val elements = expression.elements.map { evaluate(it, scope) }
             if (elements.isEmpty()) {
-                TValue.EmptyArray
+                TValue.TEmptyArray
             } else {
-                val elementType = elements.firstOrNull()?.type ?: Type.VOID
-                TValue(Type.ARRAY(elementType), elements)
+                val elementType = elements.firstOrNull()?.type ?: BuiltinType.VOID
+                TValue(BuiltinType.ARRAY(elementType), elements)
             }
         }
 
@@ -313,10 +316,10 @@ class Interpreter {
         is Expression.Index -> {
             val array = evaluate(expression.arrayExpr, scope)
             val index = evaluate(expression.indexExpr, scope)
-            if (array.type !is Type.ARRAY) {
+            if (array.type !is BuiltinType.ARRAY) {
                 throw InterpretException("indexing non-array type ${array.type}")
             }
-            if (index.type != Type.INT) {
+            if (index.type != BuiltinType.INT) {
                 throw InterpretException("indexing array with non-int type ${index.type}")
             }
 
@@ -331,7 +334,7 @@ class Interpreter {
     }
 
     private fun formatTValue(tvalue: TValue) = when (tvalue.type) {
-        Type.STRING -> "\"${tvalue.value}\""
+        BuiltinType.STRING -> "\"${tvalue.value}\""
         else -> tvalue.value.toString()
     }
 

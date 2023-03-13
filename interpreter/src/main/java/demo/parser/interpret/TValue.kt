@@ -3,11 +3,11 @@ package demo.parser.interpret
 import demo.parser.domain.*
 import demo.parser.interpret.TypeChecker.assertValueType
 
-open class TValue(val type: Type, val value: Any) {
+open class TValue(val type: BuiltinType, val value: Any) {
 
-    object EmptyArray : TValue(Type.ARRAY(Type.VOID), emptyList<TValue>())
+    object TEmptyArray : TValue(EmptyArray, emptyList<TValue>())
 
-    object VOID : TValue(Type.VOID, "void") {
+    object VOID : TValue(BuiltinType.VOID, "void") {
         override fun toString() = "void"
     }
 
@@ -27,7 +27,7 @@ open class TValue(val type: Type, val value: Any) {
 
     @Suppress("UNCHECKED_CAST")
     fun asString() = when (type) {
-        is Type.ARRAY -> "[" + (value as List<TValue>).joinToString(", ") + "]"
+        is BuiltinType.ARRAY -> "[" + (value as List<TValue>).joinToString(", ") + "]"
         else -> value.toString()
     }
 

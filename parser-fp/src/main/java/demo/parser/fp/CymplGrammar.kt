@@ -234,7 +234,7 @@ internal class CymplGrammar(
 
     private val functionHeader: Parser<FunctionHeader> by (-FUNC * ID * -LPR * optional(parameterList) * -RPR * -COLON * type)
         .map { (idToken, paramIdAndTypes, type) ->
-            semanticChecker.enterFuncDecl(idToken, type)
+            semanticChecker.enterFuncDecl(idToken, type, paramIdAndTypes)
 
             val parameters = paramIdAndTypes?.map { (idToken, type) ->
                 semanticChecker.defineVar(idToken, type)
@@ -247,7 +247,7 @@ internal class CymplGrammar(
     private data class FunctionHeader(
         val name: String,
         val parameters: List<Statement.VariableDeclaration>,
-        val returnType: Type
+        val returnType: BuiltinType
     )
 
     private val functionDecl: Parser<Statement> by (functionHeader * block)

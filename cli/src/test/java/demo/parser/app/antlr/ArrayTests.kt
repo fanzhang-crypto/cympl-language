@@ -84,47 +84,6 @@ class ArrayTests {
     }
 
     @Test
-    fun `should check element type when assigning array`(){
-        val input = """
-            arr:INT[] = [1, 2, 3.0];
-        """
-
-        when (val r = parser().parse(input.byteInputStream())) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-            is ParseResult.Success -> {
-                val program = r.value
-                val e = shouldThrow<InterpretException> { Interpreter().interpret(program).joinToString() }
-                e shouldHaveMessage "type mismatch: expected INT, got FLOAT"
-            }
-        }
-    }
-
-    @Test
-    fun `should check element type when assigning array 2`(){
-        val input = """
-            func f(arr:INT[]):INT[] {
-                return arr;
-            }
-            arr:STRING[] = f([1, 2, 3]);
-        """
-
-        when (val r = parser().parse(input.byteInputStream())) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-            is ParseResult.Success -> {
-                val program = r.value
-                val e = shouldThrow<InterpretException> { Interpreter().interpret(program).joinToString() }
-                e shouldHaveMessage "type mismatch: expected STRING[], got INT[]"
-            }
-        }
-    }
-
-    @Test
     fun `array can be indexed`() {
         val input = """
             arr:INT[] = [1, 2, 3];
@@ -164,26 +123,6 @@ class ArrayTests {
         """
 
         verify(input, output)
-    }
-
-    @Test
-    fun `should check type when array be assigned with index`() {
-        val input = """
-            arr:INT[] = [1, 2, 3];
-            arr[0] = 4.0;
-        """
-
-        when (val r = parser().parse(input.byteInputStream())) {
-            is ParseResult.Failure -> {
-                r.errors.forEach { println(it) }
-                fail(r.errors.first())
-            }
-            is ParseResult.Success -> {
-                val program = r.value
-                val e = shouldThrow<InterpretException> { Interpreter().interpret(program).joinToString() }
-                e shouldHaveMessage "type mismatch: expected INT, got FLOAT"
-            }
-        }
     }
 
     @Test

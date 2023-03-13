@@ -47,8 +47,6 @@ assign: ID '=' expr;
 
 indexAssign: arrayExpr=expr '[' indexExpr=expr ']' '=' valueExpr=expr;
 
-array: '[' exprlist? ']';
-
 expr: ID '(' exprlist? ')'                              # FunctionCall
     | arrayExpr=expr '[' indexExpr=expr ']'             # Index
     | MINUS expr                                        # Negation
@@ -60,12 +58,12 @@ expr: ID '(' exprlist? ')'                              # FunctionCall
     | expr op=(EQ | NEQ | GT | GTE | LT | LTE) expr     # Comparison
     | expr AND expr                                     # LogicalAnd
     | expr OR expr                                      # LogicalOr
-    | bool=(TRUE | FALSE)                               # BOOL
-    | array                                             # ArrayExpression
     | ID                                                # Variable
-    | FLOAT                                             # FLOAT
+    | bool=(TRUE | FALSE)                               # BOOL
     | INT                                               # INT
+    | FLOAT                                             # FLOAT
     | STRING                                            # STRING
+    | '[' exprlist? ']'                                 # ArrayExpression
     ;
 
 exprlist: expr (',' expr)*;

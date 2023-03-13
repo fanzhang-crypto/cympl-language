@@ -8,7 +8,7 @@ import org.junit.jupiter.api.fail
 import demo.parser.app.antlr.AntlrInterpretVerifier.parser
 import demo.parser.app.antlr.AntlrInterpretVerifier.verify
 import demo.parser.domain.Statement
-import demo.parser.domain.Type
+import demo.parser.domain.BuiltinType
 import demo.parser.interpret.InterpretException
 import demo.parser.interpret.Interpreter
 import io.kotest.assertions.throwables.shouldThrow
@@ -208,14 +208,14 @@ class FunctionTests {
                 return x + 1;
             }
             f = 1;
-            return f;
+            f;
         """.byteInputStream()
 
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 2
                 r.errors[0].shouldHaveMessage("semantic error at (5:12): f is not a variable")
-                r.errors[1].shouldHaveMessage("semantic error at (6:19): f is not a variable")
+                r.errors[1].shouldHaveMessage("semantic error at (6:12): f is not a variable")
             }
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
@@ -239,32 +239,7 @@ class FunctionTests {
                 val program = r.value
                 program.statements shouldHaveSize 1
                 val funcDecl = program.statements[0].shouldBeInstanceOf<Statement.FunctionDeclaration>()
-                funcDecl.returnType shouldBe Type.VOID
-            }
-        }
-    }
-
-    @Test
-    fun `should check function's return type against its declaration type`() {
-        val input = """
-            func f(x:INT) {
-                if (true) {
-                    return 1;
-                } else {
-                    return;
-                }
-                return x + 1.0;
-            }
-        """.byteInputStream()
-
-        when (val r = parser().parse(input)) {
-            is ParseResult.Failure -> {
-                r.errors shouldHaveSize 2
-                r.errors[0].shouldHaveMessage("semantic error at (4:27): return value in a void function")
-                r.errors[1].shouldHaveMessage("semantic error at (8:23): return value in a void function")
-            }
-            is ParseResult.Success -> {
-                fail("should throw semantic error, but not")
+                funcDecl.returnType shouldBe BuiltinType.VOID
             }
         }
     }

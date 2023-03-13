@@ -1,9 +1,10 @@
 package demo.parser.fp
 
 import com.github.h0tk3y.betterParse.lexer.TokenMatch
+import com.github.h0tk3y.betterParse.utils.Tuple2
 import demo.parser.domain.SemanticException
 import demo.parser.domain.TokenLocation
-import demo.parser.domain.Type
+import demo.parser.domain.BuiltinType
 import demo.parser.domain.symbol.*
 
 internal class SemanticChecker {
@@ -44,8 +45,8 @@ internal class SemanticChecker {
         }
     }
 
-    fun enterFuncDecl(idToken: TokenMatch, type: Type) {
-        val function = defineFunc(idToken, type)
+    fun enterFuncDecl(idToken: TokenMatch, type: BuiltinType, paramIdAndTypes: List<Tuple2<TokenMatch, BuiltinType>>?) {
+        val function = defineFunc(idToken, type, paramIdAndTypes)
 //        saveScope(ctx, function)
         currentScope = function
     }
@@ -64,7 +65,11 @@ internal class SemanticChecker {
         currentScope = currentScope?.enclosingScope
     }
 
-    private fun defineFunc(idToken: TokenMatch, type: Type): FunctionSymbol {
+    private fun defineFunc(
+        idToken: TokenMatch,
+        type: BuiltinType,
+        paramIdAndTypes: List<Tuple2<TokenMatch, BuiltinType>>?
+    ): FunctionSymbol {
         val name: String = idToken.text
         val functionSymbol: Symbol? = currentScope?.resolve(name)
 
@@ -77,11 +82,16 @@ internal class SemanticChecker {
             }
         }
 
-        return FunctionSymbol(name, type, currentScope)
+        val params = paramIdAndTypes?.map { (idToken, type) ->
+            val id = idToken.text
+            VariableSymbol(id, type, currentScope)
+        } ?: emptyList()
+
+        return FunctionSymbol(name, type, params, currentScope)
             .also { currentScope?.define(it) }
     }
 
-    fun defineVar(idToken: TokenMatch, type: Type) {
+    fun defineVar(idToken: TokenMatch, type: BuiltinType) {
         val name: String = idToken.text
         val variableSymbol: Symbol? = currentScope?.resolve(name)
 

@@ -2,7 +2,7 @@ package demo.parser.domain
 
 sealed interface Statement {
 
-    data class VariableDeclaration(val id: String, val type: Type, val expr: Expression? = null) : Statement {
+    data class VariableDeclaration(val id: String, val type: BuiltinType, val expr: Expression? = null) : Statement {
         override fun toString() = if (expr != null) "$id:${type.name} = $expr;" else "$id:${type.name}"
     }
 
@@ -43,7 +43,7 @@ sealed interface Statement {
         override fun toString() = "for (${init ?: ""} ${condition ?: ""}; ${update ?: ""}) $body"
     }
 
-    data class Return(val expr: Expression) : Statement {
+    data class Return(val expr: Expression?) : Statement {
         override fun toString() = "return $expr;"
     }
 
@@ -57,7 +57,7 @@ sealed interface Statement {
 
     data class FunctionDeclaration(
         val id: String,
-        val returnType: Type,
+        val returnType: BuiltinType,
         val args: List<VariableDeclaration>,
         val body: Block
     ) : Statement {

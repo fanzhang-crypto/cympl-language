@@ -11,21 +11,21 @@ sealed interface BinaryOperation {
 
         object Plus : Arithmetic {
             override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
-                Type.INT -> when (right.type) {
-                    Type.INT -> TValue(Type.INT, left.asInt() + right.asInt())
-                    Type.FLOAT -> TValue(Type.FLOAT, left.asInt() + right.asDouble())
-                    Type.STRING -> TValue(Type.STRING, left.asString() + right.asString())
+                BuiltinType.INT -> when (right.type) {
+                    BuiltinType.INT -> TValue(BuiltinType.INT, left.asInt() + right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asInt() + right.asDouble())
+                    BuiltinType.STRING -> TValue(BuiltinType.STRING, left.asString() + right.asString())
                     else -> throw InterpretException("cannot add ${left.type} to ${right.type}")
                 }
 
-                Type.FLOAT -> when (right.type) {
-                    Type.INT -> TValue(Type.FLOAT, left.asDouble() + right.asInt())
-                    Type.FLOAT -> TValue(Type.FLOAT, left.asDouble() + right.asDouble())
-                    Type.STRING -> TValue(Type.STRING, left.asString() + right.asString())
+                BuiltinType.FLOAT -> when (right.type) {
+                    BuiltinType.INT -> TValue(BuiltinType.FLOAT, left.asDouble() + right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() + right.asDouble())
+                    BuiltinType.STRING -> TValue(BuiltinType.STRING, left.asString() + right.asString())
                     else -> throw InterpretException("cannot add ${left.type} to ${right.type}")
                 }
 
-                Type.STRING -> TValue(Type.STRING, left.asString() + right.asString())
+                BuiltinType.STRING -> TValue(BuiltinType.STRING, left.asString() + right.asString())
                 else -> {
                     throw InterpretException("cannot add ${left.type} to ${right.type}")
                 }
@@ -34,15 +34,15 @@ sealed interface BinaryOperation {
 
         object Minus : Arithmetic {
             override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
-                Type.INT -> when (right.type) {
-                    Type.INT -> TValue(Type.INT, left.asInt() - right.asInt())
-                    Type.FLOAT -> TValue(Type.FLOAT, left.asDouble() - right.asDouble())
+                BuiltinType.INT -> when (right.type) {
+                    BuiltinType.INT -> TValue(BuiltinType.INT, left.asInt() - right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() - right.asDouble())
                     else -> throw InterpretException("cannot subtract ${right.type} from ${left.type}")
                 }
 
-                Type.FLOAT -> when (right.type) {
-                    Type.INT -> TValue(Type.FLOAT, left.asDouble() - right.asDouble())
-                    Type.FLOAT -> TValue(Type.FLOAT, left.asDouble() - right.asDouble())
+                BuiltinType.FLOAT -> when (right.type) {
+                    BuiltinType.INT -> TValue(BuiltinType.FLOAT, left.asDouble() - right.asDouble())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() - right.asDouble())
                     else -> throw InterpretException("cannot subtract ${right.type} from ${left.type}")
                 }
 
@@ -52,15 +52,15 @@ sealed interface BinaryOperation {
 
         object Times : Arithmetic {
             override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
-                Type.INT -> when (right.type) {
-                    Type.INT -> TValue(Type.INT, left.asInt() * right.asInt())
-                    Type.FLOAT -> TValue(Type.FLOAT, left.asInt() * right.asDouble())
+                BuiltinType.INT -> when (right.type) {
+                    BuiltinType.INT -> TValue(BuiltinType.INT, left.asInt() * right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asInt() * right.asDouble())
                     else -> throw InterpretException("cannot multiply ${left.type} by ${right.type}")
                 }
 
-                Type.FLOAT -> when (right.type) {
-                    Type.INT -> TValue(Type.FLOAT, left.asDouble() * right.asInt())
-                    Type.FLOAT -> TValue(Type.FLOAT, left.asDouble() * right.asDouble())
+                BuiltinType.FLOAT -> when (right.type) {
+                    BuiltinType.INT -> TValue(BuiltinType.FLOAT, left.asDouble() * right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() * right.asDouble())
                     else -> throw InterpretException("cannot multiply ${left.type} by ${right.type}")
                 }
 
@@ -70,15 +70,15 @@ sealed interface BinaryOperation {
 
         object Div : Arithmetic {
             override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
-                Type.INT -> when (right.type) {
-                    Type.INT -> TValue(Type.INT, left.asInt() / right.asInt())
-                    Type.FLOAT -> TValue(Type.FLOAT, left.asInt() / right.asDouble())
+                BuiltinType.INT -> when (right.type) {
+                    BuiltinType.INT -> TValue(BuiltinType.INT, left.asInt() / right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asInt() / right.asDouble())
                     else -> throw InterpretException("cannot divide ${left.type} by ${right.type}")
                 }
 
-                Type.FLOAT -> when (right.type) {
-                    Type.INT -> TValue(Type.FLOAT, left.asDouble() / right.asDouble())
-                    Type.FLOAT -> TValue(Type.FLOAT, left.asDouble() / right.asDouble())
+                BuiltinType.FLOAT -> when (right.type) {
+                    BuiltinType.INT -> TValue(BuiltinType.FLOAT, left.asDouble() / right.asDouble())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() / right.asDouble())
                     else -> throw InterpretException("cannot divide ${left.type} by ${right.type}")
                 }
 
@@ -88,15 +88,15 @@ sealed interface BinaryOperation {
 
         object Rem : Arithmetic {
             override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
-                Type.INT -> when (right.type) {
-                    Type.INT -> TValue(Type.INT, left.asInt() % right.asInt())
-                    Type.FLOAT -> TValue(Type.FLOAT, left.asInt() % right.asDouble())
+                BuiltinType.INT -> when (right.type) {
+                    BuiltinType.INT -> TValue(BuiltinType.INT, left.asInt() % right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asInt() % right.asDouble())
                     else -> throw InterpretException("cannot  ${left.type} by ${right.type}")
                 }
 
-                Type.FLOAT -> when (right.type) {
-                    Type.INT -> TValue(Type.FLOAT, left.asDouble() % right.asDouble())
-                    Type.FLOAT -> TValue(Type.FLOAT, left.asDouble() % right.asDouble())
+                BuiltinType.FLOAT -> when (right.type) {
+                    BuiltinType.INT -> TValue(BuiltinType.FLOAT, left.asDouble() % right.asDouble())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() % right.asDouble())
                     else -> throw InterpretException("cannot divide ${left.type} by ${right.type}")
                 }
 
@@ -133,7 +133,7 @@ sealed interface BinaryOperation {
                 if (left.type != right.type) {
                     throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
-                return TValue(Type.BOOL, left.value == right.value)
+                return TValue(BuiltinType.BOOL, left.value == right.value)
             }
         }
 
@@ -142,7 +142,7 @@ sealed interface BinaryOperation {
                 if (left.type != right.type) {
                     throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
-                return TValue(Type.BOOL, left.value != right.value)
+                return TValue(BuiltinType.BOOL, left.value != right.value)
             }
         }
 
@@ -152,9 +152,9 @@ sealed interface BinaryOperation {
                     throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
                 return when (left.type) {
-                    Type.INT -> TValue(Type.BOOL, left.asInt() > right.asInt())
-                    Type.FLOAT -> TValue(Type.BOOL, left.asDouble() > right.asDouble())
-                    Type.STRING -> TValue(Type.BOOL, left.asString() > right.asString())
+                    BuiltinType.INT -> TValue(BuiltinType.BOOL, left.asInt() > right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.BOOL, left.asDouble() > right.asDouble())
+                    BuiltinType.STRING -> TValue(BuiltinType.BOOL, left.asString() > right.asString())
                     else -> throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
             }
@@ -165,9 +165,9 @@ sealed interface BinaryOperation {
                     throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
                 return when (left.type) {
-                    Type.INT -> TValue(Type.BOOL, left.asInt() < right.asInt())
-                    Type.FLOAT -> TValue(Type.BOOL, left.asDouble() < right.asDouble())
-                    Type.STRING -> TValue(Type.BOOL, left.asString() < right.asString())
+                    BuiltinType.INT -> TValue(BuiltinType.BOOL, left.asInt() < right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.BOOL, left.asDouble() < right.asDouble())
+                    BuiltinType.STRING -> TValue(BuiltinType.BOOL, left.asString() < right.asString())
                     else -> throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
             }
@@ -178,9 +178,9 @@ sealed interface BinaryOperation {
                     throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
                 return when (left.type) {
-                    Type.INT -> TValue(Type.BOOL, left.asInt() <= right.asInt())
-                    Type.FLOAT -> TValue(Type.BOOL, left.asDouble() <= right.asDouble())
-                    Type.STRING -> TValue(Type.BOOL, left.asString() <= right.asString())
+                    BuiltinType.INT -> TValue(BuiltinType.BOOL, left.asInt() <= right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.BOOL, left.asDouble() <= right.asDouble())
+                    BuiltinType.STRING -> TValue(BuiltinType.BOOL, left.asString() <= right.asString())
                     else -> throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
             }
@@ -191,9 +191,9 @@ sealed interface BinaryOperation {
                     throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
                 return when (left.type) {
-                    Type.INT -> TValue(Type.BOOL, left.asInt() >= right.asInt())
-                    Type.FLOAT -> TValue(Type.BOOL, left.asDouble() >= right.asDouble())
-                    Type.STRING -> TValue(Type.BOOL, left.asString() >= right.asString())
+                    BuiltinType.INT -> TValue(BuiltinType.BOOL, left.asInt() >= right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.BOOL, left.asDouble() >= right.asDouble())
+                    BuiltinType.STRING -> TValue(BuiltinType.BOOL, left.asString() >= right.asString())
                     else -> throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
             }

@@ -1,6 +1,6 @@
 package demo.parser.domain
 
-sealed class Type {
+sealed class BuiltinType {
 
     val name: String
         get() = when (this) {
@@ -12,15 +12,17 @@ sealed class Type {
             is ARRAY -> toString()
         }
 
-    object VOID : Type()
-    object BOOL : Type()
-    object INT : Type()
-    object FLOAT : Type()
-    object STRING : Type()
+    object VOID : BuiltinType()
+    object BOOL : BuiltinType()
+    object INT : BuiltinType()
+    object FLOAT : BuiltinType()
+    object STRING : BuiltinType()
 
-    data class ARRAY(val elementType: Type) : Type() {
+    data class ARRAY(val elementType: BuiltinType) : BuiltinType() {
         override fun toString() = "$elementType[]"
     }
 
     override fun toString() = name
 }
+
+val EmptyArray = BuiltinType.ARRAY(BuiltinType.VOID)

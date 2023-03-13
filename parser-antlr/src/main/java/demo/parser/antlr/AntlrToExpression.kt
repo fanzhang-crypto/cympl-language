@@ -116,7 +116,7 @@ internal class AntlrToExpression
         return Expression.String(value)
     }
 
-    override fun visitArray(ctx: CymplParser.ArrayContext): Expression {
+    override fun visitArrayExpression(ctx: CymplParser.ArrayExpressionContext): Expression {
         val elements = ctx.exprlist()?.expr()?.map { visit(it) } ?: emptyList()
         return Expression.Array(elements)
     }

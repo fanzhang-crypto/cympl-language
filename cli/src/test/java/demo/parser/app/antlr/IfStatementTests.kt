@@ -11,16 +11,16 @@ class IfStatementTests {
             x:INT = 1;
             if (x == 1) {
                 x:INT = 2;
-                return x;
+                x;
             } else {
                 x:INT = 3;
-                return x;
+                x;
             }
             x;
         """
         val output = """
             x:INT = 1; => 1
-            if (x == 1) { x:INT = 2; return x; } else { x:INT = 3; return x; } => 2
+            if (x == 1) { x:INT = 2; x; } else { x:INT = 3; x; } => void
             x; => 1
             environment:
             x:INT = 1

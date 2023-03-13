@@ -13,11 +13,11 @@ class BlockTests  {
                 {
                     x:INT = 2;
                 }
-                return x;
+                x;
             }
         """
         val output = """
-            { x:INT = 1; { x:INT = 2; } return x; } => 1
+            { x:INT = 1; { x:INT = 2; } x; } => void
             environment:
         """
         verify(input, output)
@@ -31,11 +31,11 @@ class BlockTests  {
                 {
                     func f(x:INT):INT { return x + 2; }
                 }
-                return f(1);
+                f(1);
             }
         """
         val output = """
-            { func f(x:INT):INT { return x + 1; } { func f(x:INT):INT { return x + 2; } } return f(1); } => 2
+            { func f(x:INT):INT { return x + 1; } { func f(x:INT):INT { return x + 2; } } f(1); } => void
             environment:
         """
         verify(input, output)

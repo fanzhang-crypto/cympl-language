@@ -3,13 +3,13 @@ package demo.parser.interpret
 import java.lang.Boolean
 import java.lang.Integer
 import java.lang.Double
-import demo.parser.domain.Type
-import demo.parser.domain.Type.*
+import demo.parser.domain.BuiltinType
+import demo.parser.domain.BuiltinType.*
 
 internal object TypeChecker {
 
-    fun assertValueType(tvalue: TValue, expectedType: Type) {
-        if (tvalue == TValue.EmptyArray && expectedType is ARRAY) {
+    fun assertValueType(tvalue: TValue, expectedType: BuiltinType) {
+        if (tvalue == TValue.TEmptyArray && expectedType is ARRAY) {
             // empty array is assignable to any array type
             return
         }
@@ -32,13 +32,13 @@ internal object TypeChecker {
         }
     }
 
-    private fun checkType(value: Any, expectedType: Type) {
+    private fun checkType(value: Any, expectedType: BuiltinType) {
         if (value.javaClass != expectedType.toJavaClass()) {
             throw InterpretException("type mismatch: expected $expectedType, got ${value.javaClass.simpleName}")
         }
     }
 
-    private fun Type.toJavaClass(): Class<*> = when (this) {
+    private fun BuiltinType.toJavaClass(): Class<*> = when (this) {
         is INT -> Integer::class.java
         is FLOAT -> Double::class.java
         is STRING -> String::class.java
