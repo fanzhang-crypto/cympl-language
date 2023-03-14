@@ -68,7 +68,11 @@ internal class AntlrToStatement : CymplBaseVisitor<Statement>() {
     override fun visitForStat(ctx: CymplParser.ForStatContext): Statement {
         val init = ctx.forInit()?.let { visit(it) }
         val condition = ctx.cond?.let { antlrToExpression.visit(it) }
-        val update = ctx.update?.let { visit(it) }
+
+        val updateExpr = ctx.updateExpr?.let { antlrToExpression.visit(it).toStatement() }
+        val updateAssign = ctx.updateAssign?.let { visit(it) }
+        val update = updateExpr ?: updateAssign
+
         val body = visit(ctx.statement())
         return Statement.For(init, condition, update, body)
     }

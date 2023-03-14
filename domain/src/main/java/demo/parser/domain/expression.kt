@@ -60,6 +60,14 @@ sealed interface Expression {
         override fun toString() = "-$expr"
     }
 
+    data class Increment(val expr: Expression, val postfix: Boolean) : Expression {
+        override fun toString() = if (postfix) "$expr++" else "++$expr"
+    }
+
+    data class Decrement(val expr: Expression, val postfix: Boolean) : Expression {
+        override fun toString() = if (postfix) "$expr--" else "--$expr"
+    }
+
     data class Equality(val left: Expression, val right: Expression) : Expression {
         override fun toString() = "$left == $right"
     }

@@ -18,12 +18,19 @@ class TypeCheckTests {
         val input = """
             1 > "2";
             "2" * 3;
+            "3"++;
+            --true;
+            a:STRING[] = ["1", "2"];
+            a[0]++;
         """.trimIndent()
 
         val errors = check(input)
-        errors shouldHaveSize 2
+        errors shouldHaveSize 5
         errors[0] shouldHaveMessage "semantic error at (1:0): comparison only works between INT and FLOAT, INT and INT, FLOAT and FLOAT, STRING and STRING, BOOL and BOOL, but got INT and STRING"
         errors[1] shouldHaveMessage "semantic error at (2:0): type mismatch: expected INT or FLOAT, but got STRING and INT"
+        errors[2] shouldHaveMessage "semantic error at (3:0): increment/decrement only works on INT or FLOAT, but got STRING"
+        errors[3] shouldHaveMessage "semantic error at (4:2): increment/decrement only works on INT or FLOAT, but got BOOL"
+        errors[4] shouldHaveMessage "semantic error at (6:0): increment/decrement only works on INT or FLOAT, but got STRING"
     }
 
     @Test

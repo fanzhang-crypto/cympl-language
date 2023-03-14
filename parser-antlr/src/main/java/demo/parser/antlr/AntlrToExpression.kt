@@ -57,6 +57,24 @@ internal class AntlrToExpression
         return Expression.Negation(expr)
     }
 
+    override fun visitPreIncDec(ctx: CymplParser.PreIncDecContext): Expression {
+        val expr = visit(ctx.getChild(1))
+        return when (ctx.op.type) {
+            CymplLexer.INC -> Expression.Increment(expr, false)
+            CymplLexer.DEC -> Expression.Decrement(expr, false)
+            else -> throw RuntimeException("unknown operator ${ctx.op}")
+        }
+    }
+
+    override fun visitPostIncDec(ctx: CymplParser.PostIncDecContext): Expression {
+        val expr = visit(ctx.getChild(0))
+        return when (ctx.op.type) {
+            CymplLexer.INC -> Expression.Increment(expr, true)
+            CymplLexer.DEC -> Expression.Decrement(expr, true)
+            else -> throw RuntimeException("unknown operator ${ctx.op}")
+        }
+    }
+
     override fun visitComparison(ctx: CymplParser.ComparisonContext): Expression {
         val left: Expression = visit(ctx.getChild(0))
         val right: Expression = visit(ctx.getChild(2))

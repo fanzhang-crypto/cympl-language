@@ -5,7 +5,7 @@ import demo.parser.interpret.TypeChecker.assertValueType
 
 open class TValue(val type: BuiltinType, val value: Any) {
 
-    object TEmptyArray : TValue(EmptyArray, emptyList<TValue>())
+    object TEmptyArray : TValue(EmptyArray, emptyArray<TValue>())
 
     object VOID : TValue(BuiltinType.VOID, "void") {
         override fun toString() = "void"
@@ -27,7 +27,7 @@ open class TValue(val type: BuiltinType, val value: Any) {
 
     @Suppress("UNCHECKED_CAST")
     fun asString() = when (type) {
-        is BuiltinType.ARRAY -> "[" + (value as List<TValue>).joinToString(", ") + "]"
+        is BuiltinType.ARRAY -> "[" + (value as Array<TValue>).joinToString(", ") + "]"
         else -> value.toString()
     }
 

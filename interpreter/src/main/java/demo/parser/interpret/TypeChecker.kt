@@ -20,7 +20,7 @@ internal object TypeChecker {
         val value = tvalue.value
         when (expectedType) {
             is ARRAY -> {
-                if (value !is List<*>) {
+                if (value !is Array<*>) {
                     throw InterpretException("type mismatch: expected $expectedType, got ${value.javaClass.simpleName}")
                 }
                 for (element in value) {

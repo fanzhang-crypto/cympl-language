@@ -37,7 +37,7 @@ ifStat: IF '(' expr ')' thenBranch=statement (ELSE elseBranch=statement )?;
 whileStat: WHILE '(' expr ')' statement;
 
 forInit: varDecl | assign;
-forStat: FOR '(' forInit? ';' cond=expr? ';' update=assign? ')' statement;
+forStat: FOR '(' forInit? ';' cond=expr? ';' (updateExpr=expr | updateAssign=assign)? ')' statement;
 
 breakStat: BREAK ';';
 
@@ -52,6 +52,8 @@ expr: ID '(' exprlist? ')'                              # FunctionCall
     | MINUS expr                                        # Negation
     | NOT expr                                          # LogicalNot
     | '(' expr ')'                                      # ParenthesizedExpression
+    | op=(INC | DEC) expr                                 # PreIncDec
+    | expr op=(INC | DEC)                                 # PostIncDec
     | <assoc=right> expr '^' expr                       # Power
     | expr op=(TIMES | DIV | REM) expr                  # MulDiv
     | expr op=(PLUS | MINUS) expr                       # AddSub
@@ -68,6 +70,8 @@ expr: ID '(' exprlist? ')'                              # FunctionCall
 
 exprlist: expr (',' expr)*;
 
+INC: '++';
+DEC: '--';
 PLUS: '+';
 MINUS: '-';
 TIMES: '*';

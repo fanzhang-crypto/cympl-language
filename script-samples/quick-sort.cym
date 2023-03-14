@@ -12,7 +12,7 @@ func quickSort(arr:INT[], n:INT):INT[] {
     {
         pivot:INT = arr[high]; // pivot
         i:INT = low - 1;
-        for (j:INT = low; j <= high - 1; j = j + 1) {
+        for (j:INT = low; j <= high - 1; j++) {
             if (arr[j] < pivot) {
                 i = i + 1;
                 swap(arr, i, j);

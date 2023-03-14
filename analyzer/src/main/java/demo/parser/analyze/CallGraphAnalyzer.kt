@@ -180,9 +180,10 @@ class CallGraphAnalyzer {
             is Expression.String,
             is Expression.Bool,
             is Expression.Float,
-            is Expression.Int -> {
+            is Expression.Int,
+            is Expression.Decrement,
+            is Expression.Increment -> {
             }
-
         }
     }
 

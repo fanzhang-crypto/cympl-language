@@ -189,4 +189,66 @@ class ExpressionTests {
             }
         }
     }
+
+    @Test
+    fun `support ++ and -- on variable`() {
+        val input = """
+            i: INT = 5;
+            i++;
+            i--;
+            ++i;
+            --i;
+        """
+        val output = """
+            i:INT = 5; => 5
+            i++; => 5
+            i--; => 6
+            ++i; => 6
+            --i; => 5
+            environment:
+            i:INT = 5
+        """
+        verify(input, output)
+    }
+
+    @Test
+    fun `support ++ and -- on array elements`() {
+        val input = """
+            a: INT[] = [1, 2, 3];
+            a[0]++;
+            a[1]--;
+            ++a[2];
+            --a[0];
+        """
+        val output = """
+            a:INT[] = [1, 2, 3]; => [1, 2, 3]
+            a[0]++; => 1
+            a[1]--; => 2
+            ++a[2]; => 4
+            --a[0]; => 1
+            environment:
+            a:INT[] = [1, 1, 4]
+        """
+        verify(input, output)
+    }
+
+    @Test
+    fun `++ and -- only works on variables and array elements`() {
+        val input = """
+            5++;
+            5--;
+            ++5;
+            --5;
+        """
+
+        val output = """
+            5++; failed => cannot increment 5
+            5--; failed => cannot increment 5
+            ++5; failed => cannot increment 5
+            --5; failed => cannot increment 5
+            environment:
+        """
+
+        verify(input, output)
+    }
 }

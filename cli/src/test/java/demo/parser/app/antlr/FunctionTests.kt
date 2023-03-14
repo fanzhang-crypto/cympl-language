@@ -270,7 +270,7 @@ class FunctionTests {
     fun `insert sort test`() {
         val input = """
             func insertionSort(arr:INT[], n:INT):INT[] {
-                for(i:INT = 1; i < n; i = i + 1) {
+                for(i:INT = 1; i < n; i++) {
                     key:INT = arr[i];
                     j:INT = i - 1;
 
@@ -290,7 +290,7 @@ class FunctionTests {
         """.trimIndent()
 
         val output = """
-            func insertionSort(arr:INT[], n:INT):INT[] { for (i:INT = 1; i < n; i = i + 1;) { key:INT = arr[i]; j:INT = i - 1; while (j >= 0 && arr[j] > key) { arr[j + 1] = arr[j] j = j - 1; } arr[j + 1] = key } return arr; } => void
+            func insertionSort(arr:INT[], n:INT):INT[] { for (i:INT = 1; i < n; i++;) { key:INT = arr[i]; j:INT = i - 1; while (j >= 0 && arr[j] > key) { arr[j + 1] = arr[j] j = j - 1; } arr[j + 1] = key } return arr; } => void
             insertionSort([2, 3, 9, 1, 11, 32, 17, 23, 15, 21], 10); => [1, 2, 3, 9, 11, 15, 17, 21, 23, 32]
             environment:
             insertionSort(arr:INT[], n:INT):INT[]

@@ -138,28 +138,13 @@ class Interpreter {
     }
 
     private fun evaluate(stat: Statement.IndexAssignment, scope: Scope): TValue {
-        val array = evaluate(stat.arrayExpr, scope)
-        val index = evaluate(stat.indexExpr, scope)
-
-        if (array.type !is BuiltinType.ARRAY) {
-            throw InterpretException("indexing non-array type ${array.type}")
-        }
-        if (index.type != BuiltinType.INT) {
-            throw InterpretException("indexing array with non-int type ${index.type}")
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        val elements = array.value as MutableList<TValue>
-        val i = index.value as Int
-
-        if (i < 0 || i >= elements.size) {
-            throw InterpretException("index $i out of bounds for array of size ${elements.size}")
-        }
+        val arrayIndexing = ArrayIndexing(stat.arrayExpr, stat.indexExpr, scope)
 
         val value = evaluate(stat.valueExpr, scope)
-        assertValueType(value, array.type.elementType)
+        assertValueType(value, arrayIndexing.arrayType.elementType)
 
-        elements[i] = value
+        arrayIndexing.setValue(value)
+
         return value
     }
 
@@ -218,6 +203,40 @@ class Interpreter {
         is Expression.Negation -> {
             val tvalue = evaluate(expression.expr, scope)
             UnaryOperation.Minus.apply(tvalue)
+        }
+
+        is Expression.Increment -> {
+            val target = expression.expr
+            val tvalue = evaluate(target, scope)
+            val tvalueUpdated = UnaryOperation.Increment.apply(tvalue)
+
+            when (target) {
+                is Expression.Variable -> scope.setVariable(target.id, tvalueUpdated)
+                is Expression.Index -> {
+                    val arrayIndexing = ArrayIndexing(target.arrayExpr, target.indexExpr, scope)
+                    arrayIndexing.setValue(tvalueUpdated)
+                }
+                else -> throw InterpretException("cannot increment $target")
+            }
+
+            if (expression.postfix) tvalue else tvalueUpdated
+        }
+
+        is Expression.Decrement -> {
+            val target = expression.expr
+            val tvalue = evaluate(target, scope)
+            val tvalueUpdated = UnaryOperation.Decrement.apply(tvalue)
+
+            when (target) {
+                is Expression.Variable -> scope.setVariable(target.id, tvalueUpdated)
+                is Expression.Index -> {
+                    val arrayIndexing = ArrayIndexing(target.arrayExpr, target.indexExpr, scope)
+                    arrayIndexing.setValue(tvalueUpdated)
+                }
+                else -> throw InterpretException("cannot increment $target")
+            }
+
+            if (expression.postfix) tvalue else tvalueUpdated
         }
 
         is Expression.And -> {
@@ -284,7 +303,7 @@ class Interpreter {
         }
 
         is Expression.Array -> {
-            val elements = expression.elements.map { evaluate(it, scope) }
+            val elements = expression.elements.map { evaluate(it, scope) }.toTypedArray()
             if (elements.isEmpty()) {
                 TValue.TEmptyArray
             } else {
@@ -318,28 +337,13 @@ class Interpreter {
         }
 
         is Expression.Index -> {
-            val array = evaluate(expression.arrayExpr, scope)
-            val index = evaluate(expression.indexExpr, scope)
-            if (array.type !is BuiltinType.ARRAY) {
-                throw InterpretException("indexing non-array type ${array.type}")
-            }
-            if (index.type != BuiltinType.INT) {
-                throw InterpretException("indexing array with non-int type ${index.type}")
-            }
-
-            @Suppress("UNCHECKED_CAST")
-            val elements = array.value as List<TValue>
-            val i = index.value as Int
-            if (i < 0 || i >= elements.size) {
-                throw InterpretException("index $i out of bounds for array of size ${elements.size}")
-            }
-            elements[i]
+            ArrayIndexing(expression.arrayExpr, expression.indexExpr, scope).getValue()
         }
     }
 
     private fun formatTValue(tvalue: TValue) = when (tvalue.type) {
         BuiltinType.STRING -> "\"${tvalue.value}\""
-        else -> tvalue.value.toString()
+        else -> tvalue.toString()
     }
 
     private fun formatCurrentEnvVariables() = globalScope.getVariables()
@@ -349,4 +353,36 @@ class Interpreter {
     private fun formatCurrentEnvFunctions() = globalScope.getFunctions()
         .map { (k, function) -> "$k(${function.args.joinToString(", ") { "${it.id}:${it.type}" }}):${function.returnType}" }
         .joinToString(", ")
+
+    private inner class ArrayIndexing(arrayExpr: Expression, indexExpr: Expression, scope: Scope) {
+        val array: Array<TValue>
+        val index: Int
+        val arrayType: BuiltinType.ARRAY
+
+        init {
+            val arrayTValue = evaluate(arrayExpr, scope)
+            val indexTValue = evaluate(indexExpr, scope)
+            if (arrayTValue.type !is BuiltinType.ARRAY) {
+                throw InterpretException("indexing non-array type ${arrayTValue.type}")
+            }
+            if (indexTValue.type != BuiltinType.INT) {
+                throw InterpretException("indexing array with non-int type ${indexTValue.type}")
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            this.array = arrayTValue.value as Array<TValue>
+            this.index = indexTValue.value as Int
+            if (index < 0 || index >= array.size) {
+                throw InterpretException("index $index out of bounds for array of size ${array.size}")
+            }
+
+            arrayType = arrayTValue.type
+        }
+
+        fun getValue(): TValue = array[index]
+
+        fun setValue(value: TValue) {
+            array[index] = value
+        }
+    }
 }

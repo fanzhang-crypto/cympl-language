@@ -1,7 +1,7 @@
 #! cympl interpret
 
 func insertionSort(arr:INT[], n:INT):INT[] {
-    for(i:INT = 1; i < n; i = i + 1) {
+    for(i:INT = 1; i < n; i++) {
         key:INT = arr[i];
         j:INT = i - 1;
 

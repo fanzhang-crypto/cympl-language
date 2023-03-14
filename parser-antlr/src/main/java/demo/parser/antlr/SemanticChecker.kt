@@ -240,6 +240,22 @@ class SemanticChecker {
             checkArithmeticBop(ctx, leftType, rightType)
         }
 
+        override fun exitPreIncDec(ctx: PreIncDecContext) {
+            val targetType = types.get(ctx.expr())
+            if (targetType != BuiltinType.INT && targetType != BuiltinType.FLOAT) {
+                val location = getLocation(ctx.expr().start)
+                semanticErrors += SemanticException("increment/decrement only works on INT or FLOAT, but got $targetType", location)
+            }
+        }
+
+        override fun exitPostIncDec(ctx: PostIncDecContext) {
+            val targetType = types.get(ctx.expr())
+            if (targetType != BuiltinType.INT && targetType != BuiltinType.FLOAT) {
+                val location = getLocation(ctx.expr().start)
+                semanticErrors += SemanticException("increment/decrement only works on INT or FLOAT, but got $targetType", location)
+            }
+        }
+
         override fun exitVariable(ctx: VariableContext) {
             val variableSymbol = currentScope?.resolve(ctx.ID().text) as? VariableSymbol
             if (variableSymbol != null) {
