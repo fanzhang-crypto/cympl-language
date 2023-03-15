@@ -138,4 +138,11 @@ internal class AntlrToExpression
         val elements = ctx.exprlist()?.expr()?.map { visit(it) } ?: emptyList()
         return Expression.Array(elements)
     }
+
+    override fun visitProperty(ctx: CymplParser.PropertyContext): Expression {
+        val idToken = ctx.ID().symbol
+        val id = idToken.text
+        val expr = visit(ctx.expr())
+        return Expression.Property(expr, id)
+    }
 }

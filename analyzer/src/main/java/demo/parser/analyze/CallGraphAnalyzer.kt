@@ -176,6 +176,10 @@ class CallGraphAnalyzer {
                 }
             }
 
+            is Expression.Property -> {
+                analyze(expression.expr)
+            }
+
             is Expression.Variable,
             is Expression.String,
             is Expression.Bool,

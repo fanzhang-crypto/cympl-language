@@ -111,6 +111,10 @@ sealed interface Expression {
     data class Index(val arrayExpr: Expression, val indexExpr: Expression) : Expression {
         override fun toString() = "$arrayExpr[$indexExpr]"
     }
+
+    data class Property(val expr: Expression, val propertyName: kotlin.String) : Expression {
+        override fun toString() = "$expr.$propertyName"
+    }
 }
 
 

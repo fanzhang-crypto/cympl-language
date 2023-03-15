@@ -339,6 +339,29 @@ class Interpreter {
         is Expression.Index -> {
             ArrayIndexing(expression.arrayExpr, expression.indexExpr, scope).getValue()
         }
+
+        is Expression.Property -> {
+            val tvalue = evaluate(expression.expr, scope)
+            val propertyName = expression.propertyName
+            when (tvalue.type) {
+                is BuiltinType.ARRAY -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val array = tvalue.value as Array<TValue>
+                    when (propertyName) {
+                        "length" -> TValue(BuiltinType.INT, array.size)
+                        else -> throw InterpretException("array has no property $propertyName")
+                    }
+                }
+                is BuiltinType.STRING -> {
+                    val string = tvalue.value as String
+                    when (propertyName) {
+                        "length" -> TValue(BuiltinType.INT, string.length)
+                        else -> throw InterpretException("string has no property $propertyName")
+                    }
+                }
+                else -> throw InterpretException("cannot access property $propertyName of type ${tvalue.type}")
+            }
+        }
     }
 
     private fun formatTValue(tvalue: TValue) = when (tvalue.type) {

@@ -202,4 +202,43 @@ class ArrayTests {
 
         verify(input, output)
     }
+
+    @Test
+    fun `can access length property of an array`() {
+        val input = """
+            arr:INT[] = [1, 2, 3];
+            a:INT = arr.length;
+        """
+
+        val output = """
+            arr:INT[] = [1, 2, 3]; => [1, 2, 3]
+            a:INT = arr.length; => 3
+            environment:
+            arr:INT[] = [1, 2, 3], a:INT = 3
+        """
+
+        verify(input, output)
+    }
+
+    @Test
+    fun `can access length properties in an 2D array`() {
+        val input = """
+            arr:INT[][] = [[1, 2, 3], [4, 5]];
+            arr.length;
+            arr[0].length;
+            arr[1].length;
+        """
+
+        val output = """
+            arr:INT[][] = [[1, 2, 3], [4, 5]]; => [[1, 2, 3], [4, 5]]
+            arr.length; => 2
+            arr[0].length; => 3
+            arr[1].length; => 2
+            environment:
+            arr:INT[][] = [[1, 2, 3], [4, 5]]
+        """
+
+        verify(input, output)
+
+    }
 }

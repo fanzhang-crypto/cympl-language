@@ -244,7 +244,10 @@ class SemanticChecker {
             val targetType = types.get(ctx.expr())
             if (targetType != BuiltinType.INT && targetType != BuiltinType.FLOAT) {
                 val location = getLocation(ctx.expr().start)
-                semanticErrors += SemanticException("increment/decrement only works on INT or FLOAT, but got $targetType", location)
+                semanticErrors += SemanticException(
+                    "increment/decrement only works on INT or FLOAT, but got $targetType",
+                    location
+                )
             }
         }
 
@@ -252,7 +255,10 @@ class SemanticChecker {
             val targetType = types.get(ctx.expr())
             if (targetType != BuiltinType.INT && targetType != BuiltinType.FLOAT) {
                 val location = getLocation(ctx.expr().start)
-                semanticErrors += SemanticException("increment/decrement only works on INT or FLOAT, but got $targetType", location)
+                semanticErrors += SemanticException(
+                    "increment/decrement only works on INT or FLOAT, but got $targetType",
+                    location
+                )
             }
         }
 
@@ -371,6 +377,31 @@ class SemanticChecker {
                     "type mismatch: expected ${arrayType.elementType}, but got $exprType",
                     location
                 )
+            }
+        }
+
+        override fun exitProperty(ctx: PropertyContext) {
+            val ownerType = types.get(ctx.expr())
+
+            when (ownerType) {
+                is BuiltinType.ARRAY, is BuiltinType.STRING -> {
+                    val propertyName = ctx.ID().text
+                    val propertySymbol = ownerType.scope?.resolve(propertyName)
+                    if (propertySymbol !is VariableSymbol) {
+                        val location = getLocation(ctx.ID().symbol)
+                        semanticErrors += SemanticException("property $propertyName not found", location)
+                        return
+                    }
+                    types.put(ctx, propertySymbol.type)
+                }
+
+                else -> {
+                    val location = getLocation(ctx.expr().start)
+                    semanticErrors += SemanticException(
+                        "property access only works on arrays and strings for now, but got $ownerType",
+                        location
+                    )
+                }
             }
         }
 

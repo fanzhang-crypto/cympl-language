@@ -52,8 +52,9 @@ expr: ID '(' exprlist? ')'                              # FunctionCall
     | MINUS expr                                        # Negation
     | NOT expr                                          # LogicalNot
     | '(' expr ')'                                      # ParenthesizedExpression
-    | op=(INC | DEC) expr                                 # PreIncDec
-    | expr op=(INC | DEC)                                 # PostIncDec
+    | expr '.' ID                                       # Property
+    | op=(INC | DEC) expr                               # PreIncDec
+    | expr op=(INC | DEC)                               # PostIncDec
     | <assoc=right> expr '^' expr                       # Power
     | expr op=(TIMES | DIV | REM) expr                  # MulDiv
     | expr op=(PLUS | MINUS) expr                       # AddSub

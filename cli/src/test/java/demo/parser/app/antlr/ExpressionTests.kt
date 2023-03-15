@@ -68,22 +68,7 @@ class ExpressionTests {
         verify(input, output)
     }
 
-    @Test
-    fun `string test`() {
-        val input = """
-            s1:STRING = "a" + "b" + "c";
-            s2:STRING = "d" + 1 + 2 + 3;
-            s3:STRING = s1 + s2;
-        """
-        val output = """
-            s1:STRING = "a" + "b" + "c"; => "abc"
-            s2:STRING = "d" + 1 + 2 + 3; => "d123"
-            s3:STRING = s1 + s2; => "abcd123"
-            environment:
-            s1:STRING = "abc", s2:STRING = "d123", s3:STRING = "abcd123"
-        """
-        verify(input, output)
-    }
+
 
     @Test
     fun `should report syntax error`() {

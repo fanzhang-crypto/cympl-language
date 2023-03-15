@@ -1,6 +1,6 @@
 #! cympl interpret
 
-func quickSort(arr:INT[], n:INT):INT[] {
+func quickSort(arr:INT[]):INT[] {
     func swap(arr:INT[], i:INT, j:INT):INT
     {
         temp:INT = arr[i];
@@ -30,8 +30,8 @@ func quickSort(arr:INT[], n:INT):INT[] {
         }
     }
 
-    quickSortInternal(arr, 0, n - 1);
+    quickSortInternal(arr, 0, arr.length - 1);
     return arr;
 }
 
-quickSort([2,3,9,1,11,32,17,23,15,21], 10);
+quickSort([2,3,9,1,11,32,17,23,15,21]);

@@ -1,5 +1,7 @@
 package demo.parser.domain.symbol
 
+import demo.parser.domain.BuiltinType
+
 sealed interface Scope {
 
     val scopeName: String
@@ -39,4 +41,20 @@ class GlobalScope : BaseScope(null) {
 
 class LocalScope(parent: Scope?) : BaseScope(parent) {
     override val scopeName: String = "locals"
+}
+
+object ArrayScope : BaseScope(null) {
+    override val scopeName: String = "array"
+
+    init {
+        define(VariableSymbol("length", BuiltinType.INT, this))
+    }
+}
+
+object StringScope : BaseScope(null) {
+    override val scopeName: String = "string"
+
+    init {
+        define(VariableSymbol("length", BuiltinType.INT, this))
+    }
 }
