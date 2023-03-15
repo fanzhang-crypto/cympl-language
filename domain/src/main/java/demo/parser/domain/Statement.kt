@@ -18,7 +18,7 @@ sealed interface Statement {
         override fun toString() = "$expr;"
     }
 
-    data class Block(val statements: List<Statement>) : Statement {
+    class Block(val statements: List<Statement>) : Statement {
         override fun toString() = "{ ${statements.joinToString(" ")} }"
     }
 
@@ -55,7 +55,7 @@ sealed interface Statement {
         override fun toString() = if (label != null) "continue $label;" else "continue;"
     }
 
-    data class FunctionDeclaration(
+    open class FunctionDeclaration(
         val id: String,
         val returnType: BuiltinType,
         val args: List<VariableDeclaration>,

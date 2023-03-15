@@ -34,5 +34,22 @@ class FunctionSymbol(
     override val scopeName: String = name
 
     override fun toString(): String = "function${super.toString()}:${locals.values}"
-
 }
+
+object IntrinsicSymbols {
+    val printLine = FunctionSymbol(
+        "println",
+        BuiltinType.VOID,
+        listOf(VariableSymbol("str", BuiltinType.STRING, null)),
+        null
+    )
+
+    val readLine = FunctionSymbol(
+        "readLine",
+        BuiltinType.STRING,
+        emptyList(),
+        null
+    )
+}
+
+

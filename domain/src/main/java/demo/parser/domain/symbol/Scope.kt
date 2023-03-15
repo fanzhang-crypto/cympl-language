@@ -37,6 +37,11 @@ abstract class BaseScope(override val enclosingScope: Scope?) : Scope {
 
 class GlobalScope : BaseScope(null) {
     override val scopeName: String = "globals"
+
+    init {
+        define(IntrinsicSymbols.printLine)
+        define(IntrinsicSymbols.readLine)
+    }
 }
 
 class LocalScope(parent: Scope?) : BaseScope(parent) {

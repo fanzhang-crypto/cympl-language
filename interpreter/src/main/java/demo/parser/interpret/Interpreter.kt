@@ -7,6 +7,10 @@ class Interpreter {
 
     private val globalScope = Scope()
 
+    init {
+        globalScope.defineFunction(Intrinsic.PrintLine.id, Intrinsic.PrintLine)
+    }
+
     val globalSymbols: Set<String> get() = globalScope.getVariables().keys + globalScope.getFunctions().keys
 
     sealed class Jump : Throwable() {
@@ -324,10 +328,14 @@ class Interpreter {
                 }
             }
 
-            try {
-                function.body.evaluate(functionScope)
-            } catch (ret: Jump.Return) {
-                ret.value
+            if (function is Intrinsic) {
+                handleIntrinsic(function, args)
+            } else {
+                try {
+                    function.body.evaluate(functionScope)
+                } catch (ret: Jump.Return) {
+                    ret.value
+                }
             }
         }
 
@@ -361,6 +369,18 @@ class Interpreter {
         }
     }
 
+    private fun handleIntrinsic(function: Intrinsic, args: List<TValue>): TValue = when (function) {
+        Intrinsic.PrintLine -> {
+            println(args.firstOrNull())
+            TValue.VOID
+        }
+
+        Intrinsic.ReadLine -> {
+            val line = readlnOrNull() ?: ""
+            TValue(BuiltinType.STRING, line)
+        }
+    }
+
     private fun formatTValue(tvalue: TValue) = when (tvalue.type) {
         BuiltinType.STRING -> "\"${tvalue.value}\""
         else -> tvalue.toString()
@@ -371,6 +391,7 @@ class Interpreter {
         .joinToString(", ")
 
     private fun formatCurrentEnvFunctions() = globalScope.getFunctions()
+        .filter { it.value !is Intrinsic }
         .map { (k, function) -> "$k(${function.args.joinToString(", ") { "${it.id}:${it.type}" }}):${function.returnType}" }
         .joinToString(", ")
 
