@@ -1,7 +1,9 @@
-package demo.parser.app
+package demo.parser.app.command
 
 import demo.parser.analyze.CallGraphAnalyzer
-import demo.parser.domain.*
+import demo.parser.domain.ParseResult
+import demo.parser.domain.Parser
+import demo.parser.domain.Program
 import guru.nidi.graphviz.engine.Format
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.shell.standard.FileValueProvider

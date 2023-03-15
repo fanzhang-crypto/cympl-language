@@ -22,13 +22,13 @@ type: INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE | type '[]';
 
 varDecl: ID ':' type '=' expr;
 
-funcDecl: 'func' ID '(' paramDecls? ')' (':' (type | VOID_TYPE))? block;
+funcDecl: FUNC ID '(' paramDecls? ')' (':' (type | VOID_TYPE))? block;
 
 paramDecls: paramDecl (',' paramDecl)*;
 
 paramDecl: ID ':' type;
 
-returnStat: 'return' expr? ';';
+returnStat: RETURN expr? ';';
 
 block: '{' statement* '}';
 
@@ -99,12 +99,14 @@ INT: DIGIT+;
 FLOAT: DIGIT '.' DIGIT* | '.' DIGIT+;
 STRING: '"' (ESC|.)*? '"';
 
+FUNC: 'func';
 IF: 'if';
 ELSE: 'else';
 WHILE: 'while';
 FOR: 'for';
 BREAK: 'break';
 CONTINUE: 'continue';
+RETURN: 'return';
 
 ID: [a-zA-Z_][a-zA-Z0-9_]*;
 COMMENT: '/*' .*? '*/' -> skip;

@@ -11,7 +11,7 @@ import org.springframework.core.convert.converter.Converter
 import java.io.File
 
 @SpringBootApplication(proxyBeanMethods = false)
-open class ShellApplication {
+open class CliApp {
 
     @Bean
     open fun parserProvider(): () -> Parser<Program> = ::AntlrProgramParser
@@ -30,5 +30,5 @@ open class ShellApplication {
 }
 
 fun main(args: Array<String>) {
-    runApplication<ShellApplication>(*args)
+    runApplication<CliApp>(*args)
 }
