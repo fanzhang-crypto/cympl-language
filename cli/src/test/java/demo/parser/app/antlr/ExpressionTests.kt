@@ -69,7 +69,6 @@ class ExpressionTests {
     }
 
 
-
     @Test
     fun `should report syntax error`() {
         val input = """
@@ -153,26 +152,53 @@ class ExpressionTests {
             true && false || true && true;
         """.byteInputStream()
 
-        when(val r = parser().parse(input)) {
+        when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors.forEach { println(it) }
                 fail(r.errors.first())
             }
+
             is ParseResult.Success -> {
                 val program = r.value
                 program.statements shouldHaveSize 1
                 program.statements.first() shouldBe Expression.Or(
                     Expression.And(
-                        Expression.Bool(true),
-                        Expression.Bool(false)
+                        Expression.BoolLiteral(true),
+                        Expression.BoolLiteral(false)
                     ),
                     Expression.And(
-                        Expression.Bool(true),
-                        Expression.Bool(true)
+                        Expression.BoolLiteral(true),
+                        Expression.BoolLiteral(true)
                     ),
                 ).toStatement()
             }
         }
+    }
+
+    @Test
+    fun `logical and should be short circuited`() {
+        val input = """
+            false && 1/0 == 0;
+        """
+
+        val output = """
+            false && 1 / 0 == 0; => false
+            environment:
+        """
+        verify(input, output)
+    }
+
+    @Test
+    fun `logical or should be short circuited`() {
+        val input = """
+            true || 1/0 == 0;
+        """
+
+        val output = """
+            true || 1 / 0 == 0; => true
+            environment:
+        """
+        verify(input, output)
     }
 
     @Test

@@ -178,12 +178,12 @@ class ExpressionTests {
                 program.statements shouldHaveSize 1
                 program.statements.first() shouldBe Expression.Or(
                     Expression.And(
-                        Expression.Bool(true),
-                        Expression.Bool(false)
+                        Expression.BoolLiteral(true),
+                        Expression.BoolLiteral(false)
                     ),
                     Expression.And(
-                        Expression.Bool(true),
-                        Expression.Bool(true)
+                        Expression.BoolLiteral(true),
+                        Expression.BoolLiteral(true)
                     ),
                 ).toStatement()
             }

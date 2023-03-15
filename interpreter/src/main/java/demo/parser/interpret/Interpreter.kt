@@ -18,7 +18,7 @@ class Interpreter {
     fun interpret(program: Program): Sequence<String> = sequence {
         for (stat in program.statements) {
             try {
-                val result = evaluate(stat, globalScope)
+                val result = stat.evaluate(globalScope)
                 yield("$stat => ${formatTValue(result)}")
             } catch (jump: Jump) {
                 when (jump) {
@@ -35,16 +35,16 @@ class Interpreter {
         formatCurrentEnvFunctions().takeIf { it.isNotBlank() }?.let { yield(it) }
     }
 
-    private fun evaluate(statement: Statement, scope: Scope): TValue = when (statement) {
-        is Statement.VariableDeclaration -> evaluate(statement, scope)
-        is Statement.Assignment -> evaluate(statement, scope)
-        is Statement.IndexAssignment -> evaluate(statement, scope)
-        is Statement.FunctionDeclaration -> evaluate(statement, scope)
-        is Statement.Block -> evaluate(statement, scope)
-        is Statement.ExpressionStatement -> evaluate(statement.expr, scope)
-        is Statement.If -> evaluate(statement, scope)
-        is Statement.While -> evaluate(statement, scope)
-        is Statement.For -> evaluate(statement, scope)
+    private fun Statement.evaluate(scope: Scope): TValue = when (this) {
+        is Statement.VariableDeclaration -> evaluate(scope)
+        is Statement.Assignment -> evaluate(scope)
+        is Statement.IndexAssignment -> evaluate(scope)
+        is Statement.FunctionDeclaration -> evaluate(scope)
+        is Statement.Block -> evaluate(scope)
+        is Statement.ExpressionStatement -> expr.evaluate(scope)
+        is Statement.If -> evaluate(scope)
+        is Statement.While -> evaluate(scope)
+        is Statement.For -> evaluate(scope)
         is Statement.Break -> {
             if (scope.isInLoop())
                 throw Jump.Break
@@ -60,37 +60,35 @@ class Interpreter {
         }
 
         is Statement.Return -> {
-            val value = statement.expr?.let { evaluate(it, scope) } ?: TValue.VOID
+            val value = expr?.evaluate(scope) ?: TValue.VOID
             throw Jump.Return(value)
         }
 
-        else -> throw InterpretException("unknown statement $statement")
+        else -> throw InterpretException("unknown statement $this")
     }
 
-    private fun evaluate(block: Statement.Block, parent: Scope): TValue {
+    private fun Statement.Block.evaluate(parent: Scope): TValue {
         val currentScope = Scope(parent)
 
-        for (stat in block.statements) {
-            evaluate(stat, currentScope)
+        for (stat in statements) {
+            stat.evaluate(currentScope)
         }
 
         return TValue.VOID
     }
 
-    private fun evaluate(ifStatement: Statement.If, scope: Scope): TValue {
-        val condition = evaluate(ifStatement.condition, scope)
-        return if (condition.asBoolean()) {
-            evaluate(ifStatement.thenBranch, scope)
+    private fun Statement.If.evaluate(scope: Scope): TValue {
+        return if (condition.evaluate(scope).asBoolean()) {
+            thenBranch.evaluate(scope)
         } else {
-            ifStatement.elseBranch?.let { evaluate(it, scope) }
-                ?: TValue.VOID
+            elseBranch?.evaluate(scope) ?: TValue.VOID
         }
     }
 
-    private fun evaluate(whileStat: Statement.While, scope: Scope): TValue = scope.withinLoop {
-        while (evaluate(whileStat.condition, scope).asBoolean()) {
+    private fun Statement.While.evaluate(scope: Scope): TValue = scope.withinLoop {
+        while (condition.evaluate(scope).asBoolean()) {
             try {
-                evaluate(whileStat.body, scope)
+                body.evaluate(scope)
             } catch (jump: Jump) {
                 when (jump) {
                     is Jump.Return -> return@withinLoop jump.value
@@ -102,11 +100,12 @@ class Interpreter {
         return@withinLoop TValue.VOID
     }
 
-    private fun evaluate(forStat: Statement.For, scope: Scope): TValue = scope.withinLoop {
-        forStat.init?.let { evaluate(it, scope) }
-        while (forStat.condition?.let { evaluate(it, scope).asBoolean() } != false) {
+    private fun Statement.For.evaluate(scope: Scope): TValue = scope.withinLoop {
+        init?.evaluate(scope)
+
+        while (condition?.evaluate(scope)?.asBoolean() != false) {
             try {
-                evaluate(forStat.body, scope)
+                body.evaluate(scope)
             } catch (jump: Jump) {
                 when (jump) {
                     is Jump.Return -> return@withinLoop jump.value
@@ -114,33 +113,31 @@ class Interpreter {
                     is Jump.Continue -> {}
                 }
             }
-            forStat.update?.let { evaluate(it, scope) }
+            update?.evaluate(scope)
         }
         return@withinLoop TValue.VOID
     }
 
-    private fun evaluate(functionDeclaration: Statement.FunctionDeclaration, scope: Scope): TValue {
-        val id = functionDeclaration.id
+    private fun Statement.FunctionDeclaration.evaluate(scope: Scope): TValue {
         if (scope.containsFunction(id, true)) {
             throw InterpretException("function $id already declared")
         }
-        scope.defineFunction(id, functionDeclaration)
+        scope.defineFunction(id, this)
         return TValue.VOID
     }
 
-    private fun evaluate(assignment: Statement.Assignment, scope: Scope): TValue {
-        val id = assignment.id
+    private fun Statement.Assignment.evaluate(scope: Scope): TValue {
         val variable = scope.resolveVariable(id)
             ?: throw InterpretException("variable $id not defined")
 
-        val value = evaluate(assignment.expr, scope)
+        val value = expr.evaluate(scope)
         return variable.withValue(value.value).also { scope.setVariable(id, it) }
     }
 
-    private fun evaluate(stat: Statement.IndexAssignment, scope: Scope): TValue {
-        val arrayIndexing = ArrayIndexing(stat.arrayExpr, stat.indexExpr, scope)
+    private fun Statement.IndexAssignment.evaluate(scope: Scope): TValue {
+        val arrayIndexing = ArrayIndexing(arrayExpr, indexExpr, scope)
 
-        val value = evaluate(stat.valueExpr, scope)
+        val value = valueExpr.evaluate(scope)
         assertValueType(value, arrayIndexing.arrayType.elementType)
 
         arrayIndexing.setValue(value)
@@ -148,66 +145,64 @@ class Interpreter {
         return value
     }
 
-    private fun evaluate(variableDeclaration: Statement.VariableDeclaration, scope: Scope): TValue {
-        val id = variableDeclaration.id
+    private fun Statement.VariableDeclaration.evaluate(scope: Scope): TValue {
         if (scope.containsVariable(id, true)) {
             throw InterpretException("variable $id already declared")
         }
-        val type = variableDeclaration.type
-        return evaluate(variableDeclaration.expr!!, scope)
+        return expr!!.evaluate(scope)
             .also { result ->
                 assertValueType(result, type)
                 scope.defineVariable(id, TValue(type, result.value))
             }
     }
 
-    private fun evaluate(expression: Expression, scope: Scope): TValue = when (expression) {
-        is Expression.Parenthesized -> evaluate(expression.expr, scope)
+    private fun Expression.evaluate(scope: Scope): TValue = when (this) {
+        is Expression.Parenthesized -> expr.evaluate(scope)
 
         is Expression.Addition -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Arithmetic.Plus.apply(left, right)
         }
 
         is Expression.Subtraction -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Arithmetic.Minus.apply(left, right)
         }
 
         is Expression.Multiplication -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Arithmetic.Times.apply(left, right)
         }
 
         is Expression.Division -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Arithmetic.Div.apply(left, right)
         }
 
         is Expression.Remainder -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Arithmetic.Rem.apply(left, right)
         }
 
         is Expression.Power -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Arithmetic.Pow.apply(left, right)
         }
 
         is Expression.Negation -> {
-            val tvalue = evaluate(expression.expr, scope)
+            val tvalue = expr.evaluate(scope)
             UnaryOperation.Minus.apply(tvalue)
         }
 
         is Expression.Increment -> {
-            val target = expression.expr
-            val tvalue = evaluate(target, scope)
+            val target = expr
+            val tvalue = target.evaluate(scope)
             val tvalueUpdated = UnaryOperation.Increment.apply(tvalue)
 
             when (target) {
@@ -216,15 +211,16 @@ class Interpreter {
                     val arrayIndexing = ArrayIndexing(target.arrayExpr, target.indexExpr, scope)
                     arrayIndexing.setValue(tvalueUpdated)
                 }
+
                 else -> throw InterpretException("cannot increment $target")
             }
 
-            if (expression.postfix) tvalue else tvalueUpdated
+            if (postfix) tvalue else tvalueUpdated
         }
 
         is Expression.Decrement -> {
-            val target = expression.expr
-            val tvalue = evaluate(target, scope)
+            val target = expr
+            val tvalue = target.evaluate(scope)
             val tvalueUpdated = UnaryOperation.Decrement.apply(tvalue)
 
             when (target) {
@@ -233,77 +229,77 @@ class Interpreter {
                     val arrayIndexing = ArrayIndexing(target.arrayExpr, target.indexExpr, scope)
                     arrayIndexing.setValue(tvalueUpdated)
                 }
+
                 else -> throw InterpretException("cannot increment $target")
             }
 
-            if (expression.postfix) tvalue else tvalueUpdated
+            if (postfix) tvalue else tvalueUpdated
         }
 
         is Expression.And -> {
-            val left = evaluate(expression.left, scope)
-            val right = { evaluate(expression.right, scope) }
+            val left = left.evaluate(scope)
+            val right = { right.evaluate(scope) }
             BinaryOperation.Logical.And.apply(left, right)
         }
 
         is Expression.Or -> {
-            val left = evaluate(expression.left, scope)
-            val right = { evaluate(expression.right, scope) }
+            val left = left.evaluate(scope)
+            val right = { right.evaluate(scope) }
             BinaryOperation.Logical.Or.apply(left, right)
         }
 
         is Expression.Not -> {
-            val tvalue = evaluate(expression.expr, scope)
+            val tvalue = expr.evaluate(scope)
             UnaryOperation.Not.apply(tvalue)
         }
 
         is Expression.Variable -> {
-            val id = expression.id
             scope.resolveVariable(id) ?: throw InterpretException("variable $id not defined")
         }
 
-        is Expression.Bool -> TValue(BuiltinType.BOOL, expression.value)
-        is Expression.Float -> TValue(BuiltinType.FLOAT, expression.value)
-        is Expression.Int -> TValue(BuiltinType.INT, expression.value)
-        is Expression.String -> TValue(BuiltinType.STRING, expression.value)
+        is Expression.BoolLiteral -> TValue(BuiltinType.BOOL, value)
+        is Expression.FloatLiteral -> TValue(BuiltinType.FLOAT, value)
+        is Expression.IntLiteral -> TValue(BuiltinType.INT, value)
+        is Expression.StringLiteral -> TValue(BuiltinType.STRING, value)
 
         is Expression.Equality -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Comparison.Eq.apply(left, right)
         }
 
         is Expression.Inequality -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Comparison.Neq.apply(left, right)
         }
 
         is Expression.GreaterThan -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Comparison.Gt.apply(left, right)
         }
 
         is Expression.GreaterThanOrEqual -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Comparison.Geq.apply(left, right)
         }
 
         is Expression.LessThan -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Comparison.Lt.apply(left, right)
         }
 
         is Expression.LessThanOrEqual -> {
-            val left = evaluate(expression.left, scope)
-            val right = evaluate(expression.right, scope)
+            val left = left.evaluate(scope)
+            val right = right.evaluate(scope)
             BinaryOperation.Comparison.Leq.apply(left, right)
         }
 
-        is Expression.Array -> {
-            val elements = expression.elements.map { evaluate(it, scope) }.toTypedArray()
+        is Expression.ArrayLiteral -> {
+            val elements = elements.map { it.evaluate(scope) }.toTypedArray()
             if (elements.isEmpty()) {
                 TValue.TEmptyArray
             } else {
@@ -313,11 +309,10 @@ class Interpreter {
         }
 
         is Expression.FunctionCall -> {
-            val id = expression.id
             val function = scope.resolveFunction(id)
                 ?: throw InterpretException("function $id not defined")
 
-            val args = expression.args.map { evaluate(it, scope) }
+            val args = args.map { it.evaluate(scope) }
             if (args.size != function.args.size) {
                 throw InterpretException("function $id expects ${function.args.size} arguments, got ${args.size}")
             }
@@ -330,36 +325,38 @@ class Interpreter {
             }
 
             try {
-                evaluate(function.body, functionScope)
+                function.body.evaluate(functionScope)
             } catch (ret: Jump.Return) {
                 ret.value
             }
         }
 
         is Expression.Index -> {
-            ArrayIndexing(expression.arrayExpr, expression.indexExpr, scope).getValue()
+            ArrayIndexing(arrayExpr, indexExpr, scope).getValue()
         }
 
         is Expression.Property -> {
-            val tvalue = evaluate(expression.expr, scope)
-            val propertyName = expression.propertyName
-            when (tvalue.type) {
+            val owner = expr.evaluate(scope)
+            val propertyName = propertyName
+            when (owner.type) {
                 is BuiltinType.ARRAY -> {
                     @Suppress("UNCHECKED_CAST")
-                    val array = tvalue.value as Array<TValue>
+                    val array = owner.value as Array<TValue>
                     when (propertyName) {
                         "length" -> TValue(BuiltinType.INT, array.size)
                         else -> throw InterpretException("array has no property $propertyName")
                     }
                 }
+
                 is BuiltinType.STRING -> {
-                    val string = tvalue.value as String
+                    val string = owner.value as String
                     when (propertyName) {
                         "length" -> TValue(BuiltinType.INT, string.length)
                         else -> throw InterpretException("string has no property $propertyName")
                     }
                 }
-                else -> throw InterpretException("cannot access property $propertyName of type ${tvalue.type}")
+
+                else -> throw InterpretException("cannot access property $propertyName of type ${owner.type}")
             }
         }
     }
@@ -383,8 +380,8 @@ class Interpreter {
         val arrayType: BuiltinType.ARRAY
 
         init {
-            val arrayTValue = evaluate(arrayExpr, scope)
-            val indexTValue = evaluate(indexExpr, scope)
+            val arrayTValue = arrayExpr.evaluate(scope)
+            val indexTValue = indexExpr.evaluate(scope)
             if (arrayTValue.type !is BuiltinType.ARRAY) {
                 throw InterpretException("indexing non-array type ${arrayTValue.type}")
             }

@@ -170,7 +170,7 @@ class CallGraphAnalyzer {
                 analyze(expression.expr)
             }
 
-            is Expression.Array -> {
+            is Expression.ArrayLiteral -> {
                 for (element in expression.elements) {
                     analyze(element)
                 }
@@ -181,10 +181,10 @@ class CallGraphAnalyzer {
             }
 
             is Expression.Variable,
-            is Expression.String,
-            is Expression.Bool,
-            is Expression.Float,
-            is Expression.Int,
+            is Expression.StringLiteral,
+            is Expression.BoolLiteral,
+            is Expression.FloatLiteral,
+            is Expression.IntLiteral,
             is Expression.Decrement,
             is Expression.Increment -> {
             }

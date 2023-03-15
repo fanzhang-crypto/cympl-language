@@ -188,10 +188,10 @@ internal class CymplGrammar(
 
     // @formatter:off
     private val term: Parser<Expression> by
-        BOOL.map { Expression.Bool(it.text.toBoolean()) } or
-        INT.map { Expression.Int(it.text.toInt()) } or
-        FLOAT.map { Expression.Float(it.text.toDouble()) } or
-        STRING.map { Expression.String(it.text.substring(1, it.text.length - 1)) } or
+        BOOL.map { Expression.BoolLiteral(it.text.toBoolean()) } or
+        INT.map { Expression.IntLiteral(it.text.toInt()) } or
+        FLOAT.map { Expression.FloatLiteral(it.text.toDouble()) } or
+        STRING.map { Expression.StringLiteral(it.text.substring(1, it.text.length - 1)) } or
         functionCall or
         variable or
         negation or

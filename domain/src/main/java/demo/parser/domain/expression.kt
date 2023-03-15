@@ -8,27 +8,27 @@ sealed interface Expression {
         override fun toString() = "($expr)"
     }
 
-    data class Bool(val value: Boolean) : Expression {
+    data class BoolLiteral(val value: Boolean) : Expression {
         override fun toString() = value.toString()
     }
 
-    data class Int(val value: kotlin.Int) : Expression {
+    data class IntLiteral(val value: Int) : Expression {
         override fun toString() = value.toString()
     }
 
-    data class Float(val value: Double) : Expression {
+    data class FloatLiteral(val value: Double) : Expression {
         override fun toString() = value.toString()
     }
 
-    data class String(val value: kotlin.String) : Expression {
+    data class StringLiteral(val value: String) : Expression {
         override fun toString() = "\"$value\""
     }
 
-    data class Array(val elements: List<Expression>) : Expression {
+    data class ArrayLiteral(val elements: List<Expression>) : Expression {
         override fun toString() = "[${elements.joinToString(", ")}]"
     }
 
-    data class Variable(val id: kotlin.String) : Expression {
+    data class Variable(val id: String) : Expression {
         override fun toString() = id
     }
 
@@ -104,7 +104,7 @@ sealed interface Expression {
         override fun toString() = "!$expr"
     }
 
-    data class FunctionCall(val id: kotlin.String, val args: List<Expression>) : Expression {
+    data class FunctionCall(val id: String, val args: List<Expression>) : Expression {
         override fun toString() = "$id(${args.joinToString(", ")})"
     }
 
@@ -112,7 +112,7 @@ sealed interface Expression {
         override fun toString() = "$arrayExpr[$indexExpr]"
     }
 
-    data class Property(val expr: Expression, val propertyName: kotlin.String) : Expression {
+    data class Property(val expr: Expression, val propertyName: String) : Expression {
         override fun toString() = "$expr.$propertyName"
     }
 }
