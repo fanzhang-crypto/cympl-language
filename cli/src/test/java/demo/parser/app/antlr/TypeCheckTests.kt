@@ -3,9 +3,6 @@ package demo.parser.app.antlr
 import demo.parser.app.antlr.AntlrInterpretVerifier.parser
 import demo.parser.domain.ParseException
 import demo.parser.domain.ParseResult
-import demo.parser.interpret.InterpretException
-import demo.parser.interpret.Interpreter
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.throwable.shouldHaveMessage
 import org.junit.jupiter.api.Test
@@ -26,8 +23,8 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 5
-        errors[0] shouldHaveMessage "semantic error at (1:0): comparison only works between INT and FLOAT, INT and INT, FLOAT and FLOAT, STRING and STRING, BOOL and BOOL, but got INT and STRING"
-        errors[1] shouldHaveMessage "semantic error at (2:0): type mismatch: expected INT or FLOAT, but got STRING and INT"
+        errors[0] shouldHaveMessage "semantic error at (1:0): type mismatch: expected BOOL, INT, FLOAT or STRING, but got INT and STRING"
+        errors[1] shouldHaveMessage "semantic error at (2:0): type mismatch: expected BOOL, INT or FLOAT, but got STRING and INT"
         errors[2] shouldHaveMessage "semantic error at (3:0): increment/decrement only works on INT or FLOAT, but got STRING"
         errors[3] shouldHaveMessage "semantic error at (4:2): increment/decrement only works on INT or FLOAT, but got BOOL"
         errors[4] shouldHaveMessage "semantic error at (6:0): increment/decrement only works on INT or FLOAT, but got STRING"

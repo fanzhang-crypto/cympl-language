@@ -11,8 +11,8 @@ import java.io.InputStream
 
 class AntlrProgramParser: Parser<Program> {
 
-    private val programVisitor = AntlrToProgram()
     private val semanticChecker = SemanticChecker()
+    private val programVisitor = AntlrToProgram(semanticChecker)
 
     override fun parse(inputStream: InputStream): ParseResult<Program> {
         val errorListener = SyntaxErrorListener()

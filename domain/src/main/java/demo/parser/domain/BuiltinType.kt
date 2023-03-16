@@ -6,6 +6,12 @@ import demo.parser.domain.symbol.StringScope
 
 sealed class BuiltinType {
 
+    val isPrimitive: Boolean
+        get() = this is INT || this is FLOAT || this is STRING || this is BOOL
+
+    val numericCompatible: Boolean
+        get() = this is INT || this is FLOAT || this is BOOL
+
     val name: String
         get() = when (this) {
             is INT -> "INT"
@@ -33,6 +39,22 @@ sealed class BuiltinType {
     }
 
     override fun toString() = name
+
+    companion object {
+        fun compatibleTypeOf(typeLeft: BuiltinType, typeRight: BuiltinType): BuiltinType {
+            return when {
+                typeLeft == typeRight -> typeLeft
+                typeLeft == FLOAT && typeRight == INT -> FLOAT
+                typeLeft == INT && typeRight == FLOAT -> FLOAT
+                typeLeft == INT && typeRight == BOOL -> INT
+                typeLeft == BOOL && typeRight == INT -> INT
+                typeLeft == FLOAT && typeRight == BOOL -> FLOAT
+                typeLeft == BOOL && typeRight == FLOAT -> FLOAT
+
+                else -> VOID
+            }
+        }
+    }
 }
 
 val EmptyArray = BuiltinType.ARRAY(BuiltinType.VOID)

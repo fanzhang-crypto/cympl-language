@@ -1,0 +1,12 @@
+#! cympl interpret
+
+func fibo(n:INT):INT {
+    if (n < 2) {
+        return n;
+    }
+    return fibo(n - 1) + fibo(n - 2);
+}
+
+for (i:INT = 0; i < 10; i++) {
+    println(fibo(i) + "");
+}

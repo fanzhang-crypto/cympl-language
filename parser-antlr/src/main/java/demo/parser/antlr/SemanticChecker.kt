@@ -2,7 +2,6 @@ package demo.parser.antlr
 
 import CymplBaseListener
 import CymplParser.*
-import demo.parser.antlr.TypeResolver.resolveType
 import demo.parser.domain.SemanticException
 import demo.parser.domain.TokenLocation
 import demo.parser.domain.BuiltinType
@@ -14,10 +13,11 @@ import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeProperty
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
-class SemanticChecker {
+class SemanticChecker : TypeResolver {
 
     private val globals = GlobalScope()
     private val scopes = ParseTreeProperty<Scope>()
+    private val types = ParseTreeProperty<BuiltinType>()
 
     fun check(programAST: ParseTree): List<SemanticException> {
         val walker = ParseTreeWalker.DEFAULT
@@ -32,6 +32,10 @@ class SemanticChecker {
         walker.walk(refPhase, programAST)
 
         return (defPhase.semanticErrors + typeCheckPhase.semanticErrors + refPhase.semanticErrors).sorted()
+    }
+
+    override fun resolveType(node: ExprContext): BuiltinType {
+        return types.get(node) ?: throw IllegalStateException("No type found for node $node")
     }
 
     private inner class DefPhase : CymplBaseListener() {
@@ -128,7 +132,6 @@ class SemanticChecker {
 
         val semanticErrors = mutableListOf<SemanticException>()
 
-        private val types = ParseTreeProperty<BuiltinType>()
         private var currentScope: Scope? = globals
 
         override fun enterFuncDecl(ctx: FuncDeclContext?) {
@@ -306,6 +309,11 @@ class SemanticChecker {
             if (functionSymbol !is FunctionSymbol) {
                 return
             }
+            if (functionSymbol == IntrinsicSymbols.printLine) {
+                //printLine is a special function that can accept any type of argument
+                types.put(ctx, functionSymbol.type)
+                return
+            }
 
             val parameterTypes = functionSymbol.parameters.map { it.type }
             val argumentTypes = ctx.exprlist()?.expr()?.map { types.get(it) } ?: emptyList()
@@ -409,42 +417,29 @@ class SemanticChecker {
             if (leftType == null || rightType == null) {
                 return
             }
-            if (leftType == BuiltinType.INT && rightType == BuiltinType.INT) {
-                types.put(ctx, BuiltinType.INT)
-            } else if (leftType == BuiltinType.FLOAT && rightType == BuiltinType.FLOAT) {
-                types.put(ctx, BuiltinType.FLOAT)
-            } else if (leftType == BuiltinType.FLOAT && rightType == BuiltinType.INT) {
-                types.put(ctx, BuiltinType.FLOAT)
-            } else if (leftType == BuiltinType.INT && rightType == BuiltinType.FLOAT) {
-                types.put(ctx, BuiltinType.FLOAT)
+
+            val compatibleType = BuiltinType.compatibleTypeOf(leftType, rightType)
+            if (compatibleType.numericCompatible) {
+                types.put(ctx, compatibleType)
             } else {
                 val location = getLocation(ctx.start)
                 semanticErrors += SemanticException(
-                    "type mismatch: expected INT or FLOAT, but got $leftType and $rightType",
+                    "type mismatch: expected BOOL, INT or FLOAT, but got $leftType and $rightType",
                     location
                 )
             }
         }
 
         private fun checkComparisonBop(ctx: ParserRuleContext, leftType: BuiltinType, rightType: BuiltinType) {
-            if (leftType == BuiltinType.INT && rightType == BuiltinType.INT) {
-                types.put(ctx, BuiltinType.BOOL)
-            } else if (leftType == BuiltinType.FLOAT && rightType == BuiltinType.FLOAT) {
-                types.put(ctx, BuiltinType.BOOL)
-            } else if (leftType == BuiltinType.FLOAT && rightType == BuiltinType.INT) {
-                types.put(ctx, BuiltinType.BOOL)
-            } else if (leftType == BuiltinType.INT && rightType == BuiltinType.FLOAT) {
-                types.put(ctx, BuiltinType.BOOL)
-            } else if (leftType == BuiltinType.STRING && rightType == BuiltinType.STRING) {
-                types.put(ctx, BuiltinType.BOOL)
-            } else if (leftType == BuiltinType.BOOL && rightType == BuiltinType.BOOL) {
-                types.put(ctx, BuiltinType.BOOL)
-            } else {
+            val compatibleType = BuiltinType.compatibleTypeOf(leftType, rightType)
+            if (!compatibleType.numericCompatible  && compatibleType != BuiltinType.STRING) {
                 val location = getLocation(ctx.start)
                 semanticErrors += SemanticException(
-                    "comparison only works between INT and FLOAT, INT and INT, FLOAT and FLOAT, STRING and STRING, BOOL and BOOL, but got $leftType and $rightType",
+                    "type mismatch: expected BOOL, INT, FLOAT or STRING, but got $leftType and $rightType",
                     location
                 )
+            } else {
+                types.put(ctx, BuiltinType.BOOL)
             }
         }
 

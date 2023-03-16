@@ -3,14 +3,16 @@ package demo.parser.antlr
 import CymplBaseVisitor
 import demo.parser.domain.*
 
-internal class AntlrToExpression
-    : CymplBaseVisitor<Expression>() {
+internal class AntlrToExpression(
+    private val typeResolver: TypeResolver
+) : CymplBaseVisitor<Expression>() {
 
     override fun visitFunctionCall(ctx: CymplParser.FunctionCallContext): Expression {
         val idToken = ctx.ID().symbol
         val id = idToken.text
         val arguments = ctx.exprlist()?.expr()?.map { visit(it) } ?: emptyList()
-        return Expression.FunctionCall(id, arguments)
+        val type = typeResolver.resolveType(ctx)
+        return Expression.FunctionCall(id, arguments, type)
     }
 
     override fun visitIndex(ctx: CymplParser.IndexContext): Expression {
@@ -110,7 +112,8 @@ internal class AntlrToExpression
     override fun visitVariable(ctx: CymplParser.VariableContext): Expression {
         val idToken = ctx.ID().symbol
         val id = idToken.text
-        return Expression.Variable(id)
+        val type = typeResolver.resolveType(ctx)
+        return Expression.Variable(id, type)
     }
 
     override fun visitBOOL(ctx: CymplParser.BOOLContext): Expression = when (ctx.bool.type) {
@@ -143,6 +146,7 @@ internal class AntlrToExpression
         val idToken = ctx.ID().symbol
         val id = idToken.text
         val expr = visit(ctx.expr())
-        return Expression.Property(expr, id)
+        val type = typeResolver.resolveType(ctx)
+        return Expression.Property(expr, id, type)
     }
 }

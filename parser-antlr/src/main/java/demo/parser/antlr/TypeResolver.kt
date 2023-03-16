@@ -5,7 +5,10 @@ import demo.parser.domain.TokenLocation
 import demo.parser.domain.BuiltinType
 import org.antlr.v4.runtime.ParserRuleContext
 
-object TypeResolver {
+interface TypeResolver {
+
+    fun resolveType(node: CymplParser.ExprContext): BuiltinType
+
     fun resolveType(typeContext: CymplParser.TypeContext?): BuiltinType {
         if (typeContext == null) {
             return BuiltinType.VOID

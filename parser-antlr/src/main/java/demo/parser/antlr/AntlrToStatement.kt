@@ -1,21 +1,24 @@
 package demo.parser.antlr
 
 import CymplBaseVisitor
-import demo.parser.antlr.TypeResolver.resolveType
 import demo.parser.domain.*
 
-internal class AntlrToStatement : CymplBaseVisitor<Statement>() {
+internal class AntlrToStatement(
+    private val typeResolver: TypeResolver
+) : CymplBaseVisitor<Statement>() {
 
-    private val antlrToExpression = AntlrToExpression()
+    private val antlrToExpression = AntlrToExpression(typeResolver)
 
     override fun visitExpression(ctx: CymplParser.ExpressionContext): Statement =
-        antlrToExpression.visit(ctx.expr()).let { Statement.ExpressionStatement(it) }
+        antlrToExpression.visit(ctx.expr()).let {
+            Statement.ExpressionStatement(it)
+        }
 
     override fun visitVarDecl(ctx: CymplParser.VarDeclContext): Statement {
         val idToken = ctx.ID().symbol
 
         val id = idToken.text
-        val type = resolveType(ctx.type())
+        val type = typeResolver.resolveType(ctx.type())
         val value = antlrToExpression.visit(ctx.expr())
         return Statement.VariableDeclaration(id, type, value)
     }
@@ -38,7 +41,7 @@ internal class AntlrToStatement : CymplBaseVisitor<Statement>() {
         val idToken = ctx.ID().symbol
 
         val id = idToken.text
-        val returnType = resolveType(ctx.type())
+        val returnType = typeResolver.resolveType(ctx.type())
         val parameters = ctx.paramDecls()?.paramDecl()?.map { visitParamDecl(it) } ?: emptyList()
         val body = ctx.block().statement().map { visit(it) }.let { Statement.Block(it) }
 
@@ -89,7 +92,7 @@ internal class AntlrToStatement : CymplBaseVisitor<Statement>() {
         val paramIdToken = ctx.ID().symbol
 
         val paramId = paramIdToken.text
-        val paramType = resolveType(ctx.type())
+        val paramType = typeResolver.resolveType(ctx.type())
 
         return Statement.VariableDeclaration(paramId, paramType)
     }

@@ -3,9 +3,9 @@ package demo.parser.antlr
 import CymplBaseVisitor
 import demo.parser.domain.*
 
-internal class AntlrToProgram : CymplBaseVisitor<Program>() {
+internal class AntlrToProgram(typeResolver: TypeResolver) : CymplBaseVisitor<Program>() {
 
-    private val statVisitor = AntlrToStatement()
+    private val statVisitor = AntlrToStatement(typeResolver)
 
     override fun visitProgram(ctx: CymplParser.ProgramContext): Program {
         if (ctx.childCount <= 1) {

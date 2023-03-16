@@ -1,15 +1,7 @@
 package demo.parser.app.antlr
 
-import demo.parser.app.antlr.AntlrInterpretVerifier.parser
 import org.junit.jupiter.api.Test
 import demo.parser.app.antlr.AntlrInterpretVerifier.verify
-import demo.parser.domain.ParseResult
-import demo.parser.interpret.InterpretException
-import demo.parser.interpret.Interpreter
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.throwable.shouldHaveMessage
-import org.junit.jupiter.api.fail
 
 class ArrayTests {
 

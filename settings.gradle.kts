@@ -10,10 +10,11 @@ pluginManagement {
 
 include(
     "cli",
+    "compiler",
+    "analyzer",
     "interpreter",
     "domain",
     "parser-antlr",
     "parser-fp",
     "antlr-sample"
 )
-include("analyzer")
