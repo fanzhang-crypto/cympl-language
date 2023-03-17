@@ -1,7 +1,7 @@
-package demo.parser.app.antlr
+package demo.parser.interpret.fp
 
 import org.junit.jupiter.api.Test
-import demo.parser.app.antlr.AntlrInterpretVerifier.verify
+import demo.parser.interpret.fp.FpInterpretVerifier.verify
 
 class WhileStatementTests {
 

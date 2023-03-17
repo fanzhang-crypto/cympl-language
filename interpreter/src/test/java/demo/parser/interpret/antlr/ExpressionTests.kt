@@ -1,4 +1,4 @@
-package demo.parser.app.fp
+package demo.parser.interpret.antlr
 
 import demo.parser.domain.Expression
 import demo.parser.domain.ParseResult
@@ -9,8 +9,8 @@ import io.kotest.matchers.throwable.shouldHaveMessage
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
-import demo.parser.app.fp.FpInterpretVerifier.parser
-import demo.parser.app.fp.FpInterpretVerifier.verify
+import demo.parser.interpret.antlr.AntlrInterpretVerifier.parser
+import demo.parser.interpret.antlr.AntlrInterpretVerifier.verify
 
 class ExpressionTests {
 
@@ -68,22 +68,6 @@ class ExpressionTests {
         verify(input, output)
     }
 
-    @Test
-    fun `string test`() {
-        val input = """
-            s1:STRING = "a" + "b" + "c";
-            s2:STRING = "d" + 1 + 2 + 3;
-            s3:STRING = s1 + s2;
-        """
-        val output = """
-            s1:STRING = "a" + "b" + "c"; => "abc"
-            s2:STRING = "d" + 1 + 2 + 3; => "d123"
-            s3:STRING = s1 + s2; => "abcd123"
-            environment:
-            s1:STRING = "abc", s2:STRING = "d123", s3:STRING = "abcd123"
-        """
-        verify(input, output)
-    }
 
     @Test
     fun `should report syntax error`() {
@@ -97,7 +81,7 @@ class ExpressionTests {
 
         val errors = parser().parse(input).shouldBeInstanceOf<ParseResult.Failure<*>>().errors
         errors shouldHaveSize 1
-        errors[0].message shouldContain "syntax error at (4:24): extraneous input ':'"
+        errors[0].message shouldContain "syntax error at (4:23): extraneous input ':'"
     }
 
     @Test
@@ -168,11 +152,12 @@ class ExpressionTests {
             true && false || true && true;
         """.byteInputStream()
 
-        when(val r = parser().parse(input)) {
+        when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors.forEach { println(it) }
                 fail(r.errors.first())
             }
+
             is ParseResult.Success -> {
                 val program = r.value
                 program.statements shouldHaveSize 1
@@ -188,5 +173,93 @@ class ExpressionTests {
                 ).toStatement()
             }
         }
+    }
+
+    @Test
+    fun `logical and should be short circuited`() {
+        val input = """
+            false && 1/0 == 0;
+        """
+
+        val output = """
+            false && 1 / 0 == 0; => false
+            environment:
+        """
+        verify(input, output)
+    }
+
+    @Test
+    fun `logical or should be short circuited`() {
+        val input = """
+            true || 1/0 == 0;
+        """
+
+        val output = """
+            true || 1 / 0 == 0; => true
+            environment:
+        """
+        verify(input, output)
+    }
+
+    @Test
+    fun `support ++ and -- on variable`() {
+        val input = """
+            i: INT = 5;
+            i++;
+            i--;
+            ++i;
+            --i;
+        """
+        val output = """
+            i:INT = 5; => 5
+            i++; => 5
+            i--; => 6
+            ++i; => 6
+            --i; => 5
+            environment:
+            i:INT = 5
+        """
+        verify(input, output)
+    }
+
+    @Test
+    fun `support ++ and -- on array elements`() {
+        val input = """
+            a: INT[] = [1, 2, 3];
+            a[0]++;
+            a[1]--;
+            ++a[2];
+            --a[0];
+        """
+        val output = """
+            a:INT[] = [1, 2, 3]; => [1, 2, 3]
+            a[0]++; => 1
+            a[1]--; => 2
+            ++a[2]; => 4
+            --a[0]; => 1
+            environment:
+            a:INT[] = [1, 1, 4]
+        """
+        verify(input, output)
+    }
+
+    @Test
+    fun `++ and -- only works on variables and array elements`() {
+        val input = """
+            5++;
+            5--;
+            ++5;
+            --5;
+        """
+
+        val output = """
+            5++; failed => cannot increment 5
+            5--; failed => cannot increment 5
+            ++5; failed => cannot increment 5
+            --5; failed => cannot increment 5
+            environment:
+        """
+
+        verify(input, output)
     }
 }

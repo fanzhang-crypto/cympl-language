@@ -1,6 +1,6 @@
-package demo.parser.app.fp
+package demo.parser.interpret.fp
 
-import demo.parser.app.InterpretVerifier
+import demo.parser.interpret.InterpretVerifier
 import demo.parser.fp.FpProgramParser
 
 object FpInterpretVerifier : InterpretVerifier() {

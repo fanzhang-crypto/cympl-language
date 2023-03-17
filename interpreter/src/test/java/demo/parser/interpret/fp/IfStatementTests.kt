@@ -1,7 +1,7 @@
-package demo.parser.app.antlr
+package demo.parser.interpret.fp
 
 import org.junit.jupiter.api.Test
-import demo.parser.app.antlr.AntlrInterpretVerifier.verify
+import demo.parser.interpret.fp.FpInterpretVerifier.verify
 
 class IfStatementTests {
 
@@ -11,16 +11,16 @@ class IfStatementTests {
             x:INT = 1;
             if (x == 1) {
                 x:INT = 2;
-                x;
+                return x;
             } else {
                 x:INT = 3;
-                x;
+                return x;
             }
             x;
         """
         val output = """
             x:INT = 1; => 1
-            if (x == 1) { x:INT = 2; x; } else { x:INT = 3; x; } => void
+            if (x == 1) { x:INT = 2; return x; } else { x:INT = 3; return x; } => 2
             x; => 1
             environment:
             x:INT = 1

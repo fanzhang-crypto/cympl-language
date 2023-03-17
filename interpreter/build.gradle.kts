@@ -5,6 +5,9 @@ plugins {
 dependencies {
     implementation(project(":domain"))
 
+    testImplementation(project(":parser-antlr"))
+    testImplementation(project(":parser-fp"))
+
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.1.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
@@ -13,4 +16,8 @@ dependencies {
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.getByName<Test>("test") {
+    useJUnitPlatform()
 }

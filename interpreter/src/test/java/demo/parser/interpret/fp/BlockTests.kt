@@ -1,6 +1,6 @@
-package demo.parser.app.fp
+package demo.parser.interpret.fp
 
-import demo.parser.app.fp.FpInterpretVerifier.verify
+import demo.parser.interpret.fp.FpInterpretVerifier.verify
 import org.junit.jupiter.api.Test
 
 class BlockTests  {

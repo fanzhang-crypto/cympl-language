@@ -1,6 +1,6 @@
-package demo.parser.app.antlr
+package demo.parser.interpret.antlr
 
-import demo.parser.app.antlr.AntlrInterpretVerifier.parser
+import demo.parser.interpret.antlr.AntlrInterpretVerifier.parser
 import demo.parser.domain.ParseException
 import demo.parser.domain.ParseResult
 import io.kotest.matchers.collections.shouldHaveSize

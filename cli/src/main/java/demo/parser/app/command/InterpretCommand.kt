@@ -29,23 +29,39 @@ class InterpretCommand(
             defaultValue = ShellOption.NULL,
             valueProvider = FileValueProvider::class,
             help = "program file path to interpret"
-        ) file: File?
+        ) file: File?,
+        @ShellOption(
+            value = ["-v"],
+            defaultValue = "false",
+            help = "show verbose output when interpreting"
+        ) verbose: Boolean,
     ) {
+        if (file == null) {
+            printResult("File is required")
+            terminal.writer().flush()
+            return
+        }
+
         val parser = parserProvider()
         val interpreter = Interpreter()
 
         FileInputStream(file).use {
             when (val r = parser.parse(it)) {
                 is ParseResult.Success<Program> -> {
-                    interpreter.interpret(r.value).forEach(::printResult)
+                    val output = interpreter.interpret(r.value)
+                    if (verbose) {
+                        output.forEach(::printResult)
+                    } else {
+                        output.last()
+                    }
                 }
 
                 is ParseResult.Failure<*> -> {
                     r.errors.forEach(::printError)
                 }
             }
-            terminal.writer().flush()
         }
+        terminal.writer().flush()
     }
 
     private fun printResult(result: String) {

@@ -1,6 +1,6 @@
-package demo.parser.app.antlr
+package demo.parser.interpret.antlr
 
-import demo.parser.app.antlr.AntlrInterpretVerifier.verify
+import demo.parser.interpret.antlr.AntlrInterpretVerifier.verify
 import org.junit.jupiter.api.Test
 
 class BlockTests  {

@@ -1,9 +1,8 @@
-package demo.parser.app
+package demo.parser.interpret
 
 import demo.parser.domain.ParseResult
 import demo.parser.domain.Parser
 import demo.parser.domain.Program
-import demo.parser.interpret.Interpreter
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.fail
 
