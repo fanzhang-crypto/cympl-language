@@ -182,6 +182,7 @@ class SemanticChecker : TypeResolver {
                 val location = getLocation(ctx.expr().start)
                 semanticErrors += SemanticException("logical not only works on BOOL", location)
             }
+            types.put(ctx, BuiltinType.BOOL)
         }
 
         override fun exitSTRING(ctx: STRINGContext) {

@@ -9,10 +9,12 @@ plugins {
 dependencies {
     implementation(project(":analyzer"))
     implementation(project(":interpreter"))
+    implementation(project(":compiler"))
     implementation(project(":domain"))
     implementation(project(":parser-antlr"))
     implementation(project(":parser-fp"))
 
+    implementation("org.apache.commons:commons-text:1.10.0")
     implementation("org.springframework.shell:spring-shell-starter:3.0.1")
 
     testImplementation(kotlin("test"))

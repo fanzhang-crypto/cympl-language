@@ -17,4 +17,4 @@ func insertionSort(arr:INT[]):INT[] {
     return arr;
 }
 
-insertionSort([2,3,9,1,11,32,17,23,15,21]);
+println(insertionSort([2,3,9,1,11,32,17,23,15,21]));

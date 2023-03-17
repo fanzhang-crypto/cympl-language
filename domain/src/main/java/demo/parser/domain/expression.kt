@@ -62,6 +62,7 @@ sealed interface Expression: Typed {
     }
 
     class Power(left: Expression, right: Expression) : ArithmeticExpression(left, right) {
+        override val resolvedType = BuiltinType.FLOAT
         override fun toString() = "$left ^ $right"
     }
 
