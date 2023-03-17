@@ -3,36 +3,50 @@ package demo.parser.analyze
 import demo.parser.domain.Expression
 import demo.parser.domain.Program
 import demo.parser.domain.Statement
+import demo.parser.domain.symbol.FunctionSymbol
+import demo.parser.domain.symbol.GlobalScope
+import demo.parser.domain.symbol.Scope
 import guru.nidi.graphviz.attribute.Font
 import guru.nidi.graphviz.attribute.Rank
 import guru.nidi.graphviz.attribute.Shape
 import guru.nidi.graphviz.attribute.Size
-import guru.nidi.graphviz.engine.Format
-import guru.nidi.graphviz.engine.Graphviz
 import guru.nidi.graphviz.graph
 import guru.nidi.graphviz.toGraphviz
-import java.io.File
 
 class CallGraphAnalyzer {
 
     private val nodes: MutableSet<String> = LinkedHashSet()
     private val edges: MutableSet<Pair<String, String>> = LinkedHashSet()
 
-    private var currentFunction: String? = null
+    private var currentScope: Scope = GlobalScope()
 
-    fun analyze(program: Program): Graphviz {
+    class Graph(
+        val nodes: Set<String>,
+        val edges: Set<Pair<String, String>>
+    ) {
+        fun toGraphviz() = graph(directed = true) {
+            graph[Rank.dir(Rank.RankDir.TOP_TO_BOTTOM)]
+            node[Shape.CIRCLE, Font.name("Helvetica"), Font.size(15), Size.mode(Size.Mode.FIXED).size(1.0, 1.0)]
+
+            nodes.forEach { -it }
+            edges.forEach { (from, to) -> from - to }
+        }.toGraphviz()
+    }
+
+    fun analyze(program: Program): Graph {
         for (stat in program.statements) {
             analyze(stat)
         }
-        return toGraphviz().also { reset() }
+        return Graph(nodes.toSet(), edges.toSet()).also { reset() }
     }
 
     private fun analyze(statement: Statement) {
         when (statement) {
             is Statement.FunctionDeclaration -> {
-                nodes += statement.id
-                currentFunction = statement.id
+                currentScope = FunctionSymbol(statement.id, statement.returnType, emptyList(), currentScope)
+                nodes += currentScope.scopeName
                 analyze(statement.body)
+                currentScope = currentScope.enclosingScope!!
             }
 
             is Statement.Return -> {
@@ -78,8 +92,8 @@ class CallGraphAnalyzer {
     private fun analyze(expression: Expression) {
         when (expression) {
             is Expression.FunctionCall -> {
-                if (currentFunction != null) {
-                    edges.add(currentFunction!! to expression.id)
+                if (currentScope is FunctionSymbol) {
+                    edges.add(currentScope.scopeName to expression.id)
                 }
             }
 
@@ -194,23 +208,6 @@ class CallGraphAnalyzer {
     private fun reset() {
         nodes.clear()
         edges.clear()
-        currentFunction = null
+        currentScope = GlobalScope()
     }
-
-    private fun toGraphviz() = graph(directed = true) {
-        graph[Rank.dir(Rank.RankDir.TOP_TO_BOTTOM)]
-        node[Shape.CIRCLE, Font.name("Helvetica"), Font.size(15), Size.mode(Size.Mode.FIXED).size(1.0, 1.0)]
-
-        nodes.forEach { -it }
-        edges.forEach { (from, to) -> from - to }
-    }.toGraphviz()
-}
-
-fun main() {
-    graph(directed = true) {
-        -"a" - "a"
-        -"b"
-        -"c"
-
-    }.toGraphviz().render(Format.PNG).toFile(File("ex1.png"))
 }

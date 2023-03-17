@@ -1,14 +1,14 @@
 #! cympl interpret
 
-func main():VOID { fact(); a(); }
+func main() { fact(0); a(); }
 
 func fact(n:INT):INT {
   if ( n==0 ) return 1;
   return n * fact(n-1);
 }
 
-func a():VOID { x:INT = b(); if (false) {c(); d();} }
-func b():VOID { c(); }
-func c():VOID { b(); }
-func d():VOID { }
-func e():VOID { }
+func a() { b(); if (false) {c(); d();} }
+func b() { c(); }
+func c() { b(); }
+func d() { }
+func e() { }

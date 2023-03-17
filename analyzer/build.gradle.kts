@@ -7,6 +7,7 @@ dependencies {
     api("guru.nidi:graphviz-kotlin:0.18.1")
     implementation("ch.qos.logback:logback-classic:1.2.9")
 
+    testImplementation(project(":parser-antlr"))
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.1.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
@@ -15,4 +16,8 @@ dependencies {
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.getByName<Test>("test") {
+    useJUnitPlatform()
 }
