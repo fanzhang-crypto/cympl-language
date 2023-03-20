@@ -7,9 +7,7 @@ dependencies {
 //    implementation("org.ow2.asm:asm:9.4")
     implementation("org.ow2.asm:asm-commons:9.4")
     implementation("org.ow2.asm:asm-util:9.4")
-
-
-    implementation("org.javassist:javassist:3.29.2-GA")
+//    implementation("org.javassist:javassist:3.29.2-GA")
 
     testImplementation(project(":parser-antlr"))
     testImplementation(kotlin("test"))

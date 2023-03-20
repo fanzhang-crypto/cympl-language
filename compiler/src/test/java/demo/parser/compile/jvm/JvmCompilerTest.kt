@@ -794,7 +794,7 @@ class JvmCompilerTest {
         val program = parse(script)
         val bytecode = compiler.compile(program, compileOptions)
 
-        File("${DEFAULT_MAIN_CLASS_NAME}.class").writeBytes(bytecode)
+        File("build/classes/${DEFAULT_MAIN_CLASS_NAME}.class").writeBytes(bytecode)
 
         return Runtime.getRuntime()
             .exec("java $DEFAULT_MAIN_CLASS_NAME").let {
