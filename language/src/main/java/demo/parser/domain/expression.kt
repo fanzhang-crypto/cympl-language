@@ -13,7 +13,7 @@ sealed interface Expression: Typed {
         final override val left: Expression,
         final override val right: Expression
     ) : BinaryExpression {
-        override val resolvedType = compatibleNumberType(left.resolvedType, right.resolvedType)
+        override val resolvedType get() = compatibleNumberType(left.resolvedType, right.resolvedType)
     }
 
     sealed class ComparisonExpression(
@@ -24,7 +24,7 @@ sealed interface Expression: Typed {
     }
 
     data class Parenthesized(val expr: Expression) : Expression {
-        override val resolvedType = expr.resolvedType
+        override val resolvedType get() = expr.resolvedType
         override fun toString() = "($expr)"
     }
 
@@ -49,7 +49,7 @@ sealed interface Expression: Typed {
     }
 
     data class ArrayLiteral(val elements: List<Expression>) : Expression {
-        override val resolvedType = BuiltinType.ARRAY(
+        override val resolvedType get() = BuiltinType.ARRAY(
             elements.firstOrNull()?.resolvedType ?: BuiltinType.VOID
         )
 
@@ -93,17 +93,17 @@ sealed interface Expression: Typed {
     }
 
     class Negation(val expr: Expression) : Expression {
-        override val resolvedType = expr.resolvedType
+        override val resolvedType get() = expr.resolvedType
         override fun toString() = "-$expr"
     }
 
     class Increment(val expr: Expression, val postfix: Boolean) : Expression {
-        override val resolvedType = expr.resolvedType
+        override val resolvedType get() = expr.resolvedType
         override fun toString() = if (postfix) "$expr++" else "++$expr"
     }
 
     class Decrement(val expr: Expression, val postfix: Boolean) : Expression {
-        override val resolvedType = expr.resolvedType
+        override val resolvedType get() = expr.resolvedType
         override fun toString() = if (postfix) "$expr--" else "--$expr"
     }
 
@@ -154,7 +154,7 @@ sealed interface Expression: Typed {
     }
 
     data class Index(val arrayExpr: Expression, val indexExpr: Expression) : Expression {
-        override val resolvedType = (arrayExpr.resolvedType as BuiltinType.ARRAY).elementType
+        override val resolvedType get() = (arrayExpr.resolvedType as BuiltinType.ARRAY).elementType
         override fun toString() = "$arrayExpr[$indexExpr]"
     }
 

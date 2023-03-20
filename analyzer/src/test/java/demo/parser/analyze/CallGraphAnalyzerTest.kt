@@ -12,9 +12,9 @@ class CallGraphAnalyzerTest {
     @Test
     fun `support nested function declaration`() {
         val input = """
-            func f1() {
-                func f2() {
-                    func f3() {
+            void f1() {
+                void f2() {
+                    void f3() {
                         println("Hello, world!");
                     }
                     f3();
@@ -41,14 +41,14 @@ class CallGraphAnalyzerTest {
     @Test
     fun `support function declaration with parameters`() {
         val input = """
-            func main() { fact(0); a(); }
+            void main() { fact(0); a(); }
 
-            func fact(n:INT):INT {
+            int fact(int n) {
               if ( n==0 ) return 1;
               return n * fact(n-1);
             }
 
-            func a() {  }
+            void a() {  }
         """
 
         val program = parse(input)

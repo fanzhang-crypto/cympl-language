@@ -45,5 +45,6 @@ internal object TypeChecker {
         is BOOL -> Boolean::class.java
         is VOID -> Void::class.java
         is ARRAY -> Array::class.java
+        is FUNCTION -> throw IllegalArgumentException("cannot convert function type to java class")
     }
 }

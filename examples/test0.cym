@@ -1,8 +1,8 @@
 #! cympl interpret
 
-i:INT = 1;
-j:INT = 2;
-k:INT = 3;
+int i = 1;
+int j = 2;
+int k = 3;
 k = i - j;
 (i + j) * k;
 i + j * 2 - k/3;

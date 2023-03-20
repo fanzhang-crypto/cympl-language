@@ -3,6 +3,7 @@ package demo.parser.compile.jvm
 import demo.parser.compile.CompilationException
 import demo.parser.domain.BuiltinType
 import demo.parser.domain.Expression
+import demo.parser.domain.symbol.ArrayScope
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -46,7 +47,7 @@ internal class ExpressionCompiler {
     }
 
     private fun Expression.Property.compile(ctx: CompilationContext) {
-        if (expr.resolvedType is BuiltinType.ARRAY && propertyName == "length") {
+        if (expr.resolvedType is BuiltinType.ARRAY && propertyName == ArrayScope.LENGTH_PROPERTY.name) {
             compile(expr, ctx)
             ctx.mv.arrayLength()
         }

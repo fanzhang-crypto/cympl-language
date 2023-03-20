@@ -17,10 +17,10 @@ class ExpressionTests {
     @Test
     fun `integers test`() {
         val input = """
-            i:INT = 1;  // some comment 1
+            int i = 1;  // some comment 1
             //some comment 2
-            j:INT = 2;
-            k:INT = 3;
+            int j = 2;
+            int k = 3;
             k = i - j;
             (i + j) * k;
             i + j * 2 - k/3;
@@ -28,16 +28,16 @@ class ExpressionTests {
             -i;
         """
         val output = """
-            i:INT = 1; => 1
-            j:INT = 2; => 2
-            k:INT = 3; => 3
+            i:int = 1; => 1
+            j:int = 2; => 2
+            k:int = 3; => 3
             k = i - j; => -1
             (i + j) * k; => -3
             i + j * 2 - k / 3; => 5
             (1 - (i + j)) / 2; => -1
             -i; => -1
             environment:
-            i:INT = 1, j:INT = 2, k:INT = -1
+            i:int = 1, j:int = 2, k:int = -1
         """
         verify(input, output)
     }
@@ -45,25 +45,25 @@ class ExpressionTests {
     @Test
     fun `floats and integers test`() {
         val input = """
-            i:INT = 1;  // some comment 1
+            int i = 1;  // some comment 1
             //some comment 2
-            j:FLOAT = 2.0;
-            k:FLOAT = 3.0;
-            k = i - j; // i - j cast to FLOAT because j is FLOAT
+            float j = 2.0;
+            float k = 3.0;
+            k = i - j; // i - j cast to float because j is float
             (i + j) * k;
             i + j * 2 - k/3;
             (1 - (i + j)) / 2;
         """
         val output = """
-            i:INT = 1; => 1
-            j:FLOAT = 2.0; => 2.0
-            k:FLOAT = 3.0; => 3.0
+            i:int = 1; => 1
+            j:float = 2.0; => 2.0
+            k:float = 3.0; => 3.0
             k = i - j; => -1.0
             (i + j) * k; => -3.0
             i + j * 2 - k / 3; => 5.333333333333333
             (1 - (i + j)) / 2; => -1.0
             environment:
-            i:INT = 1, j:FLOAT = 2.0, k:FLOAT = -1.0
+            i:int = 1, j:float = 2.0, k:float = -1.0
         """
         verify(input, output)
     }
@@ -72,42 +72,42 @@ class ExpressionTests {
     @Test
     fun `should report syntax error`() {
         val input = """
-            i: INT = 5;
-            i: INT = 7;
-            j = i + 23;:INT
+            int i = 5;
+            int i = 7;
+            j = i + int 23;
             24 * k;
-            i: INT = 9;
+            int i = 9;
         """.byteInputStream()
 
         val errors = parser().parse(input).shouldBeInstanceOf<ParseResult.Failure<*>>().errors
         errors shouldHaveSize 1
-        errors[0].message shouldContain "syntax error at (4:23): extraneous input ':'"
+        errors[0].message shouldContain "syntax error at (4:20): extraneous input 'int'"
     }
 
     @Test
     fun `should report semantic error`() {
         val input = """
-            i: INT = 5; // some comment here
-            i: INT = 7;
+            int i = 5; // some comment here
+            int i = 7;
             i + 23;
             24 * k;
-            i: INT = 9;
+            int i = 9;
             j = i + 23;
         """.byteInputStream()
 
         val errors = parser().parse(input).shouldBeInstanceOf<ParseResult.Failure<*>>().errors
         errors shouldHaveSize 4
-        errors[0].shouldHaveMessage("semantic error at (3:12): variable i already defined")
+        errors[0].shouldHaveMessage("semantic error at (3:16): variable i already defined")
         errors[1].shouldHaveMessage("semantic error at (5:17): variable k not defined")
-        errors[2].shouldHaveMessage("semantic error at (6:12): variable i already defined")
+        errors[2].shouldHaveMessage("semantic error at (6:16): variable i already defined")
         errors[3].shouldHaveMessage("semantic error at (7:12): variable j not defined")
     }
 
     @Test
     fun `support eq, neq, gt, get, lt, lte`() {
         val input = """
-            i: INT = 5;
-            j: INT = 7;
+            int i = 5;
+            int j = 7;
             i == j;
             i != j;
             i > j;
@@ -116,8 +116,8 @@ class ExpressionTests {
             i <= j;
         """
         val output = """
-            i:INT = 5; => 5
-            j:INT = 7; => 7
+            i:int = 5; => 5
+            j:int = 7; => 7
             i == j; => false
             i != j; => true
             i > j; => false
@@ -125,7 +125,7 @@ class ExpressionTests {
             i < j; => true
             i <= j; => true
             environment:
-            i:INT = 5, j:INT = 7
+            i:int = 5, j:int = 7
         """
         verify(input, output)
     }
@@ -204,20 +204,20 @@ class ExpressionTests {
     @Test
     fun `support ++ and -- on variable`() {
         val input = """
-            i: INT = 5;
+            int i = 5;
             i++;
             i--;
             ++i;
             --i;
         """
         val output = """
-            i:INT = 5; => 5
+            i:int = 5; => 5
             i++; => 5
             i--; => 6
             ++i; => 6
             --i; => 5
             environment:
-            i:INT = 5
+            i:int = 5
         """
         verify(input, output)
     }
@@ -225,20 +225,20 @@ class ExpressionTests {
     @Test
     fun `support ++ and -- on array elements`() {
         val input = """
-            a: INT[] = [1, 2, 3];
+            int[] a = [1, 2, 3];
             a[0]++;
             a[1]--;
             ++a[2];
             --a[0];
         """
         val output = """
-            a:INT[] = [1, 2, 3]; => [1, 2, 3]
+            a:int[] = [1, 2, 3]; => [1, 2, 3]
             a[0]++; => 1
             a[1]--; => 2
             ++a[2]; => 4
             --a[0]; => 1
             environment:
-            a:INT[] = [1, 1, 4]
+            a:int[] = [1, 1, 4]
         """
         verify(input, output)
     }

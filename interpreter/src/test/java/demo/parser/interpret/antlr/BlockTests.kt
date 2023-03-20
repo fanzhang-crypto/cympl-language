@@ -9,15 +9,15 @@ class BlockTests  {
     fun `variables in different blocks have no conflict`() {
         val input = """
             {
-                x:INT = 1;
+                int x = 1;
                 {
-                    x:INT = 2;
+                    int x = 2;
                 }
                 x;
             }
         """
         val output = """
-            { x:INT = 1; { x:INT = 2; } x; } => void
+            { x:int = 1; { x:int = 2; } x; } => void
             environment:
         """
         verify(input, output)
@@ -27,15 +27,15 @@ class BlockTests  {
     fun `functions in different blocks have no conflict`() {
         val input = """
             {
-                func f(x:INT):INT { return x + 1; }
+                int f(int x) { return x + 1; }
                 {
-                    func f(x:INT):INT { return x + 2; }
+                    int f(int x) { return x + 2; }
                 }
                 f(1);
             }
         """
         val output = """
-            { func f(x:INT):INT { return x + 1; } { func f(x:INT):INT { return x + 2; } } f(1); } => void
+            { func f(x:int):int { return x + 1; } { func f(x:int):int { return x + 2; } } f(1); } => void
             environment:
         """
         verify(input, output)

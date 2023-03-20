@@ -1,19 +1,18 @@
 #! cympl interpret
 
-func quickSort(arr:INT[]):INT[] {
-    func swap(arr:INT[], i:INT, j:INT)
+int[] quickSort(int[] arr) {
+    void swap(int[] arr, int i, int j)
     {
-        temp:INT = arr[i];
+        int temp = arr[i];
         arr[i] = arr[j];
         arr[j] = temp;
-        return;
     }
 
-    func partition(arr:INT[], low:INT, high:INT):INT
+    int partition(int[] arr, int low, int high)
     {
-        pivot:INT = arr[high]; // pivot
-        i:INT = low - 1;
-        for (j:INT = low; j <= high - 1; j++) {
+        int pivot = arr[high]; // pivot
+        int i = low - 1;
+        for (int j = low; j <= high - 1; j++) {
             if (arr[j] < pivot) {
                 i = i + 1;
                 swap(arr, i, j);
@@ -23,13 +22,12 @@ func quickSort(arr:INT[]):INT[] {
         return i + 1;
     }
 
-    func quickSortInternal(arr:INT[], low:INT, high:INT) {
+    void quickSortInternal(int[] arr, int low, int high) {
         if (low < high) {
-            pi:INT = partition(arr, low, high);
+            int pi = partition(arr, low, high);
             quickSortInternal(arr, low, pi - 1);
             quickSortInternal(arr, pi + 1, high);
         }
-        return;
     }
 
     quickSortInternal(arr, 0, arr.length - 1);

@@ -1,6 +1,8 @@
 package demo.parser.interpret
 
 import demo.parser.domain.*
+import demo.parser.domain.symbol.ArrayScope
+import demo.parser.domain.symbol.StringScope
 import demo.parser.interpret.TypeChecker.assertValueType
 
 class Interpreter {
@@ -351,7 +353,7 @@ class Interpreter {
                     @Suppress("UNCHECKED_CAST")
                     val array = owner.value as Array<TValue>
                     when (propertyName) {
-                        "length" -> TValue(BuiltinType.INT, array.size)
+                        ArrayScope.LENGTH_PROPERTY.name -> TValue(BuiltinType.INT, array.size)
                         else -> throw InterpretException("array has no property $propertyName")
                     }
                 }
@@ -359,7 +361,7 @@ class Interpreter {
                 is BuiltinType.STRING -> {
                     val string = owner.value as String
                     when (propertyName) {
-                        "length" -> TValue(BuiltinType.INT, string.length)
+                        StringScope.LENGTH_PROPERTY.name -> TValue(BuiltinType.INT, string.length)
                         else -> throw InterpretException("string has no property $propertyName")
                     }
                 }

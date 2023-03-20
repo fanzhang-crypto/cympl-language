@@ -20,13 +20,13 @@ statement
 
 type: INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE | type '[]';
 
-varDecl: ID ':' type '=' expr;
+varDecl: type ID '=' expr;
 
-funcDecl: FUNC ID '(' paramDecls? ')' (':' (type | VOID_TYPE))? block;
+funcDecl:  (type | VOID_TYPE) ID '(' paramDecls? ')' block;
 
 paramDecls: paramDecl (',' paramDecl)*;
 
-paramDecl: ID ':' type;
+paramDecl: type ID;
 
 returnStat: RETURN expr? ';';
 
@@ -62,11 +62,11 @@ expr: ID '(' exprlist? ')'                              # FunctionCall
     | expr AND expr                                     # LogicalAnd
     | expr OR expr                                      # LogicalOr
     | ID                                                # Variable
-    | bool=(TRUE | FALSE)                               # BOOL
-    | INT                                               # INT
-    | FLOAT                                             # FLOAT
-    | STRING                                            # STRING
-    | '[' exprlist? ']'                                 # ArrayExpression
+    | bool=(TRUE | FALSE)                               # BoolLiteral
+    | INT                                               # IntLiteral
+    | FLOAT                                             # FloatLiteral
+    | STRING                                            # StringLiteral
+    | '[' exprlist? ']'                                 # ArrayLiteral
     ;
 
 exprlist: expr (',' expr)*;
@@ -88,11 +88,11 @@ NOT: '!';
 AND: '&&';
 OR: '||';
 
-INT_TYPE: 'INT';
-FLOAT_TYPE: 'FLOAT';
-STRING_TYPE: 'STRING';
-BOOL_TYPE: 'BOOL';
-VOID_TYPE: 'VOID';
+INT_TYPE: 'int';
+FLOAT_TYPE: 'float';
+STRING_TYPE: 'String';
+BOOL_TYPE: 'bool';
+VOID_TYPE: 'void';
 
 TRUE: 'true';
 FALSE: 'false';
@@ -100,7 +100,6 @@ INT: DIGIT+;
 FLOAT: DIGIT '.' DIGIT* | '.' DIGIT+;
 STRING: '"' (ESC|.)*? '"';
 
-FUNC: 'func';
 IF: 'if';
 ELSE: 'else';
 WHILE: 'while';

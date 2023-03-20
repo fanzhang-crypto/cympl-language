@@ -1,7 +1,7 @@
-package demo.parser.interpret.antlr
+package demo.parser.interpret.fp
 
 import org.junit.jupiter.api.Test
-import demo.parser.interpret.antlr.AntlrInterpretVerifier.verify
+import demo.parser.interpret.fp.FpInterpretVerifier.verify
 
 class StringTests {
 

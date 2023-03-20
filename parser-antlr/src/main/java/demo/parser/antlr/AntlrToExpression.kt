@@ -116,28 +116,28 @@ internal class AntlrToExpression(
         return Expression.Variable(id, type)
     }
 
-    override fun visitBOOL(ctx: CymplParser.BOOLContext): Expression = when (ctx.bool.type) {
+    override fun visitBoolLiteral(ctx: CymplParser.BoolLiteralContext): Expression = when (ctx.bool.type) {
         CymplLexer.TRUE -> Expression.BoolLiteral(true)
         CymplLexer.FALSE -> Expression.BoolLiteral(false)
         else -> throw RuntimeException("unknown boolean value ${ctx.bool.text}")
     }
 
-    override fun visitINT(ctx: CymplParser.INTContext): Expression {
+    override fun visitIntLiteral(ctx: CymplParser.IntLiteralContext): Expression {
         val value = ctx.INT().text.toInt()
         return Expression.IntLiteral(value)
     }
 
-    override fun visitFLOAT(ctx: CymplParser.FLOATContext): Expression {
+    override fun visitFloatLiteral(ctx: CymplParser.FloatLiteralContext): Expression {
         val value = ctx.FLOAT().text.toDouble()
         return Expression.FloatLiteral(value)
     }
 
-    override fun visitSTRING(ctx: CymplParser.STRINGContext): Expression {
+    override fun visitStringLiteral(ctx: CymplParser.StringLiteralContext): Expression {
         val value = ctx.STRING().text.let { it.substring(1, it.length - 1) }
         return Expression.StringLiteral(value)
     }
 
-    override fun visitArrayExpression(ctx: CymplParser.ArrayExpressionContext): Expression {
+    override fun visitArrayLiteral(ctx: CymplParser.ArrayLiteralContext): Expression {
         val elements = ctx.exprlist()?.expr()?.map { visit(it) } ?: emptyList()
         return Expression.ArrayLiteral(elements)
     }

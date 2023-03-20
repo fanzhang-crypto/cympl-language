@@ -6,12 +6,13 @@ import demo.parser.domain.SemanticException
 import demo.parser.domain.TokenLocation
 import demo.parser.domain.BuiltinType
 import demo.parser.domain.symbol.*
+import java.util.TreeSet
 
 internal class SemanticChecker {
 
     private var currentScope: Scope? = GlobalScope()
 
-    private val semanticErrors: MutableList<SemanticException> = mutableListOf()
+    private val semanticErrors: MutableSet<SemanticException> = TreeSet()
 
     fun getSemanticErrors(): List<SemanticException> = semanticErrors.toList()
 
@@ -45,8 +46,8 @@ internal class SemanticChecker {
         }
     }
 
-    fun enterFuncDecl(idToken: TokenMatch, type: BuiltinType, paramIdAndTypes: List<Tuple2<TokenMatch, BuiltinType>>?) {
-        val function = defineFunc(idToken, type, paramIdAndTypes)
+    fun enterFuncDecl(idToken: TokenMatch, type: BuiltinType, paramTypeAndIds: List<Tuple2<BuiltinType, TokenMatch>>?) {
+        val function = defineFunc(idToken, type, paramTypeAndIds)
 //        saveScope(ctx, function)
         currentScope = function
     }
@@ -68,7 +69,7 @@ internal class SemanticChecker {
     private fun defineFunc(
         idToken: TokenMatch,
         type: BuiltinType,
-        paramIdAndTypes: List<Tuple2<TokenMatch, BuiltinType>>?
+        paramTypeAndIds: List<Tuple2<BuiltinType, TokenMatch>>?
     ): FunctionSymbol {
         val name: String = idToken.text
         val functionSymbol: Symbol? = currentScope?.resolve(name)
@@ -82,7 +83,7 @@ internal class SemanticChecker {
             }
         }
 
-        val params = paramIdAndTypes?.map { (idToken, type) ->
+        val params = paramTypeAndIds?.map { (type, idToken) ->
             val id = idToken.text
             VariableSymbol(id, type, currentScope)
         } ?: emptyList()

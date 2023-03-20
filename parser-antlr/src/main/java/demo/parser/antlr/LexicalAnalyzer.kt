@@ -27,7 +27,6 @@ object LexicalAnalyzer {
 
                     CymplLexer.STRING -> listener.onQuote(text, token.startIndex, token.stopIndex)
 
-                    CymplLexer.FUNC,
                     CymplLexer.INT_TYPE,
                     CymplLexer.FLOAT_TYPE,
                     CymplLexer.STRING_TYPE,

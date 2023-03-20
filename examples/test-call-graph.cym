@@ -1,14 +1,14 @@
 #! cympl interpret
 
-func main() { fact(0); a(); }
+void main() { fact(0); a(); }
 
-func fact(n:INT):INT {
+int fact(int n) {
   if ( n==0 ) return 1;
   return n * fact(n-1);
 }
 
-func a() { b(); if (false) {c(); d();} }
-func b() { c(); }
-func c() { b(); }
-func d() { }
-func e() { }
+void a() { b(); if (false) {c(); d();} }
+void b() { c(); }
+void c() { b(); }
+void d() { }
+void e() { }

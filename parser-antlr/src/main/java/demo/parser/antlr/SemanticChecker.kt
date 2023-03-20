@@ -160,7 +160,7 @@ class SemanticChecker : TypeResolver {
                 is BuiltinType.FLOAT -> types.put(ctx, BuiltinType.FLOAT)
                 else -> {
                     val location = getLocation(ctx.expr().start)
-                    semanticErrors += SemanticException("negation only works on INT or FLOAT", location)
+                    semanticErrors += SemanticException("negation only works on int or float", location)
                 }
             }
         }
@@ -180,24 +180,24 @@ class SemanticChecker : TypeResolver {
         override fun exitLogicalNot(ctx: LogicalNotContext) {
             if (types.get(ctx.expr()) != BuiltinType.BOOL) {
                 val location = getLocation(ctx.expr().start)
-                semanticErrors += SemanticException("logical not only works on BOOL", location)
+                semanticErrors += SemanticException("logical not only works on bool", location)
             }
             types.put(ctx, BuiltinType.BOOL)
         }
 
-        override fun exitSTRING(ctx: STRINGContext) {
+        override fun exitStringLiteral(ctx: StringLiteralContext) {
             types.put(ctx, BuiltinType.STRING)
         }
 
-        override fun exitINT(ctx: INTContext) {
+        override fun exitIntLiteral(ctx: IntLiteralContext) {
             types.put(ctx, BuiltinType.INT)
         }
 
-        override fun exitBOOL(ctx: BOOLContext) {
+        override fun exitBoolLiteral(ctx: BoolLiteralContext) {
             types.put(ctx, BuiltinType.BOOL)
         }
 
-        override fun exitFLOAT(ctx: FLOATContext) {
+        override fun exitFloatLiteral(ctx: FloatLiteralContext) {
             types.put(ctx, BuiltinType.FLOAT)
         }
 
@@ -207,7 +207,7 @@ class SemanticChecker : TypeResolver {
             checkComparisonBop(ctx, leftType, rightType)
         }
 
-        override fun exitArrayExpression(ctx: ArrayExpressionContext) {
+        override fun exitArrayLiteral(ctx: ArrayLiteralContext) {
             val elementTypes = ctx.exprlist()?.expr()?.map { types.get(it) }?.toSet() ?: emptySet()
 
             if (elementTypes.size > 1) {
@@ -249,7 +249,7 @@ class SemanticChecker : TypeResolver {
             if (targetType != BuiltinType.INT && targetType != BuiltinType.FLOAT) {
                 val location = getLocation(ctx.expr().start)
                 semanticErrors += SemanticException(
-                    "increment/decrement only works on INT or FLOAT, but got $targetType",
+                    "increment/decrement only works on int or float, but got $targetType",
                     location
                 )
             }
@@ -260,7 +260,7 @@ class SemanticChecker : TypeResolver {
             if (targetType != BuiltinType.INT && targetType != BuiltinType.FLOAT) {
                 val location = getLocation(ctx.expr().start)
                 semanticErrors += SemanticException(
-                    "increment/decrement only works on INT or FLOAT, but got $targetType",
+                    "increment/decrement only works on int or float, but got $targetType",
                     location
                 )
             }
@@ -359,7 +359,7 @@ class SemanticChecker : TypeResolver {
             val indexType = types.get(ctx.indexExpr)
             if (indexType != BuiltinType.INT) {
                 val location = getLocation(ctx.expr(1).start)
-                semanticErrors += SemanticException("array index must be of type INT, but got $indexType", location)
+                semanticErrors += SemanticException("array index must be of type int, but got $indexType", location)
             }
 
             types.put(ctx, arrayType.elementType)
@@ -376,7 +376,7 @@ class SemanticChecker : TypeResolver {
             val indexType = types.get(ctx.indexExpr)
             if (indexType != BuiltinType.INT) {
                 val location = getLocation(ctx.expr(1).start)
-                semanticErrors += SemanticException("array index must be of type INT, but got $indexType", location)
+                semanticErrors += SemanticException("array index must be of type int, but got $indexType", location)
             }
 
             val exprType = types.get(ctx.valueExpr)
@@ -425,7 +425,7 @@ class SemanticChecker : TypeResolver {
             } else {
                 val location = getLocation(ctx.start)
                 semanticErrors += SemanticException(
-                    "type mismatch: expected BOOL, INT or FLOAT, but got $leftType and $rightType",
+                    "type mismatch: expected bool, int or float, but got $leftType and $rightType",
                     location
                 )
             }
@@ -436,7 +436,7 @@ class SemanticChecker : TypeResolver {
             if (!compatibleType.numericCompatible  && compatibleType != BuiltinType.STRING) {
                 val location = getLocation(ctx.start)
                 semanticErrors += SemanticException(
-                    "type mismatch: expected BOOL, INT, FLOAT or STRING, but got $leftType and $rightType",
+                    "type mismatch: expected bool, int, float or String, but got $leftType and $rightType",
                     location
                 )
             } else {
@@ -450,7 +450,7 @@ class SemanticChecker : TypeResolver {
             } else {
                 val location = getLocation(ctx.start)
                 semanticErrors += SemanticException(
-                    "type mismatch: expected BOOL, but got $leftType and $rightType",
+                    "type mismatch: expected bool, but got $leftType and $rightType",
                     location
                 )
             }

@@ -30,11 +30,11 @@ interface TypeResolver {
 
     private fun resolveByText(ctx: ParserRuleContext): BuiltinType {
         return when (ctx.text) {
-            "VOID" -> BuiltinType.VOID
-            "BOOL" -> BuiltinType.BOOL
-            "INT" -> BuiltinType.INT
-            "FLOAT" -> BuiltinType.FLOAT
-            "STRING" -> BuiltinType.STRING
+            "void" -> BuiltinType.VOID
+            "bool" -> BuiltinType.BOOL
+            "int" -> BuiltinType.INT
+            "float" -> BuiltinType.FLOAT
+            "String" -> BuiltinType.STRING
 
             else -> {
                 val location = TokenLocation(ctx.start.line, ctx.start.charPositionInLine)

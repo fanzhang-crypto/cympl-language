@@ -20,8 +20,8 @@ interface Located : Comparable<Located> {
 
 sealed class ParseException(message: String) : RuntimeException(message), Located
 
-class SemanticException(message: String, override val location: TokenLocation) :
-    ParseException("semantic error at $location: $message")
+data class SemanticException(val msg: String, override val location: TokenLocation) :
+    ParseException("semantic error at $location: $msg")
 
-class SyntaxException(message: String, override val location: TokenLocation) :
-    ParseException("syntax error at $location: $message")
+data class SyntaxException(val msg: String, override val location: TokenLocation) :
+    ParseException("syntax error at $location: $msg")

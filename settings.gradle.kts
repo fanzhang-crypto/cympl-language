@@ -1,4 +1,4 @@
-rootProject.name = "cympl-parser"
+rootProject.name = "cympl-language"
 
 pluginManagement {
     repositories {
@@ -13,7 +13,7 @@ include(
     "compiler",
     "analyzer",
     "interpreter",
-    "domain",
+    "language",
     "parser-antlr",
     "parser-fp",
     "antlr-sample"

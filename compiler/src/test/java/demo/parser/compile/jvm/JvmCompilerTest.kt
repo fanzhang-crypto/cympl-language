@@ -17,12 +17,12 @@ class JvmCompilerTest {
     @Test
     fun `support variable declaration`() {
         val input = """
-            a:INT = 3;
-            b:STRING = "Hello";
-            c:BOOL = true;
-            d:FLOAT = 3.14 * a;
-            e:INT[] = [1,2,-a];
-            f:INT[][] = [[1,2,3],[4,5,6]];
+            int a = 3;
+            String b = "Hello";
+            bool c = true;
+            float d = 3.14 * a;
+            int[] e = [1,2,-a];
+            int[][] f = [[1,2,3],[4,5,6]];
             
             println(a);
             println(b);
@@ -47,16 +47,16 @@ class JvmCompilerTest {
     @Test
     fun `support arithmetic expression`() {
         val input = """
-            a:INT = 3;
-            b:INT = 4;
-            c:INT = 5;
-            d:INT = 6;
-            e:INT = 7;
-            f:INT = 8;
-            g:INT = 9;
-            h:INT = 10;
-            i:INT = 11;
-            j:INT = 12;
+            int a = 3;
+            int b = 4;
+            int c = 5;
+            int d = 6;
+            int e = 7;
+            int f = 8;
+            int g = 9;
+            int h = 10;
+            int i = 11;
+            int j = 12;
             
             println(a ^ b);
             println(a + b);
@@ -83,9 +83,9 @@ class JvmCompilerTest {
     @Test
     fun `support array indexing`() {
         val input = """
-            a:INT[] = [1,2,3];
-            b:INT[][] = [[1,2,3],[4,5,6]];
-            c:STRING[] = ["Hello", "World", "!"];
+            int[] a = [1,2,3];
+            int[][] b = [[1,2,3],[4,5,6]];
+            String[] c = ["Hello", "World", "!"];
             println(a[0]);
             println(a[1]);
             println(a[2]);
@@ -125,9 +125,9 @@ class JvmCompilerTest {
     @Test
     fun `support string concatenation`() {
         val input = """
-            a:STRING = "Hello";
-            b:STRING = "World";
-            c:STRING = "!";
+            String a = "Hello";
+            String b = "World";
+            String c = "!";
             
             println(a + b + c);
         """.trimIndent()
@@ -142,9 +142,9 @@ class JvmCompilerTest {
     @Test
     fun `support self increment and decrement`() {
         val input = """
-            a:INT = 3;
-            b:INT = 4;
-            c:FLOAT = 3.14;
+            int a = 3;
+            int b = 4;
+            float c = 3.14;
             
             println(a++);
             println(++a);
@@ -173,14 +173,14 @@ class JvmCompilerTest {
     @Test
     fun `support comparison of int float bool and string`() {
         val input = """
-            a:INT = 3;
-            b:INT = 4;
-            c:FLOAT = 3.14;
-            d:FLOAT = 4.14;
-            e:BOOL = true;
-            f:BOOL = false;
-            g:STRING = "Hello";
-            h:STRING = "World";
+            int a = 3;
+            int b = 4;
+            float c = 3.14;
+            float d = 4.14;
+            bool e = true;
+            bool f = false;
+            String g = "Hello";
+            String h = "World";
             
             println(a == b);
             println(a != b);
@@ -241,8 +241,8 @@ class JvmCompilerTest {
     @Test
     fun `support logical expression`() {
         val input = """
-            a:BOOL = true;
-            b:BOOL = false;
+            bool a = true;
+            bool b = false;
             
             println(a && b);
             println(a || b);
@@ -263,16 +263,16 @@ class JvmCompilerTest {
     @Test
     fun `support if else statement`() {
         val input = """
-            a:INT = 3;
-            b:INT = 4;
-            c:INT = 5;
-            d:INT = 6;
-            e:INT = 7;
-            f:INT = 8;
-            g:INT = 9;
-            h:INT = 10;
-            i:INT = 11;
-            j:INT = 12;
+            int a = 3;
+            int b = 4;
+            int c = 5;
+            int d = 6;
+            int e = 7;
+            int f = 8;
+            int g = 9;
+            int h = 10;
+            int i = 11;
+            int j = 12;
             
             if (a == b) {
                 println("a == b");
@@ -307,7 +307,7 @@ class JvmCompilerTest {
     @Test
     fun `support while loop`() {
         val input = """
-            a:FLOAT = 0.0;
+            float a = 0.0;
             while (a < 10) {
                 println(a);
                 a++;
@@ -333,7 +333,7 @@ class JvmCompilerTest {
     @Test
     fun `support while loop with break`() {
         val input = """
-            a:INT = 0;
+            int a = 0;
             while (a < 10) {
                 println(a);
                 a++;
@@ -359,7 +359,7 @@ class JvmCompilerTest {
     @Test
     fun `support while loop with continue`() {
         val input = """
-            a:INT = 0;
+            int a = 0;
             while (a < 10) {
                 a++;
                 if (a == 10) {
@@ -387,10 +387,10 @@ class JvmCompilerTest {
     @Test
     fun `support break in a nest loop`() {
         val input = """
-            a:INT = 0;
+            int a = 0;
             while (a < 5) {
                 a++;
-                b:INT = 0;
+                int b = 0;
                 while (b < 10) {
                     b++;
                     if (b == 7) {
@@ -431,7 +431,7 @@ class JvmCompilerTest {
     @Test
     fun `support for loop`() {
         val input = """
-            for (a:INT = 0; a < 10; a++) {
+            for (int a = 0; a < 10; a++) {
                 println(a);
             }
         """.trimIndent()
@@ -455,7 +455,7 @@ class JvmCompilerTest {
     @Test
     fun `support break and continue in a for loop`() {
         val input = """
-            for (a:INT = 0; a < 10; a++) {
+            for (int a = 0; a < 10; a++) {
                 if (a == 7) {
                     continue;
                 }
@@ -483,7 +483,7 @@ class JvmCompilerTest {
     @Test
     fun `support 1D array element assignment`() {
         val input = """
-            a:INT[] = [1, 2, 3, 4, 5];
+            int[] a = [1, 2, 3, 4, 5];
             a[0] = 10;
             a[1] = 20;
             a[2] = 30;
@@ -510,7 +510,7 @@ class JvmCompilerTest {
     @Test
     fun `support 2D array element assignment`() {
         val input = """
-            a:INT[][] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+            int[][] a = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
             a[0][0] = 10;
             a[0][1] = 20;
             a[0][2] = 30;
@@ -549,16 +549,16 @@ class JvmCompilerTest {
     @Test
     fun `variables in different blocks have no conflict`() {
         val input = """
-            a:INT = 0;
+            int a = 0;
             {
                 if (true) {
                     a = 3;
                 }
-                a:INT = 1;
+                int a = 1;
                 println(a);
                 
                 {
-                    a:INT = 2;
+                    int a = 2;
                     println(a);
                 }
             }
@@ -577,10 +577,10 @@ class JvmCompilerTest {
     @Test
     fun `support function declaration`() {
         val input = """
-            func add(a:INT, b:INT):INT {
+            int add(int a, int b) {
                 return a + b;
             }
-            func sub(a:INT, b:INT):INT {
+            int sub(int a, int b) {
                 return a - b;
             }
             println(add(1, 2));
@@ -598,8 +598,8 @@ class JvmCompilerTest {
     @Test
     fun `functions can manipulate global variables`() {
         val input = """
-            a:INT = 0;
-            func add(b:INT):INT {
+            int a = 0;
+            int add(int b) {
                 a = a + b;
                 return a;
             }
@@ -620,11 +620,11 @@ class JvmCompilerTest {
     @Test
     fun `variable can be shadowed in function decl`() {
         val input = """
-            x:INT = 1;
-            func f(x:INT):INT {
+            int x = 1;
+            int f(int x) {
                 return x + 1;
             }
-            func g(x:INT):INT {
+            int g(int x) {
                 return x * 2;
             }
             println(f(g(2)));
@@ -640,7 +640,7 @@ class JvmCompilerTest {
     @Test
     fun `function can call itself`() {
         val input = """
-            func f(x:INT):INT {
+            int f(int x) {
                 if (x == 0) {
                     return 1;
                 } else {
@@ -659,10 +659,10 @@ class JvmCompilerTest {
     @Test
     fun `function can be called before defined`() {
         val input = """
-            func f(x:INT):INT {
+            int f(int x) {
                 return g(x + 1);
             }
-            func g(x:INT):INT {
+            int g(int x) {
                 return x * 2;
             }
             println(f(2));
@@ -677,7 +677,7 @@ class JvmCompilerTest {
     @Test
     fun `function can operate string`() {
         val input = """
-            func f(x:STRING):STRING {
+            String f(String x) {
                 return x + " world";
             }
             println(f("hello"));
@@ -692,10 +692,10 @@ class JvmCompilerTest {
     @Test
     fun `insert sort test`() {
         val input = """
-            func insertionSort(arr:INT[]):INT[] {
-                for(i:INT = 1; i < arr.length; i++) {
-                    key:INT = arr[i];
-                    j:INT = i - 1;
+            int[] insertionSort(int[] arr) {
+                for(int i = 1; i < arr.length; i++) {
+                    int key = arr[i];
+                    int j = i - 1;
 
                     while (j >= 0 && arr[j] > key) {
                         arr[j+1] = arr[j];
@@ -719,7 +719,7 @@ class JvmCompilerTest {
     @Test
     fun `can return early in a loop in function`() {
         val input = """
-            func f(x:INT):INT {
+            int f(int x) {
                 while (x < 10) {
                     x++;
                     if (x == 5) {
@@ -741,19 +741,19 @@ class JvmCompilerTest {
     @Test
     fun `quick sort test`() {
         val input = """
-            func quickSort(arr:INT[]):INT[] {
-                func swap(arr:INT[], i:INT, j:INT)
+            int[] quickSort(int[] arr) {
+                void swap(int[] arr, int i, int j)
                 {
-                    temp:INT = arr[i];
+                    int temp = arr[i];
                     arr[i] = arr[j];
                     arr[j] = temp;
                 }
-    
-                func partition(arr:INT[], low:INT, high:INT):INT
+            
+                int partition(int[] arr, int low, int high)
                 {
-                    pivot:INT = arr[high];
-                    i:INT = low - 1;
-                    for (j:INT = low; j <= high - 1; j++) {
+                    int pivot = arr[high]; // pivot
+                    int i = low - 1;
+                    for (int j = low; j <= high - 1; j++) {
                         if (arr[j] < pivot) {
                             i = i + 1;
                             swap(arr, i, j);
@@ -762,15 +762,15 @@ class JvmCompilerTest {
                     swap(arr, i + 1, high);
                     return i + 1;
                 }
-    
-                func quickSortInternal(arr:INT[], low:INT, high:INT) {
+            
+                void quickSortInternal(int[] arr, int low, int high) {
                     if (low < high) {
-                        pi:INT = partition(arr, low, high);
+                        int pi = partition(arr, low, high);
                         quickSortInternal(arr, low, pi - 1);
                         quickSortInternal(arr, pi + 1, high);
                     }
                 }
-                
+            
                 quickSortInternal(arr, 0, arr.length - 1);
                 return arr;
             }
@@ -797,7 +797,7 @@ class JvmCompilerTest {
         File("build/classes/${DEFAULT_MAIN_CLASS_NAME}.class").writeBytes(bytecode)
 
         return Runtime.getRuntime()
-            .exec("java $DEFAULT_MAIN_CLASS_NAME").let {
+            .exec("java -cp build/classes $DEFAULT_MAIN_CLASS_NAME").let {
                 it.waitFor()
                 val errorLines = it.errorLines()
                 if (errorLines.isNotEmpty()) {

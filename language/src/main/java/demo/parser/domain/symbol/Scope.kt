@@ -51,15 +51,19 @@ class LocalScope(parent: Scope?) : BaseScope(parent) {
 object ArrayScope : BaseScope(null) {
     override val scopeName: String = "array"
 
+    val LENGTH_PROPERTY = VariableSymbol("length", BuiltinType.INT, this)
+
     init {
-        define(VariableSymbol("length", BuiltinType.INT, this))
+        define(LENGTH_PROPERTY)
     }
 }
 
 object StringScope : BaseScope(null) {
     override val scopeName: String = "string"
 
+    val LENGTH_PROPERTY = VariableSymbol("length", BuiltinType.INT, this)
+
     init {
-        define(VariableSymbol("length", BuiltinType.INT, this))
+        define(LENGTH_PROPERTY)
     }
 }

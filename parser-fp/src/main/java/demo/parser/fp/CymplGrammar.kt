@@ -13,48 +13,6 @@ internal class CymplGrammar(
     private val semanticChecker: SemanticChecker
 ) : Grammar<Program>() {
 
-    companion object Symbols {
-        const val FUNC = "func"
-        const val RETURN = "return"
-        const val IF = "if"
-        const val ELSE = "else"
-        const val WHILE = "while"
-        const val FOR = "for"
-        const val BREAK = "break"
-        const val CONTINUE = "continue"
-        const val VOID_TYPE = "VOID"
-        const val BOOL_TYPE = "BOOL"
-        const val INT_TYPE = "INT"
-        const val FLOAT_TYPE = "FLOAT"
-        const val STRING_TYPE = "STRING"
-        const val TRUE = "true"
-        const val FALSE = "false"
-        const val LPR = "("
-        const val RPR = ")"
-        const val LBR = "{"
-        const val RBR = "}"
-        const val COLON = ":"
-        const val SEMICOLON = ";"
-        const val COMMA = ","
-        const val ASSIGN = "="
-        const val PLUS = "+"
-        const val MINUS = "-"
-        const val MUL = "*"
-        const val DIV = "/"
-        const val MOD = "%"
-        const val CARET = "^"
-        const val AND = "&&"
-        const val OR = "||"
-        const val NOT = "!"
-        const val EQ = "=="
-        const val NEQ = "!="
-        const val LT = "<"
-        const val GT = ">"
-        const val LEQ = "<="
-        const val GEQ = ">="
-    }
-
-    private val FUNC by literalToken(Symbols.FUNC)
     private val RETURN by literalToken(Symbols.RETURN)
     private val IF by literalToken(Symbols.IF)
     private val ELSE by literalToken(Symbols.ELSE)
@@ -68,17 +26,14 @@ internal class CymplGrammar(
     private val INT_TYPE by literalToken(Symbols.INT_TYPE)
     private val FLOAT_TYPE by literalToken(Symbols.FLOAT_TYPE)
     private val STRING_TYPE by literalToken(Symbols.STRING_TYPE)
-
     private val TRUE by literalToken(Symbols.TRUE)
     private val FALSE by literalToken(Symbols.FALSE)
-    private val BOOL by TRUE or FALSE
+    private val BOOL_LITERAL by TRUE or FALSE
+    private val FLOAT_LITERAL by regexToken("0.0|[1-9][0-9]*\\.[0-9]+")
+    private val INT_LITERAL by regexToken("0|[1-9][0-9]*")
+    private val STRING_LITERAL by regexToken("\"[^\"]*\"")
 
     private val ID by regexToken("[a-z][a-zA-Z0-9_]*")
-
-    private val FLOAT by regexToken("0.0|[1-9][0-9]*\\.[0-9]+")
-    private val INT by regexToken("0|[1-9][0-9]*")
-
-    private val STRING by regexToken("\"[^\"]*\"")
 
     private val WS by regexToken("\\s+", ignore = true)
     private val COMMENT by regexToken("//[^\r\n]*", ignore = true)
@@ -86,11 +41,17 @@ internal class CymplGrammar(
 
     private val LPR by literalToken(Symbols.LPR)
     private val RPR by literalToken(Symbols.RPR)
-    private val LBR by literalToken(Symbols.LBR)
-    private val RBR by literalToken(Symbols.RBR)
+    private val LBRACE by literalToken(Symbols.LBRACE)
+    private val RBRACE by literalToken(Symbols.RBRACE)
+    private val LBRACKET by literalToken(Symbols.LBRACKET)
+    private val RBRACKET by literalToken(Symbols.RBRACKET)
     private val COLON by literalToken(Symbols.COLON)
     private val SEMICOLON by literalToken(Symbols.SEMICOLON)
     private val COMMA by literalToken(Symbols.COMMA)
+    private val DOT by literalToken(Symbols.DOT)
+
+    private val INC by literalToken(Symbols.INC)
+    private val DEC by literalToken(Symbols.DEC)
 
     private val PLUS by literalToken(Symbols.PLUS)
     private val MINUS by literalToken(Symbols.MINUS)
@@ -112,6 +73,9 @@ internal class CymplGrammar(
     private val OR by literalToken(Symbols.OR)
 
     private val expression by parser(this::logicalOrChain)
+
+    private val arrayLiteral by (-LBRACKET * separatedTerms(expression, COMMA, acceptZero = true) * -RBRACKET)
+        .map { Expression.ArrayLiteral(it) }
 
     private val logicalOrChain: Parser<Expression> by leftAssociative(parser(this::logicalAndChain), OR) { l, _, r ->
         Expression.Or(l, r)
@@ -186,13 +150,50 @@ internal class CymplGrammar(
         Expression.Variable(idToken.text, BuiltinType.VOID)
     }
 
+    private val arrayIndex: Parser<Expression.Index> by (ID * oneOrMore(-LBRACKET * expression * -RBRACKET))
+        .map { (idToken, indices) ->
+            val array = Expression.Variable(idToken.text, BuiltinType.VOID)
+            val initialArrayIndex = Expression.Index(array, indices[0])
+            indices.subList(1, indices.size).fold(initialArrayIndex) { acc, index ->
+                Expression.Index(acc, index)
+            }
+        }
+
+    private val preIncrement: Parser<Expression> by (-INC * parser { term })
+        .map { expr -> Expression.Increment(expr, false) }
+
+    private val preDecrement: Parser<Expression> by (-DEC * parser { term })
+        .map { expr -> Expression.Decrement(expr, false) }
+
+    private val postIncrement: Parser<Expression> by ((arrayIndex or variable) * -INC)
+        .map { expr -> Expression.Increment(expr, true) }
+
+    private val postDecrement: Parser<Expression> by ((arrayIndex or variable) * -DEC)
+        .map { expr -> Expression.Decrement(expr, true) }
+
+    private val property: Parser<Expression.Property> by ((arrayIndex or variable) * oneOrMore(-DOT * ID))
+        .map { (obj, properties) ->
+            val initialProperty = Expression.Property(obj, properties[0].text, BuiltinType.INT)
+            properties.subList(1, properties.size).fold(initialProperty) { acc, property ->
+                Expression.Property(acc, property.text, BuiltinType.INT)
+            }
+        }
+
     // @formatter:off
     private val term: Parser<Expression> by
-        BOOL.map { Expression.BoolLiteral(it.text.toBoolean()) } or
-        INT.map { Expression.IntLiteral(it.text.toInt()) } or
-        FLOAT.map { Expression.FloatLiteral(it.text.toDouble()) } or
-        STRING.map { Expression.StringLiteral(it.text.substring(1, it.text.length - 1)) } or
+        BOOL_LITERAL.map { Expression.BoolLiteral(it.text.toBoolean()) } or
+        INT_LITERAL.map { Expression.IntLiteral(it.text.toInt()) } or
+        FLOAT_LITERAL.map { Expression.FloatLiteral(it.text.toDouble()) } or
+        STRING_LITERAL.map { Expression.StringLiteral(it.text.substring(1, it.text.length - 1)) } or
+        arrayLiteral or
         functionCall or
+        property or
+
+        preIncrement or
+        preDecrement or
+        postIncrement or
+        postDecrement or
+        arrayIndex or
         variable or
         negation or
         logicalNot or
@@ -204,12 +205,23 @@ internal class CymplGrammar(
         Statement.Assignment(idToken.text, e)
     }
 
-    private val type = (BOOL_TYPE or INT_TYPE or FLOAT_TYPE or STRING_TYPE or VOID_TYPE)
-        .map(TypeResolver::resolveType)
+    private val arrayIndexAssign by (arrayIndex * -ASSIGN * expression)
+        .map { (arrayIndex, valueExpr) ->
+//            semanticChecker.checkVariableRef()
+            Statement.IndexAssignment(arrayIndex.arrayExpr, arrayIndex.indexExpr, valueExpr)
+        }
+
+    private val valueType by (BOOL_TYPE or INT_TYPE or FLOAT_TYPE or STRING_TYPE or VOID_TYPE)
+        .map(TypeResolver::resolveValueType)
+
+    private val arrayType by (valueType * oneOrMore(LBRACKET * RBRACKET))
+        .map { (type, brackets) -> TypeResolver.resolveArrayType(type, brackets.size) }
+
+    private val type by arrayType or valueType
 
     private val variableDecl: Parser<Statement>
-            by (ID * -COLON * parser(this::type) * -ASSIGN * expression)
-                .map { (idToken, type, e) ->
+            by (type * ID * -ASSIGN * expression)
+                .map { (type, idToken, e) ->
                     val id = idToken.text
                     semanticChecker.defineVar(idToken, type)
                     Statement.VariableDeclaration(id, type, e)
@@ -222,21 +234,21 @@ internal class CymplGrammar(
     private val returnStat by (-RETURN * expression * -SEMICOLON).map { Statement.Return(it) }
 
     private val block: Parser<Statement.Block> by (
-            -LBR.map { semanticChecker.enterBlock() }
+            -LBRACE.map { semanticChecker.enterBlock() }
                     * zeroOrMore(parser(this::statement))
-                    * -RBR.map { semanticChecker.exitBlock() }
+                    * -RBRACE.map { semanticChecker.exitBlock() }
             ).map { Statement.Block(it) }
 
-    private val parameter by (ID * -COLON * parser(this::type))
+    private val parameter by type * ID
 
     private val parameterList by (parameter * zeroOrMore(-COMMA * parameter))
         .map { (first, rest) -> listOf(first) + rest }
 
-    private val functionHeader: Parser<FunctionHeader> by (-FUNC * ID * -LPR * optional(parameterList) * -RPR * -COLON * type)
-        .map { (idToken, paramIdAndTypes, type) ->
-            semanticChecker.enterFuncDecl(idToken, type, paramIdAndTypes)
+    private val functionHeader: Parser<FunctionHeader> by (type * ID * -LPR * optional(parameterList) * -RPR)
+        .map { (type, idToken, paramTypeAndId) ->
+            semanticChecker.enterFuncDecl(idToken, type, paramTypeAndId)
 
-            val parameters = paramIdAndTypes?.map { (idToken, type) ->
+            val parameters = paramTypeAndId?.map { (type, idToken) ->
                 semanticChecker.defineVar(idToken, type)
                 Statement.VariableDeclaration(idToken.text, type)
             } ?: emptyList()
@@ -282,6 +294,7 @@ internal class CymplGrammar(
     private val statement: Parser<Statement> by functionDecl or
             (variableDecl * -SEMICOLON) or
             (assign * -SEMICOLON) or
+            (arrayIndexAssign * -SEMICOLON) or
             exprStat or
             returnStat or
             ifStat or
@@ -294,16 +307,63 @@ internal class CymplGrammar(
     private val prog: Parser<Program> by oneOrMore(statement).map { Program(it) }
 
     override val rootParser: Parser<Program> by prog
+
+    companion object Symbols {
+        const val RETURN = "return"
+        const val IF = "if"
+        const val ELSE = "else"
+        const val WHILE = "while"
+        const val FOR = "for"
+        const val BREAK = "break"
+        const val CONTINUE = "continue"
+        const val VOID_TYPE = "void"
+        const val BOOL_TYPE = "bool"
+        const val INT_TYPE = "int"
+        const val FLOAT_TYPE = "float"
+        const val STRING_TYPE = "String"
+        const val TRUE = "true"
+        const val FALSE = "false"
+        const val DOT = "."
+        const val LPR = "("
+        const val RPR = ")"
+        const val LBRACE = "{"
+        const val RBRACE = "}"
+        const val LBRACKET = "["
+        const val RBRACKET = "]"
+        const val COLON = ":"
+        const val SEMICOLON = ";"
+        const val COMMA = ","
+        const val ASSIGN = "="
+        const val PLUS = "+"
+        const val MINUS = "-"
+        const val MUL = "*"
+        const val DIV = "/"
+        const val MOD = "%"
+        const val CARET = "^"
+        const val AND = "&&"
+        const val OR = "||"
+        const val NOT = "!"
+        const val EQ = "=="
+        const val NEQ = "!="
+        const val LT = "<"
+        const val GT = ">"
+        const val LEQ = "<="
+        const val GEQ = ">="
+        const val INC = "++"
+        const val DEC = "--"
+    }
 }
 
 fun main() {
     val input = """
-        func main(n:INT):INT { 
-            a(); 
-        }
+        a[2]++;
+//        f()[1][2];
     """.trimIndent()
 
     val semanticChecker = SemanticChecker()
-    val program = CymplGrammar(semanticChecker).parseToEnd(input)
+    val grammar = CymplGrammar(semanticChecker)
+    val program = grammar.parseToEnd(input)
     program.statements.forEach(::println)
 }
+
+

@@ -17,87 +17,87 @@ class TypeCheckTests {
             "2" * 3;
             "3"++;
             --true;
-            a:STRING[] = ["1", "2"];
+            String[] a = ["1", "2"];
             a[0]++;
         """.trimIndent()
 
         val errors = check(input)
         errors shouldHaveSize 5
-        errors[0] shouldHaveMessage "semantic error at (1:0): type mismatch: expected BOOL, INT, FLOAT or STRING, but got INT and STRING"
-        errors[1] shouldHaveMessage "semantic error at (2:0): type mismatch: expected BOOL, INT or FLOAT, but got STRING and INT"
-        errors[2] shouldHaveMessage "semantic error at (3:0): increment/decrement only works on INT or FLOAT, but got STRING"
-        errors[3] shouldHaveMessage "semantic error at (4:2): increment/decrement only works on INT or FLOAT, but got BOOL"
-        errors[4] shouldHaveMessage "semantic error at (6:0): increment/decrement only works on INT or FLOAT, but got STRING"
+        errors[0] shouldHaveMessage "semantic error at (1:0): type mismatch: expected bool, int, float or String, but got int and String"
+        errors[1] shouldHaveMessage "semantic error at (2:0): type mismatch: expected bool, int or float, but got String and int"
+        errors[2] shouldHaveMessage "semantic error at (3:0): increment/decrement only works on int or float, but got String"
+        errors[3] shouldHaveMessage "semantic error at (4:2): increment/decrement only works on int or float, but got bool"
+        errors[4] shouldHaveMessage "semantic error at (6:0): increment/decrement only works on int or float, but got String"
     }
 
     @Test
     fun `should check type on variable declaration`() {
         val input = """
-            x:INT = 1.1;
-            y:FLOAT = "1";
-            z:STRING = 2;
-            b:BOOL = 1;
-            xx:INT = 1 / 2 * 3 + y;
-            arr:INT[] = [1, 2.2];
-            arr2:INT[] = [1.2, 2.2];
+            int x = 1.1;
+            float y = "1";
+            String z = 2;
+            bool b = 1;
+            int xx = 1 / 2 * 3 + y;
+            int[] arr = [1, 2.2];
+            int[] arr2 = [1.2, 2.2];
         """.trimIndent()
 
         val errors = check(input)
         errors shouldHaveSize 7
-        errors[0] shouldHaveMessage "semantic error at (1:8): type mismatch: expected INT, but got FLOAT"
-        errors[1] shouldHaveMessage "semantic error at (2:10): type mismatch: expected FLOAT, but got STRING"
-        errors[2] shouldHaveMessage "semantic error at (3:11): type mismatch: expected STRING, but got INT"
-        errors[3] shouldHaveMessage "semantic error at (4:9): type mismatch: expected BOOL, but got INT"
-        errors[4] shouldHaveMessage "semantic error at (5:9): type mismatch: expected INT, but got FLOAT"
+        errors[0] shouldHaveMessage "semantic error at (1:8): type mismatch: expected int, but got float"
+        errors[1] shouldHaveMessage "semantic error at (2:10): type mismatch: expected float, but got String"
+        errors[2] shouldHaveMessage "semantic error at (3:11): type mismatch: expected String, but got int"
+        errors[3] shouldHaveMessage "semantic error at (4:9): type mismatch: expected bool, but got int"
+        errors[4] shouldHaveMessage "semantic error at (5:9): type mismatch: expected int, but got float"
         errors[5] shouldHaveMessage "semantic error at (6:12): array elements must be of the same type"
-        errors[6] shouldHaveMessage "semantic error at (7:13): type mismatch: expected INT[], but got FLOAT[]"
+        errors[6] shouldHaveMessage "semantic error at (7:13): type mismatch: expected int[], but got float[]"
     }
 
     @Test
     fun `should check type on variable assign`() {
         val input = """
-            x:INT = 1;
+            int x = 1;
             x = 1.1;
-            y:FLOAT = 1.1;
+            float y = 1.1;
             y = "1";
-            z:STRING = "1";
+            String z = "1";
             z = 2;
-            b:BOOL = true;
+            bool b = true;
             b = 1;
-            arr:INT[] = [1, 2];
+            int[] arr = [1, 2];
             arr = [1, 2.2];
-            arr2:INT[] = [1, 2];
+            int[] arr2 = [1, 2];
             arr2 = [1.2, 2.2];
         """.trimIndent()
 
         val errors = check(input)
         errors shouldHaveSize 6
-        errors[0] shouldHaveMessage "semantic error at (2:4): type mismatch: expected INT, but got FLOAT"
-        errors[1] shouldHaveMessage "semantic error at (4:4): type mismatch: expected FLOAT, but got STRING"
-        errors[2] shouldHaveMessage "semantic error at (6:4): type mismatch: expected STRING, but got INT"
-        errors[3] shouldHaveMessage "semantic error at (8:4): type mismatch: expected BOOL, but got INT"
+        errors[0] shouldHaveMessage "semantic error at (2:4): type mismatch: expected int, but got float"
+        errors[1] shouldHaveMessage "semantic error at (4:4): type mismatch: expected float, but got String"
+        errors[2] shouldHaveMessage "semantic error at (6:4): type mismatch: expected String, but got int"
+        errors[3] shouldHaveMessage "semantic error at (8:4): type mismatch: expected bool, but got int"
         errors[4] shouldHaveMessage "semantic error at (10:6): array elements must be of the same type"
-        errors[5] shouldHaveMessage "semantic error at (12:7): type mismatch: expected INT[], but got FLOAT[]"
+        errors[5] shouldHaveMessage "semantic error at (12:7): type mismatch: expected int[], but got float[]"
     }
 
     @Test
-    fun `array index should be INT`() {
+    fun `array index should be int`() {
         val input = """
-            arr:INT[] = [1, 2];
+            int[] arr = [1, 2];
             arr[1.1];
             arr[1.1] = 1;
         """.trimIndent()
 
         val errors = check(input)
         errors shouldHaveSize 2
-        errors[0] shouldHaveMessage "semantic error at (2:4): array index must be of type INT, but got FLOAT"
-        errors[1] shouldHaveMessage "semantic error at (3:4): array index must be of type INT, but got FLOAT"
+        errors[0] shouldHaveMessage "semantic error at (2:4): array index must be of type int, but got float"
+        errors[1] shouldHaveMessage "semantic error at (3:4): array index must be of type int, but got float"
     }
 
     @Test
     fun `only array can be indexed`() {
         val input = """
-            x:INT = 1;
+            int x = 1;
             x[1];
             x[1] = 1;
         """.trimIndent()
@@ -111,19 +111,19 @@ class TypeCheckTests {
     @Test
     fun `should check value type for array index assignment`() {
         val input = """
-            arr:INT[] = [1, 2];
+            int[] arr = [1, 2];
             arr[1] = 1.1;
         """.trimIndent()
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (2:9): type mismatch: expected INT, but got FLOAT"
+        errors[0] shouldHaveMessage "semantic error at (2:9): type mismatch: expected int, but got float"
     }
 
     @Test
     fun `should check parameter type on function call`() {
         val input = """
-            func foo(x:INT, y:INT):INT {
+            int foo(int x, int y) {
                 return x + y;
             }
             foo(1.1, "1");
@@ -131,27 +131,27 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (4:0): argument types mismatch: expected [INT, INT], but got [FLOAT, STRING]"
+        errors[0] shouldHaveMessage "semantic error at (4:0): argument types mismatch: expected [int, int], but got [float, String]"
     }
 
     @Test
     fun `should check return type of function call in variable declaration`(){
         val input = """
-            func f(arr:INT[]):INT[] {
+            int[] f(int[] arr) {
                 return arr;
             }
-            arr:STRING[] = f([1, 2, 3]);
+            String[] arr = f([1, 2, 3]);
         """
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (5:27): type mismatch: expected STRING[], but got INT[]"
+        errors[0] shouldHaveMessage "semantic error at (5:27): type mismatch: expected String[], but got int[]"
     }
 
     @Test
     fun `should check return expression type against the function's declaration type`() {
         val input = """
-            func f(x:INT) {
+            void f(int x) {
                 if (true) {
                     return 1;
                 } else {
@@ -163,8 +163,8 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 2
-        errors[0] shouldHaveMessage "semantic error at (3:15): return expression type mismatch: expected VOID, but got INT"
-        errors[1] shouldHaveMessage "semantic error at (7:11): return expression type mismatch: expected VOID, but got FLOAT"
+        errors[0] shouldHaveMessage "semantic error at (3:15): return expression type mismatch: expected void, but got int"
+        errors[1] shouldHaveMessage "semantic error at (7:11): return expression type mismatch: expected void, but got float"
     }
 
     private fun check(input: String): List<ParseException> =

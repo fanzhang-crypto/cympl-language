@@ -14,12 +14,13 @@ sealed class BuiltinType {
 
     val name: String
         get() = when (this) {
-            is INT -> "INT"
-            is FLOAT -> "FLOAT"
-            is STRING -> "STRING"
-            is BOOL -> "BOOL"
-            is VOID -> "VOID"
+            is INT -> "int"
+            is FLOAT -> "float"
+            is STRING -> "String"
+            is BOOL -> "bool"
+            is VOID -> "void"
             is ARRAY -> toString()
+            is FUNCTION -> "(${paramTypes.joinToString(", ")}) -> $returnType"
         }
 
     open val scope: Scope? = null
@@ -37,6 +38,8 @@ sealed class BuiltinType {
         override val scope: Scope = ArrayScope
         override fun toString() = "$elementType[]"
     }
+
+    data class FUNCTION(val returnType: BuiltinType, val paramTypes: List<BuiltinType>) : BuiltinType()
 
     override fun toString() = name
 
