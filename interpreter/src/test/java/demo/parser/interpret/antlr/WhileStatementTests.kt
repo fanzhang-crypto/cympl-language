@@ -180,10 +180,10 @@ class WhileStatementTests {
             f(1);
         """
         val output ="""
-            func f(x:int):int { while (x < 10) { x = x + 1; if (x == 5) { return x; } } return x; } => void
+            func f(x:int):int { while (x < 10) { x = x + 1; if (x == 5) { return x; } } return x; } => Closure(#f)
             f(1); => 5
             environment:
-            f(x:int):int
+            f: (int) -> int
         """
         verify(input, output)
     }

@@ -1,12 +1,8 @@
 package demo.parser.interpret
 
-import demo.parser.domain.Statement
-
 class Scope(private val parent: Scope? = null) {
 
     private val variables = mutableMapOf<String, TValue>()
-
-    private val functions = mutableMapOf<String, Statement.FunctionDeclaration>()
 
     private var inLoop:Boolean = false
 
@@ -43,25 +39,7 @@ class Scope(private val parent: Scope? = null) {
         return variables[id] ?: parent?.resolveVariable(id)
     }
 
-    fun defineFunction(name: String, function: Statement.FunctionDeclaration) {
-        functions[name] = function
-    }
-
-    fun containsFunction(id: String, inCurrentScope:Boolean = false): Boolean =
-        if (inCurrentScope)
-            functions.contains(id)
-        else
-            functions.contains(id) || parent?.containsFunction(id, false) ?: false
-
-    fun resolveFunction(id: String): Statement.FunctionDeclaration? {
-        return functions[id] ?: parent?.resolveFunction(id)
-    }
-
     fun getVariables(): Map<String, TValue> {
         return variables.toMap()
-    }
-
-    fun getFunctions(): Map<String, Statement.FunctionDeclaration> {
-        return functions.toMap()
     }
 }

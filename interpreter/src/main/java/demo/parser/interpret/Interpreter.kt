@@ -11,11 +11,13 @@ class Interpreter(private val runtime: Runtime) {
     private val globalScope = Scope()
 
     init {
-        globalScope.defineFunction(IntrinsicFunction.PrintLine.id, IntrinsicFunction.PrintLine)
-        globalScope.defineFunction(IntrinsicFunction.ReadLine.id, IntrinsicFunction.ReadLine)
+        val printLine = Closure(IntrinsicFunction.PrintLine, globalScope)
+        val readLine = Closure(IntrinsicFunction.ReadLine, globalScope)
+        globalScope.defineVariable(IntrinsicFunction.PrintLine.id, printLine)
+        globalScope.defineVariable(IntrinsicFunction.ReadLine.id, readLine)
     }
 
-    val globalSymbols: Set<String> get() = globalScope.getVariables().keys + globalScope.getFunctions().keys
+    val globalSymbols: Set<String> get() = globalScope.getVariables().keys
 
     sealed class Jump : Throwable() {
         data class Return(val value: TValue) : Jump()
@@ -42,9 +44,7 @@ class Interpreter(private val runtime: Runtime) {
         }
 
         if (verbose) {
-            yield("environment:")
-            formatCurrentEnvVariables().takeIf { it.isNotBlank() }?.let { yield(it) }
-            formatCurrentEnvFunctions().takeIf { it.isNotBlank() }?.let { yield(it) }
+            yieldAll(dumpEnvironment())
         }
     }
 
@@ -154,11 +154,11 @@ class Interpreter(private val runtime: Runtime) {
     }
 
     private fun Statement.FunctionDeclaration.evaluate(scope: Scope): TValue {
-        if (scope.containsFunction(id, true)) {
+        if (scope.containsVariable(id, true)) {
             throw InterpretException("function $id already declared")
         }
-        scope.defineFunction(id, this)
-        return TValue.VOID
+        return Closure(this, scope)
+            .also { scope.defineVariable(id, it) }
     }
 
     private fun Statement.Assignment.evaluate(scope: Scope): TValue {
@@ -187,7 +187,9 @@ class Interpreter(private val runtime: Runtime) {
         return expr!!.evaluate(scope)
             .also { result ->
                 assertValueType(result, type)
-                scope.defineVariable(id, TValue(type, result.value))
+                // TEmptyArray has no type, so we need to set it as the type of the variable
+                val variable = if (result == TValue.TEmptyArray) TValue(type, result.value) else result
+                scope.defineVariable(id, variable)
             }
     }
 
@@ -364,16 +366,17 @@ class Interpreter(private val runtime: Runtime) {
         }
 
         is Expression.FunctionCall -> {
-            val function = scope.resolveFunction(id)
-                ?: throw InterpretException("function $id not defined")
+            val closure = scope.resolveVariable(id) as? Closure
+                ?: throw InterpretException("function not defined: $id")
 
+            val function = closure.function
             val args = args.map { it.evaluate(scope) }
-            if (args.size != function.args.size) {
-                throw InterpretException("function $id expects ${function.args.size} arguments, got ${args.size}")
+            if (args.size != function.parameters.size) {
+                throw InterpretException("function $id expects ${function.parameters.size} arguments, got ${args.size}")
             }
 
-            val functionScope = Scope(scope).apply {
-                function.args.forEachIndexed { i, (name, type) ->
+            val functionScope = Scope(closure.scope).apply {
+                function.parameters.forEachIndexed { i, (name, type) ->
                     assertValueType(args[i], type)
                     defineVariable(name, args[i])
                 }
@@ -443,14 +446,27 @@ class Interpreter(private val runtime: Runtime) {
         else -> tvalue.toString()
     }
 
-    private fun formatCurrentEnvVariables() = globalScope.getVariables()
-        .map { (k, tvalue) -> "$k:${tvalue.type} = ${formatTValue(tvalue)}" }
-        .joinToString(", ")
+    private fun dumpEnvironment(): Sequence<String> = sequence {
+        yield("environment:")
 
-    private fun formatCurrentEnvFunctions() = globalScope.getFunctions()
-        .filter { it.value !is IntrinsicFunction }
-        .map { (k, function) -> "$k(${function.args.joinToString(", ") { "${it.id}:${it.type}" }}):${function.returnType}" }
-        .joinToString(", ")
+        val (functions, variables) = globalScope.getVariables()
+            .asSequence()
+            .partition { it.value is Closure }
+
+        val variableLine = variables.joinToString(", ") { (k, tvalue) -> "$k:${tvalue.type} = ${formatTValue(tvalue)}" }
+
+        if (variableLine.isNotEmpty()) {
+            yield(variableLine)
+        }
+
+        val functionsLine = functions
+            .filter { (_, v) -> (v as Closure).function !is IntrinsicFunction }
+            .joinToString(", ") { (k, tvalue) -> "$k: ${tvalue.type}" }
+
+        if (functionsLine.isNotEmpty()) {
+            yield(functionsLine)
+        }
+    }
 
     private inner class ArrayIndexing(arrayExpr: Expression, indexExpr: Expression, scope: Scope) {
         val array: Array<TValue>

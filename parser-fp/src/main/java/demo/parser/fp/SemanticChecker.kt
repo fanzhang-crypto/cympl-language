@@ -101,7 +101,7 @@ internal class SemanticChecker {
             if (variableSymbol.scope == currentScope) {
                 semanticErrors += SemanticException("variable $name already defined", location)
             } else {
-                println("variable shadowed at $location: $name")
+//                println("variable shadowed at $location: $name")
             }
         }
 

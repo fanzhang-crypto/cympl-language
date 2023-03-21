@@ -21,7 +21,7 @@ sealed class BuiltinType {
             is BOOL -> "bool"
             is VOID -> "void"
             is ARRAY -> toString()
-            is FUNCTION -> "(${paramTypes.joinToString(", ")}) -> $returnType"
+            is FUNCTION -> toString()
         }
 
     open val scope: Scope? = null
@@ -41,7 +41,9 @@ sealed class BuiltinType {
         override fun toString() = "$elementType[]"
     }
 
-    data class FUNCTION(val paramTypes: List<BuiltinType>, val returnType: BuiltinType) : BuiltinType()
+    data class FUNCTION(val returnType: BuiltinType, val paramTypes: List<BuiltinType>) : BuiltinType() {
+        override fun toString() = "(${paramTypes.joinToString(", ")}) -> $returnType"
+    }
 
     override fun toString() = name
 

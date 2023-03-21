@@ -38,7 +38,7 @@ internal class ProgramCompiler {
     private fun generateSubMethod(functionDecl: Statement.FunctionDeclaration, ctx: CompilationContext): Unit = with(ctx) {
         val functionName = functionDecl.id
         val returnType = functionDecl.returnType.asmType
-        val argTypes = functionDecl.args.map { it.type.asmType }.toTypedArray()
+        val argTypes = functionDecl.parameters.map { it.type.asmType }.toTypedArray()
 
         val method = Method(functionName, returnType, argTypes)
         ctx.defineMethod(method)
@@ -49,7 +49,7 @@ internal class ProgramCompiler {
         mv.mark(methodStart)
         ctx.enterScope()
 
-        functionDecl.args.forEachIndexed { argIndex, arg ->
+        functionDecl.parameters.forEachIndexed { argIndex, arg ->
             val localIndex = ctx.declareVar(arg.id, arg.type)
             mv.loadArg(argIndex)
             mv.storeLocal(localIndex)

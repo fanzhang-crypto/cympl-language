@@ -46,11 +46,11 @@ class ArrayTests {
         """
 
         val output = """
-            func f():int[] { return [1, 2, 3]; } => void
+            func f():int[] { return [1, 2, 3]; } => Closure(#f)
             arr:int[] = f(); => [1, 2, 3]
             environment:
             arr:int[] = [1, 2, 3]
-            f():int[]
+            f: () -> int[]
         """
 
         verify(input, output)
@@ -66,11 +66,11 @@ class ArrayTests {
         """
 
         val output = """
-            func f(arr:int[]):int[] { return arr; } => void
+            func f(arr:int[]):int[] { return arr; } => Closure(#f)
             arr:int[] = f([1, 2, 3]); => [1, 2, 3]
             environment:
             arr:int[] = [1, 2, 3]
-            f(arr:int[]):int[]
+            f: (int[]) -> int[]
         """
 
         verify(input, output)
@@ -165,12 +165,12 @@ class ArrayTests {
         """
 
         val output = """
-            func f():int { return 1; } => void
+            func f():int { return 1; } => Closure(#f)
             arr:int[] = [1, 2, 3]; => [1, 2, 3]
             a:int = arr[f()]; => 2
             environment:
             arr:int[] = [1, 2, 3], a:int = 2
-            f():int
+            f: () -> int
         """
 
         verify(input, output)
@@ -187,7 +187,7 @@ class ArrayTests {
         """
 
         val output = """
-            func f():int[] { return [1, 2, 3]; } => void
+            func f():int[] { return [1, 2, 3]; } => Closure(#f)
             a:int = f()[1]; => 2
             environment:
             a:int = 2

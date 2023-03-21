@@ -14,6 +14,13 @@ interface TypeResolver {
             return BuiltinType.VOID
         }
 
+        if (typeContext.funcType() != null) {
+            val funcTypeContext = typeContext.funcType()
+            val returnType = resolveType(funcTypeContext.retType)
+            val parameterTypes = funcTypeContext.paramTypes?.children?.map { resolveType(it as CymplParser.TypeContext) } ?: emptyList()
+            return BuiltinType.FUNCTION(returnType, parameterTypes)
+        }
+
         if (typeContext.childCount == 1) {
             return resolveByText(typeContext)
         }

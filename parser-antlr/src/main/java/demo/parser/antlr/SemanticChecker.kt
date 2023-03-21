@@ -114,7 +114,7 @@ class SemanticChecker : TypeResolver {
                 if (variableSymbol.scope == currentScope) {
                     semanticErrors += SemanticException("symbol $name already defined", location)
                 } else {
-                    println("variable shadowed at $location: $name")
+//                    println("variable shadowed at $location: $name")
                 }
             }
 
@@ -279,9 +279,9 @@ class SemanticChecker : TypeResolver {
         }
 
         override fun exitVariable(ctx: VariableContext) {
-            val variableSymbol = currentScope?.resolve(ctx.ID().text) as? VariableSymbol
-            if (variableSymbol != null) {
-                types.put(ctx, variableSymbol.type)
+            when (val symbol = currentScope?.resolve(ctx.ID().text)) {
+                is VariableSymbol, is FunctionSymbol -> types.put(ctx, symbol.type)
+                else -> {}
             }
         }
 
@@ -318,18 +318,17 @@ class SemanticChecker : TypeResolver {
             val idToken = ctx.ID()
             val functionName = idToken.text
 
-            val functionSymbol: Symbol? = currentScope?.resolve(functionName)
-            if (functionSymbol !is FunctionSymbol) {
-                return
-            }
-            if (functionSymbol == IntrinsicSymbols.printLine) {
-                //printLine is a special function that can accept any type of argument
-                types.put(ctx, functionSymbol.type)
+            val functionSymbol: Symbol = currentScope?.resolve(functionName) ?: return
+
+            val functionType = functionSymbol.type
+            if (functionType !is BuiltinType.FUNCTION) {
+                val location = getLocation(idToken.symbol)
+                semanticErrors += SemanticException("$functionName is not a function:", location)
                 return
             }
 
-            val parameterTypes = functionSymbol.parameters.map { it.type }
-            val argumentTypes = ctx.exprlist()?.expr()?.map { types.get(it) } ?: emptyList()
+            val parameterTypes = functionType.paramTypes
+            val argumentTypes = ctx.exprlist()?.expr()?.mapNotNull { types.get(it) } ?: emptyList()
 
             if (!TypeChecker.typesMatch(argumentTypes, parameterTypes)) {
                 val location = getLocation(idToken.symbol)
@@ -338,7 +337,7 @@ class SemanticChecker : TypeResolver {
                     location
                 )
             }
-            types.put(ctx, functionSymbol.returnType)
+            types.put(ctx, functionType.returnType)
         }
 
         override fun exitReturnStat(ctx: ReturnStatContext) {
@@ -510,9 +509,6 @@ class SemanticChecker : TypeResolver {
             if (variableSymbol == null) {
                 val location = getLocation(ctx.ID().symbol)
                 semanticErrors += SemanticException("variable $varName not defined", location)
-            } else if (variableSymbol !is VariableSymbol) {
-                val location = getLocation(ctx.ID().symbol)
-                semanticErrors += SemanticException("$varName is not a variable", location)
             }
         }
 
@@ -538,7 +534,7 @@ class SemanticChecker : TypeResolver {
             if (functionSymbol == null) {
                 val location = getLocation(idToken.symbol)
                 semanticErrors += SemanticException("function: $functionName not defined", location)
-            } else if (functionSymbol !is FunctionSymbol) {
+            } else if (functionSymbol.type !is BuiltinType.FUNCTION) {
                 val location = getLocation(idToken.symbol)
                 semanticErrors += SemanticException("$functionName is not a function", location)
             }

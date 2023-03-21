@@ -9,8 +9,8 @@ import demo.parser.domain.symbol.IntrinsicSymbols
 sealed class IntrinsicFunction(
     id: String,
     returnType: BuiltinType,
-    args: List<Statement.VariableDeclaration>
-) : Statement.FunctionDeclaration(id, returnType, args, native) {
+    parameters: List<Statement.VariableDeclaration>
+) : Statement.FunctionDeclaration(id, returnType, parameters, native) {
 
     object PrintLine : IntrinsicFunction(
         IntrinsicSymbols.printLine.name,
@@ -25,7 +25,7 @@ sealed class IntrinsicFunction(
     )
 
     override fun toString(): String {
-        return "func $id(${args.joinToString(", ")}): $returnType"
+        return "func $id(${parameters.joinToString(", ")}): $returnType"
     }
 
     companion object {

@@ -44,11 +44,11 @@ class FunctionTests {
         """
 
         val output = """
-            func f(x:int):int { return x + 1; } => void
-            func g(x:int):int { return x * 2; } => void
+            func f(x:int):int { return x + 1; } => Closure(#f)
+            func g(x:int):int { return x * 2; } => Closure(#g)
             f(g(2)); => 5
             environment:
-            f(x:int):int, g(x:int):int
+            f: (int) -> int, g: (int) -> int
         """
         verify(input, output)
     }
@@ -62,11 +62,11 @@ class FunctionTests {
             f(1, 2);
         """
         val output = """
-                    func f(x:int, y:int):int { return x + y; } => void
-                    f(1, 2); => 3
-                    environment:
-                    f(x:int, y:int):int
-                """.trimIndent()
+            func f(x:int, y:int):int { return x + y; } => Closure(#f)
+            f(1, 2); => 3
+            environment:
+            f: (int, int) -> int
+        """.trimIndent()
         verify(input, output)
     }
 
@@ -84,12 +84,12 @@ class FunctionTests {
         """
         val output = """
             x:int = 1; => 1
-            func f(x:int):int { return x + 1; } => void
-            func g(x:int):int { return x * 2; } => void
+            func f(x:int):int { return x + 1; } => Closure(#f)
+            func g(x:int):int { return x * 2; } => Closure(#g)
             f(g(2)); => 5
             environment:
             x:int = 1
-            f(x:int):int, g(x:int):int
+            f: (int) -> int, g: (int) -> int
         """.trimIndent()
         verify(input, output)
     }
@@ -107,10 +107,10 @@ class FunctionTests {
             f(5);
         """
         val output = """
-            func f(x:int):int { if (x == 0) { return 1; } else { return x * f(x - 1); } } => void
+            func f(x:int):int { if (x == 0) { return 1; } else { return x * f(x - 1); } } => Closure(#f)
             f(5); => 120
             environment:
-            f(x:int):int
+            f: (int) -> int
         """
         verify(input, output)
     }
@@ -127,11 +127,11 @@ class FunctionTests {
             f(2);
         """
         val output = """
-            func f(x:int):int { return g(x + 1); } => void
-            func g(x:int):int { return x * 2; } => void
+            func f(x:int):int { return g(x + 1); } => Closure(#f)
+            func g(x:int):int { return x * 2; } => Closure(#g)
             f(2); => 6
             environment:
-            f(x:int):int, g(x:int):int
+            f: (int) -> int, g: (int) -> int
         """
         verify(input, output)
     }
@@ -145,10 +145,10 @@ class FunctionTests {
             f("hello");
         """
         val output = """
-            func f(x:String):String { return x + " world"; } => void
+            func f(x:String):String { return x + " world"; } => Closure(#f)
             f("hello"); => "hello world"
             environment:
-            f(x:String):String
+            f: (String) -> String
         """
         verify(input, output)
     }
@@ -200,7 +200,7 @@ class FunctionTests {
             int f(int x) {
                 int x = 1;
                 int x = 2;
-                return x + 1;
+                return x;
             }
         """.byteInputStream()
 
@@ -228,9 +228,8 @@ class FunctionTests {
 
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
-                r.errors shouldHaveSize 2
+                r.errors shouldHaveSize 1
                 r.errors[0].shouldHaveMessage("semantic error at (5:12): f is not a variable")
-                r.errors[1].shouldHaveMessage("semantic error at (6:12): f is not a variable")
             }
 
             is ParseResult.Success -> {
@@ -271,10 +270,10 @@ class FunctionTests {
         """.trimIndent()
 
         val output = """
-            func f():int { 1 + 2; } => void
+            func f():int { 1 + 2; } => Closure(#f)
             i:int = f(); failed => type mismatch: expected int, got void
             environment:
-            f():int
+            f: () -> int
         """.trimIndent()
 
         verify(input, output)
@@ -301,10 +300,85 @@ class FunctionTests {
         """.trimIndent()
 
         val output = """
-            func insertionSort(arr:int[]):int[] { for (i:int = 1; i < arr.length; i++;) { key:int = arr[i]; j:int = i - 1; while (j >= 0 && arr[j] > key) { arr[j + 1] = arr[j] j = j - 1; } arr[j + 1] = key } return arr; } => void
+            func insertionSort(arr:int[]):int[] { for (i:int = 1; i < arr.length; i++;) { key:int = arr[i]; j:int = i - 1; while (j >= 0 && arr[j] > key) { arr[j + 1] = arr[j] j = j - 1; } arr[j + 1] = key } return arr; } => Closure(#insertionSort)
             insertionSort([2, 3, 9, 1, 11, 32, 17, 23, 15, 21]); => [1, 2, 3, 9, 11, 15, 17, 21, 23, 32]
             environment:
-            insertionSort(arr:int[]):int[]
+            insertionSort: (int[]) -> int[]
+        """.trimIndent()
+
+        verify(input, output)
+    }
+
+    @Test
+    fun `support closure`() {
+        val input = """
+            int f(int x) {
+                int g(int y) {
+                    return x + y;
+                }
+                return g(1);
+            }
+            f(2);
+        """.trimIndent()
+
+        val output = """
+            func f(x:int):int { func g(y:int):int { return x + y; } return g(1); } => Closure(#f)
+            f(2); => 3
+            environment:
+            f: (int) -> int
+        """.trimIndent()
+
+        verify(input, output)
+    }
+
+    @Test
+    fun `closure can be returned from function`() {
+        val input = """
+            () -> int f() {
+                int x = 0;
+                int g() {
+                    x = x + 1;
+                    return x;
+                }
+                return g;
+            }
+            () -> int g = f();
+            g();
+            g();
+            g();
+        """.trimIndent()
+
+        val output = """
+            func f():() -> int { x:int = 0; func g():int { x = x + 1; return x; } return g; } => Closure(#f)
+            g:() -> int = f(); => Closure(#g)
+            g(); => 1
+            g(); => 2
+            g(); => 3
+            environment:
+            f: () -> () -> int, g: () -> int
+        """.trimIndent()
+
+        verify(input, output)
+    }
+
+    @Test
+    fun `closure can be passed to a function`() {
+            val input = """
+            int f(int x, () -> int gg) {
+                return gg() + x;
+            }
+            int g() {
+                return 1;
+            }
+            f(2, g);
+        """.trimIndent()
+
+        val output = """
+            func f(x:int, gg:() -> int):int { return gg() + x; } => Closure(#f)
+            func g():int { return 1; } => Closure(#g)
+            f(2, g); => 3
+            environment:
+            f: (int, () -> int) -> int, g: () -> int
         """.trimIndent()
 
         verify(input, output)

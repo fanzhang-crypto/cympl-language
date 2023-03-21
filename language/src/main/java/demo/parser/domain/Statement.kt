@@ -73,10 +73,14 @@ sealed interface Statement {
     open class FunctionDeclaration(
         val id: String,
         val returnType: BuiltinType,
-        val args: List<VariableDeclaration>,
+        val parameters: List<VariableDeclaration>,
         val body: Block
-    ) : Statement {
-        override fun toString() = "func $id(${args.joinToString(", ")}):$returnType $body"
+    ) : Statement, Typed {
+
+        override val resolvedType: BuiltinType
+            get() = BuiltinType.FUNCTION(returnType, parameters.map { it.type })
+
+        override fun toString() = "func $id(${parameters.joinToString(", ")}):$returnType $body"
     }
 }
 

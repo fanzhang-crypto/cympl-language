@@ -19,7 +19,9 @@ statement
     | block                         #BlockStatement
 ;
 
-type: INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE | type '[]';
+type: INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE | type '[]' | funcType;
+
+funcType: '(' paramTypes=type? ')' '->' retType=type;
 
 varDecl: type ID '=' expr;
 
