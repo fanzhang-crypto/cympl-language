@@ -56,7 +56,7 @@ class ArrayTests {
     }
 
     @Test
-    fun `array can be passed through function call`(){
+    fun `array can be passed through function call`() {
         val input = """
             int[] f(int[] arr) {
                 return arr;
@@ -228,6 +228,118 @@ class ArrayTests {
             arr[1].length; => 2
             environment:
             arr:int[][] = [[1, 2, 3], [4, 5]]
+        """
+
+        verify(input, output)
+
+    }
+
+    @Test
+    fun `support new 1D array`() {
+        val input = """
+            int[] arr = new int[3];
+            arr[0] = 1;
+            arr[1] = 2;
+            arr[2] = 3;
+        """
+
+        val output = """
+            arr:int[] = new int[3]; => [0, 0, 0]
+            arr[0] = 1 => 1
+            arr[1] = 2 => 2
+            arr[2] = 3 => 3
+            environment:
+            arr:int[] = [1, 2, 3]
+        """
+
+        verify(input, output)
+    }
+
+    @Test
+    fun `support new 2D array`() {
+        val input = """
+            int[][] arr = new int[2][3];
+            arr[0][0] = 1;
+            arr[0][1] = 2;
+            arr[0][2] = 3;
+            arr[1][0] = 4;
+            arr[1][1] = 5;
+            arr[1][2] = 6;
+        """
+
+        val output = """
+            arr:int[][] = new int[2][3]; => [[0, 0, 0], [0, 0, 0]]
+            arr[0][0] = 1 => 1
+            arr[0][1] = 2 => 2
+            arr[0][2] = 3 => 3
+            arr[1][0] = 4 => 4
+            arr[1][1] = 5 => 5
+            arr[1][2] = 6 => 6
+            environment:
+            arr:int[][] = [[1, 2, 3], [4, 5, 6]]
+        """
+
+        verify(input, output)
+    }
+
+    @Test
+    fun `support new 3D array`() {
+        val input = """
+            int[][][] arr = new int[2][3][4];
+            arr[0][0][0] = 1;
+            arr[0][0][1] = 2;
+            arr[0][0][2] = 3;
+            arr[0][0][3] = 4;
+            arr[0][1][0] = 5;
+            arr[0][1][1] = 6;
+            arr[0][1][2] = 7;
+            arr[0][1][3] = 8;
+            arr[0][2][0] = 9;
+            arr[0][2][1] = 10;
+            arr[0][2][2] = 11;
+            arr[0][2][3] = 12;
+            arr[1][0][0] = 13;
+            arr[1][0][1] = 14;
+            arr[1][0][2] = 15;
+            arr[1][0][3] = 16;
+            arr[1][1][0] = 17;
+            arr[1][1][1] = 18;
+            arr[1][1][2] = 19;
+            arr[1][1][3] = 20;
+            arr[1][2][0] = 21;
+            arr[1][2][1] = 22;
+            arr[1][2][2] = 23;
+            arr[1][2][3] = 24;
+        """
+
+        val output = """
+            arr:int[][][] = new int[2][3][4]; => [[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]]
+            arr[0][0][0] = 1 => 1
+            arr[0][0][1] = 2 => 2
+            arr[0][0][2] = 3 => 3
+            arr[0][0][3] = 4 => 4
+            arr[0][1][0] = 5 => 5
+            arr[0][1][1] = 6 => 6
+            arr[0][1][2] = 7 => 7
+            arr[0][1][3] = 8 => 8
+            arr[0][2][0] = 9 => 9
+            arr[0][2][1] = 10 => 10
+            arr[0][2][2] = 11 => 11
+            arr[0][2][3] = 12 => 12
+            arr[1][0][0] = 13 => 13
+            arr[1][0][1] = 14 => 14
+            arr[1][0][2] = 15 => 15
+            arr[1][0][3] = 16 => 16
+            arr[1][1][0] = 17 => 17
+            arr[1][1][1] = 18 => 18
+            arr[1][1][2] = 19 => 19
+            arr[1][1][3] = 20 => 20
+            arr[1][2][0] = 21 => 21
+            arr[1][2][1] = 22 => 22
+            arr[1][2][2] = 23 => 23
+            arr[1][2][3] = 24 => 24
+            environment:
+            arr:int[][][] = [[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]], [[13, 14, 15, 16], [17, 18, 19, 20], [21, 22, 23, 24]]]
         """
 
         verify(input, output)

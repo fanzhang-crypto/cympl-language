@@ -547,6 +547,72 @@ class JvmCompilerTest {
     }
 
     @Test
+    fun `support new array`() {
+        val input = """
+            int[] a = new int[5];
+            a[0] = 10;
+            a[1] = 20;
+            a[2] = 30;
+            a[3] = 40;
+            a[4] = 50;
+            println(a[0]);
+            println(a[1]);
+            println(a[2]);
+            println(a[3]);
+            println(a[4]);
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            10
+            20
+            30
+            40
+            50
+        """.trimIndent()
+    }
+
+    @Test
+    fun `support new 2d array`() {
+        val input = """
+            int[][] a = new int[3][3];
+            a[0][0] = 10;
+            a[0][1] = 20;
+            a[0][2] = 30;
+            a[1][0] = 40;
+            a[1][1] = 50;
+            a[1][2] = 60;
+            a[2][0] = 70;
+            a[2][1] = 80;
+            a[2][2] = 90;
+            println(a[0][0]);
+            println(a[0][1]);
+            println(a[0][2]);
+            println(a[1][0]);
+            println(a[1][1]);
+            println(a[1][2]);
+            println(a[2][0]);
+            println(a[2][1]);
+            println(a[2][2]);
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            10
+            20
+            30
+            40
+            50
+            60
+            70
+            80
+            90
+        """.trimIndent()
+    }
+
+    @Test
     fun `variables in different blocks have no conflict`() {
         val input = """
             int a = 0;

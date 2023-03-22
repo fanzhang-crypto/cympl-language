@@ -16,4 +16,14 @@ internal object RuntimeTypeChecker {
             throw InterpretException("type mismatch: expected $expectedType, got ${tvalue.type}")
         }
     }
+
+    fun checkArrayDimension(dimension: TValue) : Int {
+        if (dimension.type != INT) {
+            throw InterpretException("array dimension must be an integer: $dimension")
+        }
+        if (dimension.value as Int <= 0) {
+            throw InterpretException("array dimension must be positive: $dimension")
+        }
+        return dimension.value
+    }
 }

@@ -149,4 +149,10 @@ internal class AntlrToExpression(
         val type = typeResolver.resolveType(ctx)
         return Expression.Property(expr, id, type)
     }
+
+    override fun visitNewArray(ctx: CymplParser.NewArrayContext): Expression {
+        val type = typeResolver.resolveType(ctx.type())
+        val dimensions = ctx.expr().map { visit(it) }
+        return Expression.NewArray(type, dimensions)
+    }
 }

@@ -194,6 +194,10 @@ class CallGraphAnalyzer {
                 analyze(expression.expr)
             }
 
+            is Expression.NewArray -> {
+                expression.dimensions.forEach { analyze(it) }
+            }
+
             is Expression.Variable,
             is Expression.StringLiteral,
             is Expression.BoolLiteral,

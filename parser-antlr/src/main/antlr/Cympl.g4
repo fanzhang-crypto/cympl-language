@@ -48,6 +48,7 @@ assign: ID '=' expr;
 indexAssign: arrayExpr=expr '[' indexExpr=expr ']' '=' valueExpr=expr;
 
 expr: ID '(' exprlist? ')'                              # FunctionCall
+    | NEW type ('[' expr ']')+                          # NewArray
     | arrayExpr=expr '[' indexExpr=expr ']'             # Index
     | MINUS expr                                        # Negation
     | NOT expr                                          # LogicalNot
@@ -100,6 +101,7 @@ INT: DIGIT+;
 FLOAT: DIGIT '.' DIGIT* | '.' DIGIT+;
 STRING: '"' (ESC|.)*? '"';
 
+NEW: 'new';
 IF: 'if';
 ELSE: 'else';
 WHILE: 'while';

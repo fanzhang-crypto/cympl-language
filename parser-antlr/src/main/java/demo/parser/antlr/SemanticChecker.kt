@@ -216,6 +216,19 @@ class SemanticChecker : TypeResolver {
             types.put(ctx, BuiltinType.ARRAY(elementType))
         }
 
+        override fun exitNewArray(ctx: NewArrayContext) {
+            val elementType = resolveType(ctx.type())
+            val arrayType = ctx.expr().fold(elementType) { acc, dimExpr ->
+                val dimType = types.get(dimExpr)
+                if (dimType != BuiltinType.INT) {
+                    val location = getLocation(dimExpr.start)
+                    semanticErrors += SemanticException("array dimensions must be of type int", location)
+                }
+                BuiltinType.ARRAY(acc)
+            }
+            types.put(ctx, arrayType)
+        }
+
         override fun exitMulDiv(ctx: MulDivContext) {
             val leftType = types.get(ctx.expr(0))
             val rightType = types.get(ctx.expr(1))
@@ -250,6 +263,7 @@ class SemanticChecker : TypeResolver {
                     location
                 )
             }
+            types.put(ctx, targetType)
         }
 
         override fun exitPostIncDec(ctx: PostIncDecContext) {
@@ -261,6 +275,7 @@ class SemanticChecker : TypeResolver {
                     location
                 )
             }
+            types.put(ctx, targetType)
         }
 
         override fun exitVariable(ctx: VariableContext) {

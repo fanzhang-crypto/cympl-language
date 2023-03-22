@@ -1,6 +1,6 @@
 package demo.parser.domain
 
-sealed interface Expression: Typed {
+sealed interface Expression : Typed {
 
     fun toStatement(): Statement = Statement.ExpressionStatement(this)
 
@@ -13,7 +13,7 @@ sealed interface Expression: Typed {
         final override val left: Expression,
         final override val right: Expression
     ) : BinaryExpression {
-        override val resolvedType get() = compatibleNumberType(left.resolvedType, right.resolvedType)
+        override val resolvedType by lazy { compatibleNumberType(left.resolvedType, right.resolvedType) }
     }
 
     sealed class ComparisonExpression(
@@ -24,7 +24,7 @@ sealed interface Expression: Typed {
     }
 
     data class Parenthesized(val expr: Expression) : Expression {
-        override val resolvedType get() = expr.resolvedType
+        override val resolvedType by lazy { expr.resolvedType }
         override fun toString() = "($expr)"
     }
 
@@ -49,11 +49,24 @@ sealed interface Expression: Typed {
     }
 
     data class ArrayLiteral(val elements: List<Expression>) : Expression {
-        override val resolvedType get() = BuiltinType.ARRAY(
-            elements.firstOrNull()?.resolvedType ?: BuiltinType.VOID
-        )
+        override val resolvedType by lazy {
+            BuiltinType.ARRAY(
+                elements.firstOrNull()?.resolvedType ?: BuiltinType.VOID
+            )
+        }
 
         override fun toString() = "[${elements.joinToString(", ")}]"
+    }
+
+    data class NewArray(val elementType: BuiltinType, val dimensions: List<Expression>) : Expression {
+
+        override val resolvedType: BuiltinType.ARRAY =
+            dimensions.fold(elementType) { innerType, _ -> BuiltinType.ARRAY(innerType) } as BuiltinType.ARRAY
+
+        override fun toString(): String {
+            val dimensionString = dimensions.joinToString("") { "[$it]" }
+            return "new ${elementType}$dimensionString"
+        }
     }
 
     data class Variable(val id: String, val type: BuiltinType) : Expression {
@@ -79,11 +92,11 @@ sealed interface Expression: Typed {
     }
 
     class Addition(left: Expression, right: Expression) : ArithmeticExpression(left, right) {
-        override val resolvedType: BuiltinType
-            get() =
-                if (left.resolvedType == BuiltinType.STRING || right.resolvedType == BuiltinType.STRING)
-                    BuiltinType.STRING
-                else super.resolvedType
+        override val resolvedType: BuiltinType by lazy {
+            if (left.resolvedType == BuiltinType.STRING || right.resolvedType == BuiltinType.STRING)
+                BuiltinType.STRING
+            else super.resolvedType
+        }
 
         override fun toString() = "$left + $right"
     }
@@ -93,7 +106,7 @@ sealed interface Expression: Typed {
     }
 
     class Negation(val expr: Expression) : Expression {
-        override val resolvedType get() = expr.resolvedType
+        override val resolvedType by lazy { expr.resolvedType }
         override fun toString() = "-$expr"
     }
 
@@ -103,7 +116,7 @@ sealed interface Expression: Typed {
     }
 
     class Decrement(val expr: Expression, val postfix: Boolean) : Expression {
-        override val resolvedType get() = expr.resolvedType
+        override val resolvedType by lazy { expr.resolvedType }
         override fun toString() = if (postfix) "$expr--" else "--$expr"
     }
 
@@ -154,7 +167,7 @@ sealed interface Expression: Typed {
     }
 
     data class Index(val arrayExpr: Expression, val indexExpr: Expression) : Expression {
-        override val resolvedType get() = (arrayExpr.resolvedType as BuiltinType.ARRAY).elementType
+        override val resolvedType by lazy { (arrayExpr.resolvedType as BuiltinType.ARRAY).elementType }
         override fun toString() = "$arrayExpr[$indexExpr]"
     }
 

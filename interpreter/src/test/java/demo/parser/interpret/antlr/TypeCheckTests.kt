@@ -167,6 +167,21 @@ class TypeCheckTests {
         errors[1] shouldHaveMessage "semantic error at (7:11): return expression type mismatch: expected void, but got float"
     }
 
+    @Test
+    fun `should check array size type and element type on new array`() {
+        val input = """
+            int[] arr = new int[1.1];
+            String[] arr2 = new int[1];
+            arr2[0] = 1.1;
+        """.trimIndent()
+
+        val errors = check(input)
+        errors shouldHaveSize 3
+        errors[0] shouldHaveMessage "semantic error at (1:20): array dimensions must be of type int"
+        errors[1] shouldHaveMessage "semantic error at (2:16): type mismatch: expected String[], but got int[]"
+        errors[2] shouldHaveMessage "semantic error at (3:10): type mismatch: expected String, but got float"
+    }
+
     private fun check(input: String): List<ParseException> =
         when (val r = parser().parse(input.byteInputStream())) {
             is ParseResult.Failure ->

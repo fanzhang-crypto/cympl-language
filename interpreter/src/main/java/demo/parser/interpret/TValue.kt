@@ -7,6 +7,10 @@ open class TValue(val type: BuiltinType, val value: Any) {
 
     object TEmptyArray : TValue(EmptyArray, emptyArray<TValue>())
 
+    object NULL: TValue(BuiltinType.ANY, "null") {
+        override fun toString() = "null"
+    }
+
     object VOID : TValue(BuiltinType.VOID, "void") {
         override fun toString() = "void"
     }
@@ -38,12 +42,18 @@ open class TValue(val type: BuiltinType, val value: Any) {
         else -> throw InterpretException("cannot convert $value to boolean")
     }
 
-    fun asComparable(): Comparable<*> = when (value) {
-        is Int -> value
-        is Double -> value
-        is String -> value
-        else -> throw InterpretException("cannot convert $value to comparable")
-    }
-
     override fun toString() = asString()
+
+    companion object {
+        fun defaultValueOf(type: BuiltinType) = when (type) {
+            BuiltinType.ANY -> NULL
+            BuiltinType.VOID -> VOID
+            BuiltinType.BOOL -> TValue(type, false)
+            BuiltinType.INT -> TValue(type, 0)
+            BuiltinType.FLOAT -> TValue(type, 0.0)
+            BuiltinType.STRING -> TValue(type, "")
+            is BuiltinType.ARRAY -> TEmptyArray
+            else -> throw InterpretException("unknown type $type")
+        }
+    }
 }

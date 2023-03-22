@@ -43,7 +43,15 @@ internal class ExpressionCompiler {
             is Expression.Index -> source.compile(ctx)
             is Expression.Property -> source.compile(ctx)
             is Expression.FunctionCall -> source.compile(ctx)
+            is Expression.NewArray -> source.compile(ctx)
         }
+    }
+
+    private fun Expression.NewArray.compile(ctx: CompilationContext) {
+        for (dimension in dimensions) {
+            compile(dimension, ctx)
+        }
+        ctx.mv.visitMultiANewArrayInsn(resolvedType.jvmDescription, dimensions.size)
     }
 
     private fun Expression.Property.compile(ctx: CompilationContext) {

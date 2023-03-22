@@ -4,6 +4,7 @@ import demo.parser.domain.*
 import demo.parser.domain.symbol.ArrayScope
 import demo.parser.domain.symbol.StringScope
 import demo.parser.interpret.RuntimeTypeChecker.assertValueType
+import demo.parser.interpret.RuntimeTypeChecker.checkArrayDimension
 
 class Interpreter(private val runtime: Runtime) {
 
@@ -317,6 +318,24 @@ class Interpreter(private val runtime: Runtime) {
             } else {
                 val elementType = elements.firstOrNull()?.type ?: BuiltinType.VOID
                 TValue(BuiltinType.ARRAY(elementType), elements)
+            }
+        }
+
+        is Expression.NewArray -> when {
+            dimensions.size == 1 -> {
+                val dimension = dimensions.first().evaluate(scope).let { checkArrayDimension(it) }
+                val elements = Array(dimension) { TValue.defaultValueOf(elementType) }
+                TValue(resolvedType, elements)
+            }
+            dimensions.size > 1 -> {
+                val dimension = dimensions.first().evaluate(scope).let { checkArrayDimension(it) }
+
+                TValue(resolvedType, Array(dimension) {
+                    Expression.NewArray(elementType, dimensions.drop(1)).evaluate(scope)
+                })
+            }
+            else -> {
+                throw InterpretException("cannot create array with zero or negative dimensions")
             }
         }
 
