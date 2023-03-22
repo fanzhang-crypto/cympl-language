@@ -1,0 +1,4 @@
+#! cympl interpret
+
+String input = readln("Enter a string:");
+println("You entered: " + input);

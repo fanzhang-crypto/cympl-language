@@ -3,14 +3,15 @@ package demo.parser.interpret
 import demo.parser.domain.*
 import demo.parser.domain.symbol.ArrayScope
 import demo.parser.domain.symbol.StringScope
-import demo.parser.interpret.TypeChecker.assertValueType
+import demo.parser.interpret.RuntimeTypeChecker.assertValueType
 
-class Interpreter {
+class Interpreter(private val runtime: Runtime) {
 
     private val globalScope = Scope()
 
     init {
-        globalScope.defineFunction(Intrinsic.PrintLine.id, Intrinsic.PrintLine)
+        globalScope.defineFunction(IntrinsicFunction.PrintLine.id, IntrinsicFunction.PrintLine)
+        globalScope.defineFunction(IntrinsicFunction.ReadLine.id, IntrinsicFunction.ReadLine)
     }
 
     val globalSymbols: Set<String> get() = globalScope.getVariables().keys + globalScope.getFunctions().keys
@@ -21,11 +22,13 @@ class Interpreter {
         object Continue : Jump()
     }
 
-    fun interpret(program: Program): Sequence<String> = sequence {
+    fun interpret(program: Program, verbose: Boolean = true): Sequence<String> = sequence {
         for (stat in program.statements) {
             try {
                 val result = stat.evaluate(globalScope)
-                yield("$stat => ${formatTValue(result)}")
+                if (verbose) {
+                    yield("$stat => ${formatTValue(result)}")
+                }
             } catch (jump: Jump) {
                 when (jump) {
                     is Jump.Return -> yield("$stat => ${formatTValue(jump.value)}")
@@ -36,9 +39,12 @@ class Interpreter {
                 yield("$stat failed => ${e.message}")
             }
         }
-        yield("environment:")
-        formatCurrentEnvVariables().takeIf { it.isNotBlank() }?.let { yield(it) }
-        formatCurrentEnvFunctions().takeIf { it.isNotBlank() }?.let { yield(it) }
+
+        if (verbose) {
+            yield("environment:")
+            formatCurrentEnvVariables().takeIf { it.isNotBlank() }?.let { yield(it) }
+            formatCurrentEnvFunctions().takeIf { it.isNotBlank() }?.let { yield(it) }
+        }
     }
 
     private fun Statement.evaluate(scope: Scope): TValue = when (this) {
@@ -330,8 +336,8 @@ class Interpreter {
                 }
             }
 
-            if (function is Intrinsic) {
-                handleIntrinsic(function, args)
+            if (function is IntrinsicFunction) {
+                handleIntrinsicCall(function, args)
             } else {
                 try {
                     function.body.evaluate(functionScope)
@@ -371,14 +377,20 @@ class Interpreter {
         }
     }
 
-    private fun handleIntrinsic(function: Intrinsic, args: List<TValue>): TValue = when (function) {
-        Intrinsic.PrintLine -> {
-            println(args.firstOrNull())
+    private fun handleIntrinsicCall(function: IntrinsicFunction, args: List<TValue>): TValue = when (function) {
+        IntrinsicFunction.PrintLine -> {
+            val arg = args.firstOrNull()
+            if (arg != null) {
+                runtime.printLine(formatTValue(arg))
+            } else {
+                runtime.printLine("")
+            }
             TValue.VOID
         }
 
-        Intrinsic.ReadLine -> {
-            val line = readlnOrNull() ?: ""
+        IntrinsicFunction.ReadLine -> {
+            val arg = args.firstOrNull() ?: ""
+            val line = runtime.readLine(arg.toString())
             TValue(BuiltinType.STRING, line)
         }
     }
@@ -393,7 +405,7 @@ class Interpreter {
         .joinToString(", ")
 
     private fun formatCurrentEnvFunctions() = globalScope.getFunctions()
-        .filter { it.value !is Intrinsic }
+        .filter { it.value !is IntrinsicFunction }
         .map { (k, function) -> "$k(${function.args.joinToString(", ") { "${it.id}:${it.type}" }}):${function.returnType}" }
         .joinToString(", ")
 

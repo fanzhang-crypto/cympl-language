@@ -8,6 +8,7 @@ import org.jline.terminal.Terminal
 import org.jline.utils.AttributedString
 import org.jline.utils.AttributedStyle
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Lazy
 import org.springframework.shell.standard.FileValueProvider
 import org.springframework.shell.standard.ShellComponent
 import org.springframework.shell.standard.ShellMethod
@@ -20,6 +21,7 @@ import java.lang.Exception
 class InterpretCommand(
     @Autowired private val parserProvider: () -> Parser<Program>,
     @Autowired private val terminal: Terminal,
+    @Lazy @Autowired private val runtime: demo.parser.interpret.Runtime
 ) {
 
     @ShellMethod("Interpret a program")
@@ -43,17 +45,12 @@ class InterpretCommand(
         }
 
         val parser = parserProvider()
-        val interpreter = Interpreter()
+        val interpreter = Interpreter(runtime)
 
         FileInputStream(file).use {
             when (val r = parser.parse(it)) {
                 is ParseResult.Success<Program> -> {
-                    val output = interpreter.interpret(r.value)
-                    if (verbose) {
-                        output.forEach(::printResult)
-                    } else {
-                        output.last()
-                    }
+                    interpreter.interpret(r.value, verbose).forEach(::printResult)
                 }
 
                 is ParseResult.Failure<*> -> {

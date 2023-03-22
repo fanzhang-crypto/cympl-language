@@ -2,10 +2,7 @@ package demo.parser.antlr
 
 import CymplBaseListener
 import CymplParser.*
-import demo.parser.domain.SemanticException
-import demo.parser.domain.TokenLocation
-import demo.parser.domain.BuiltinType
-import demo.parser.domain.EmptyArray
+import demo.parser.domain.*
 import demo.parser.domain.symbol.*
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
@@ -281,7 +278,7 @@ class SemanticChecker : TypeResolver {
                 //empty array is allowed to assign to any array type
                 return
             }
-            if (exprType != varType) {
+            if (!TypeChecker.typeMatch(exprType, varType)) {
                 val location = getLocation(ctx.expr().start)
                 semanticErrors += SemanticException("type mismatch: expected $varType, but got $exprType", location)
             }
@@ -292,7 +289,7 @@ class SemanticChecker : TypeResolver {
             if (variableSymbol != null) {
                 val varType = variableSymbol.type
                 val exprType = types.get(ctx.expr())
-                if (exprType != varType) {
+                if (!TypeChecker.typeMatch(exprType, varType)) {
                     val location = getLocation(ctx.expr().start)
                     semanticErrors += SemanticException(
                         "type mismatch: expected ${variableSymbol.type}, but got $exprType",
@@ -319,7 +316,7 @@ class SemanticChecker : TypeResolver {
             val parameterTypes = functionSymbol.parameters.map { it.type }
             val argumentTypes = ctx.exprlist()?.expr()?.map { types.get(it) } ?: emptyList()
 
-            if (argumentTypes != parameterTypes) {
+            if (!TypeChecker.typesMatch(argumentTypes, parameterTypes)) {
                 val location = getLocation(idToken.symbol)
                 semanticErrors += SemanticException(
                     "argument types mismatch: expected ${parameterTypes}, but got $argumentTypes",
@@ -433,7 +430,7 @@ class SemanticChecker : TypeResolver {
 
         private fun checkComparisonBop(ctx: ParserRuleContext, leftType: BuiltinType, rightType: BuiltinType) {
             val compatibleType = BuiltinType.compatibleTypeOf(leftType, rightType)
-            if (!compatibleType.numericCompatible  && compatibleType != BuiltinType.STRING) {
+            if (!compatibleType.numericCompatible && compatibleType != BuiltinType.STRING) {
                 val location = getLocation(ctx.start)
                 semanticErrors += SemanticException(
                     "type mismatch: expected bool, int, float or String, but got $leftType and $rightType",

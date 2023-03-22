@@ -14,6 +14,7 @@ sealed class BuiltinType {
 
     val name: String
         get() = when (this) {
+            is ANY -> "any"
             is INT -> "int"
             is FLOAT -> "float"
             is STRING -> "String"
@@ -25,6 +26,7 @@ sealed class BuiltinType {
 
     open val scope: Scope? = null
 
+    object ANY : BuiltinType()
     object VOID : BuiltinType()
     object BOOL : BuiltinType()
     object INT : BuiltinType()

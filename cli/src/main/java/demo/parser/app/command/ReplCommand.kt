@@ -16,6 +16,7 @@ import org.jline.utils.AttributedString
 import org.jline.utils.AttributedStyle
 import org.jline.widget.AutosuggestionWidgets
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Lazy
 import org.springframework.shell.standard.ShellComponent
 import org.springframework.shell.standard.ShellMethod
 import java.lang.Exception
@@ -24,7 +25,8 @@ import java.lang.Exception
 class ReplCommand(
     @Autowired private val parserProvider: () -> Parser<Program>,
     @Autowired private val terminal: Terminal,
-    @Autowired private val jlineParser: org.jline.reader.Parser
+    @Autowired private val jlineParser: org.jline.reader.Parser,
+    @Lazy @Autowired private val runtime: demo.parser.interpret.Runtime
 ) {
 
     @ShellMethod("Start a REPL")
@@ -89,7 +91,7 @@ class ReplCommand(
         val globalSymbols get() = interpreter.globalSymbols
 
         private val parser: Parser<Program> = parserProvider()
-        private val interpreter = Interpreter()
+        private val interpreter = Interpreter(runtime)
 
         fun eval(inputLine: String) {
             when (val r = parser.parse(inputLine.byteInputStream())) {

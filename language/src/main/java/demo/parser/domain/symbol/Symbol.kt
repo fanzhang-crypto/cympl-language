@@ -40,14 +40,14 @@ object IntrinsicSymbols {
     val printLine = FunctionSymbol(
         "println",
         BuiltinType.VOID,
-        listOf(VariableSymbol("str", BuiltinType.STRING, null)),
+        listOf(VariableSymbol("str", BuiltinType.ANY, null)),
         null
     )
 
     val readLine = FunctionSymbol(
-        "readLine",
+        "readln",
         BuiltinType.STRING,
-        emptyList(),
+        listOf(VariableSymbol("prompt", BuiltinType.STRING, null)),
         null
     )
 }

@@ -1,7 +1,7 @@
 package demo.parser.interpret
 
 import demo.parser.domain.*
-import demo.parser.interpret.TypeChecker.assertValueType
+import demo.parser.interpret.RuntimeTypeChecker.assertValueType
 
 open class TValue(val type: BuiltinType, val value: Any) {
 
