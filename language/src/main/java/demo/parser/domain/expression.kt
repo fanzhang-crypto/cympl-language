@@ -1,6 +1,6 @@
 package demo.parser.domain
 
-sealed interface Expression : Typed {
+sealed interface Expression: Typed {
 
     fun toStatement(): Statement = Statement.ExpressionStatement(this)
 
