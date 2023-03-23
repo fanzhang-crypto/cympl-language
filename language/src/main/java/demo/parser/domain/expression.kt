@@ -1,6 +1,6 @@
 package demo.parser.domain
 
-sealed interface Expression: Typed {
+sealed interface Expression : Typed {
 
     fun toStatement(): Statement = Statement.ExpressionStatement(this)
 
@@ -59,7 +59,6 @@ sealed interface Expression: Typed {
     }
 
     data class NewArray(val elementType: BuiltinType, val dimensions: List<Expression>) : Expression {
-
         override val resolvedType: BuiltinType.ARRAY =
             dimensions.fold(elementType) { innerType, _ -> BuiltinType.ARRAY(innerType) } as BuiltinType.ARRAY
 
@@ -161,9 +160,9 @@ sealed interface Expression: Typed {
         override fun toString() = "!$expr"
     }
 
-    data class FunctionCall(val id: String, val args: List<Expression>, val type: BuiltinType) : Expression {
+    data class FunctionCall(val funcExpr: Expression, val args: List<Expression>, val type: BuiltinType) : Expression {
         override val resolvedType = type
-        override fun toString() = "$id(${args.joinToString(", ")})"
+        override fun toString() = "$funcExpr(${args.joinToString(", ")})"
     }
 
     data class Index(val arrayExpr: Expression, val indexExpr: Expression) : Expression {
@@ -174,6 +173,18 @@ sealed interface Expression: Typed {
     data class Property(val expr: Expression, val propertyName: String, val type: BuiltinType) : Expression {
         override val resolvedType = type
         override fun toString() = "$expr.$propertyName"
+    }
+
+    data class Lambda(val paramNames: List<String>, val body: Statement, val type: BuiltinType.FUNCTION) : Expression {
+        override val resolvedType = type
+
+        override fun toString(): String {
+            val bodyString = when (body) {
+                is Statement.Return -> body.expr.toString()
+                else -> body.toString()
+            }
+            return "(${paramNames.joinToString(", ")}) -> $bodyString"
+        }
     }
 
     companion object {

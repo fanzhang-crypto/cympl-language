@@ -145,7 +145,8 @@ internal class CymplGrammar(
     private val functionCall by (ID * -LPR * optional(exprList) * -RPR)
         .map { (idToken, e) ->
             semanticChecker.checkFunctionRef(idToken)
-            Expression.FunctionCall(idToken.text, e ?: emptyList(), BuiltinType.VOID)
+            val funcExpr = Expression.Variable(idToken.text, BuiltinType.VOID)
+            Expression.FunctionCall(funcExpr, e ?: emptyList(), BuiltinType.VOID)
         }
 
     private val variable by ID.map { idToken ->

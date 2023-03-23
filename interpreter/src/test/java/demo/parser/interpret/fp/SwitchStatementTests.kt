@@ -196,11 +196,11 @@ class SwitchStatementTests {
             case 1:return "one";
             case 2:return "two";
             default:return "other";
-            } } => void
+            } } => Closure(#foo)
             foo(1); => "one"
             environment:
-            foo(x:int):String
-        """
+            foo: (int) -> String
+            """
 
         verify(input, output)
     }

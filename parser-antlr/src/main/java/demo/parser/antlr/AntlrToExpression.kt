@@ -4,15 +4,15 @@ import CymplBaseVisitor
 import demo.parser.domain.*
 
 internal class AntlrToExpression(
-    private val typeResolver: TypeResolver
+    private val typeResolver: TypeResolver,
+    private val antlrToStatement: AntlrToStatement
 ) : CymplBaseVisitor<Expression>() {
 
     override fun visitFunctionCall(ctx: CymplParser.FunctionCallContext): Expression {
-        val idToken = ctx.ID().symbol
-        val id = idToken.text
+        val funcExpr = visit(ctx.funcExpr)
         val arguments = ctx.exprlist()?.expr()?.map { visit(it) } ?: emptyList()
         val type = typeResolver.resolveType(ctx)
-        return Expression.FunctionCall(id, arguments, type)
+        return Expression.FunctionCall(funcExpr, arguments, type)
     }
 
     override fun visitIndex(ctx: CymplParser.IndexContext): Expression {
@@ -154,5 +154,17 @@ internal class AntlrToExpression(
         val type = typeResolver.resolveType(ctx.type())
         val dimensions = ctx.expr().map { visit(it) }
         return Expression.NewArray(type, dimensions)
+    }
+
+    override fun visitLambda(ctx: CymplParser.LambdaContext): Expression {
+        val paramNames = ctx.idList()?.ID()?.map { it.text } ?: emptyList()
+        // lambda body can be either a statement or an expression. If it's an expression, we wrap it in a return statement
+        val body = when {
+            ctx.expr() != null -> Statement.Return(visit(ctx.expr()))
+            ctx.statement() != null -> antlrToStatement.visit(ctx.statement())
+            else -> Statement.Block(emptyList())
+        }
+        val type = typeResolver.resolveType(ctx) as BuiltinType.FUNCTION
+        return Expression.Lambda(paramNames, body, type)
     }
 }

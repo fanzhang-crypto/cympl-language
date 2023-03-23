@@ -44,6 +44,7 @@ internal class ExpressionCompiler {
             is Expression.Property -> source.compile(ctx)
             is Expression.FunctionCall -> source.compile(ctx)
             is Expression.NewArray -> source.compile(ctx)
+            is Expression.Lambda -> TODO()
         }
     }
 
@@ -319,14 +320,20 @@ internal class ExpressionCompiler {
     }
 
     private fun Expression.FunctionCall.compile(ctx: CompilationContext) {
-        if (id == "println") {
+        val funcExpr = this.funcExpr
+        if (funcExpr !is Expression.Variable) {
+            //high order functions are not supported
+            throw CompilationException("function call unsupported for expression: $funcExpr")
+        }
+
+        if (funcExpr.id == "println") {
             compileIntrinsicCalls(this, ctx)
             return
         }
 
         args.forEach { compile(it, ctx) }
 
-        ctx.invokeMethod(id, args.map { it.resolvedType.asmType }.toTypedArray(), resolvedType.asmType)
+        ctx.invokeMethod(funcExpr.id, args.map { it.resolvedType.asmType }.toTypedArray(), resolvedType.asmType)
     }
 
     private fun compileIntrinsicCalls(functionCall: Expression.FunctionCall, ctx: CompilationContext): Unit =

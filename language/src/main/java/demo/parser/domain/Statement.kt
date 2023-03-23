@@ -78,7 +78,7 @@ sealed interface Statement {
     ) : Statement, Typed {
 
         override val resolvedType: BuiltinType
-            get() = BuiltinType.FUNCTION(returnType, parameters.map { it.type })
+            get() = BuiltinType.FUNCTION(parameters.map { it.type }, returnType)
 
         override fun toString() = "func $id(${parameters.joinToString(", ")}):$returnType $body"
     }

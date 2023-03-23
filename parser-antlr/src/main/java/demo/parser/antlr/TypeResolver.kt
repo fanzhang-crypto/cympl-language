@@ -17,8 +17,8 @@ interface TypeResolver {
         if (typeContext.funcType() != null) {
             val funcTypeContext = typeContext.funcType()
             val returnType = resolveType(funcTypeContext.retType)
-            val parameterTypes = funcTypeContext.paramTypes?.children?.map { resolveType(it as CymplParser.TypeContext) } ?: emptyList()
-            return BuiltinType.FUNCTION(returnType, parameterTypes)
+            val parameterTypes = funcTypeContext.paramTypes?.type()?.map { resolveType(it as CymplParser.TypeContext) } ?: emptyList()
+            return BuiltinType.FUNCTION(parameterTypes, returnType)
         }
 
         if (typeContext.childCount == 1) {

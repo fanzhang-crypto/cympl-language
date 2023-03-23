@@ -7,7 +7,7 @@ internal class AntlrToStatement(
     private val typeResolver: TypeResolver
 ) : CymplBaseVisitor<Statement>() {
 
-    private val antlrToExpression = AntlrToExpression(typeResolver)
+    private val antlrToExpression = AntlrToExpression(typeResolver, this)
 
     override fun visitExpression(ctx: CymplParser.ExpressionContext): Statement =
         antlrToExpression.visit(ctx.expr()).let {

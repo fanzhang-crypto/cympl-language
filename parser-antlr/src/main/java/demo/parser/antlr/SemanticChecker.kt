@@ -64,6 +64,17 @@ class SemanticChecker : TypeResolver {
             currentScope = currentScope?.enclosingScope
         }
 
+        override fun enterLambda(ctx: LambdaContext) {
+            val parameters = ctx.idList()?.ID()?.map { VariableSymbol(it.text, BuiltinType.ANY, null) } ?: emptyList()
+            val lambdaScope = LambdaScope(BuiltinType.ANY, parameters, currentScope)
+            saveScope(ctx, lambdaScope)
+            currentScope = lambdaScope
+        }
+
+        override fun exitLambda(ctx: LambdaContext) {
+            currentScope = currentScope?.enclosingScope
+        }
+
         override fun exitParamDecl(ctx: ParamDeclContext) {
             defineVar(ctx.ID().symbol, ctx.type())
         }
@@ -144,6 +155,89 @@ class SemanticChecker : TypeResolver {
         }
 
         override fun exitBlock(ctx: BlockContext?) {
+            currentScope = currentScope?.enclosingScope
+        }
+
+        /**
+         * lambda's type can only be determined by its context which could be:
+         * 1. a variable declaration
+         * 2. an assign statement
+         * 3. a function call with lambda as argument
+         * 4. a return statement in a function definition
+         */
+        override fun enterLambda(ctx: LambdaContext) {
+            val lambdaType: BuiltinType = when (val parent = ctx.parent) {
+                is VarDeclContext -> resolveType(parent.type())
+
+                is AssignContext -> {
+                    val assignVarSymbol = currentScope?.resolve(parent.ID().text) as? VariableSymbol
+                    assignVarSymbol?.type ?: BuiltinType.VOID
+                }
+
+                is ExprlistContext -> {
+                    val functionCallContext = parent.parent
+                    if (functionCallContext !is FunctionCallContext) {
+                        return
+                    }
+                    val functionType = types.get(functionCallContext.funcExpr)
+                    if (functionType !is BuiltinType.FUNCTION) {
+                        val location = getLocation(functionCallContext.funcExpr.start)
+                        semanticErrors += SemanticException("callee is not a function", location)
+                        return
+                    }
+                    val parameterTypes = functionType.paramTypes
+                    val argumentIndex = parent.expr().indexOf(ctx)
+                    parameterTypes[argumentIndex]
+                }
+
+                is ExprContext -> {
+                    types.get(parent)
+                }
+
+                is ReturnStatContext -> {
+                    val currentFunctionSymbol = getCurrentFunctionScope()
+                    if (currentFunctionSymbol == null) {
+                        val location = getLocation(ctx.start)
+                        semanticErrors += SemanticException("return statement outside of function", location)
+                        return
+                    }
+                    currentFunctionSymbol.returnType
+                }
+
+                else -> BuiltinType.VOID
+            }
+
+            if (lambdaType !is BuiltinType.FUNCTION) {
+                val location = getLocation(ctx.start)
+                semanticErrors += SemanticException(
+                    "lambda expression must be assigned to or returned as a function type",
+                    location
+                )
+                return
+            }
+            if (lambdaType.paramTypes.size != (ctx.idList()?.ID()?.size ?: 0)) {
+                val location = getLocation(ctx.start)
+                semanticErrors += SemanticException(
+                    "lambda expression must have ${lambdaType.paramTypes.size} parameters, but got ${
+                        ctx.idList().ID().size
+                    }",
+                    location
+                )
+                return
+            }
+
+            currentScope = scopes[ctx]
+            //update return type of current lambda scope
+            (currentScope as LambdaScope).returnType = lambdaType.returnType
+
+            ctx.idList()?.ID()?.zip(lambdaType.paramTypes)?.forEach { (idToken, paramType) ->
+                val variableSymbol = VariableSymbol(idToken.text, paramType, null)
+                currentScope?.define(variableSymbol)
+            }
+            types.put(ctx, lambdaType)
+        }
+
+        override fun exitLambda(ctx: LambdaContext) {
             currentScope = currentScope?.enclosingScope
         }
 
@@ -315,15 +409,28 @@ class SemanticChecker : TypeResolver {
         }
 
         override fun exitFunctionCall(ctx: FunctionCallContext) {
-            val idToken = ctx.ID()
-            val functionName = idToken.text
+            val functionType = when (val funcExpr = ctx.funcExpr) {
+                is VariableContext -> {
+                    val functionName = funcExpr.ID().text
+                    val functionSymbol: Symbol = currentScope?.resolve(functionName) ?: return
+                    if (functionSymbol.type !is BuiltinType.FUNCTION) {
+                        val location = getLocation(funcExpr.ID().symbol)
+                        semanticErrors += SemanticException("${functionSymbol.name} is not a function:", location)
+                        return
+                    }
+                    functionSymbol.type
+                }
 
-            val functionSymbol: Symbol = currentScope?.resolve(functionName) ?: return
+                is FunctionCallContext -> {
+                    types.get(funcExpr)
+                }
 
-            val functionType = functionSymbol.type
+                else -> BuiltinType.VOID
+            }
+
             if (functionType !is BuiltinType.FUNCTION) {
-                val location = getLocation(idToken.symbol)
-                semanticErrors += SemanticException("$functionName is not a function:", location)
+                val location = getLocation(ctx.funcExpr.start)
+                semanticErrors += SemanticException("callee is not a function", location)
                 return
             }
 
@@ -331,7 +438,7 @@ class SemanticChecker : TypeResolver {
             val argumentTypes = ctx.exprlist()?.expr()?.mapNotNull { types.get(it) } ?: emptyList()
 
             if (!TypeChecker.typesMatch(argumentTypes, parameterTypes)) {
-                val location = getLocation(idToken.symbol)
+                val location = getLocation(ctx.start)
                 semanticErrors += SemanticException(
                     "argument types mismatch: expected ${parameterTypes}, but got $argumentTypes",
                     location
@@ -341,7 +448,7 @@ class SemanticChecker : TypeResolver {
         }
 
         override fun exitReturnStat(ctx: ReturnStatContext) {
-            val currentFunctionSymbol = getCurrentFunctionSymbol()
+            val currentFunctionSymbol = getCurrentFunctionScope()
             if (currentFunctionSymbol == null) {
                 val location = getLocation(ctx.start)
                 semanticErrors += SemanticException("return statement outside of function", location)
@@ -467,10 +574,10 @@ class SemanticChecker : TypeResolver {
             }
         }
 
-        private fun getCurrentFunctionSymbol(): FunctionSymbol? {
+        private fun getCurrentFunctionScope(): FunctionScope? {
             var scope = currentScope
             while (scope != null) {
-                if (scope is FunctionSymbol) {
+                if (scope is FunctionScope) {
                     return scope
                 }
                 scope = scope.enclosingScope
@@ -485,23 +592,36 @@ class SemanticChecker : TypeResolver {
 
         private var currentScope: Scope? = globals
 
-        override fun enterFuncDecl(ctx: FuncDeclContext?) {
+        override fun enterFuncDecl(ctx: FuncDeclContext) {
             currentScope = scopes[ctx]
         }
 
-        override fun exitFuncDecl(ctx: FuncDeclContext?) {
+        override fun exitFuncDecl(ctx: FuncDeclContext) {
             currentScope = currentScope?.enclosingScope
         }
 
-        override fun enterBlock(ctx: BlockContext?) {
+        override fun enterBlock(ctx: BlockContext) {
             currentScope = scopes[ctx]
         }
 
-        override fun exitBlock(ctx: BlockContext?) {
+        override fun exitBlock(ctx: BlockContext) {
+            currentScope = currentScope?.enclosingScope
+        }
+
+        override fun enterLambda(ctx: LambdaContext) {
+            currentScope = scopes[ctx]
+        }
+
+        override fun exitLambda(ctx: LambdaContext) {
             currentScope = currentScope?.enclosingScope
         }
 
         override fun exitVariable(ctx: VariableContext) {
+            if (ctx.parent is FunctionCallContext) {
+                //leave it to the function call check
+                return
+            }
+
             val idToken = ctx.ID()
             val varName: String = idToken.text
             val variableSymbol: Symbol? = currentScope?.resolve(varName)
@@ -527,7 +647,13 @@ class SemanticChecker : TypeResolver {
         }
 
         override fun exitFunctionCall(ctx: FunctionCallContext) {
-            val idToken = ctx.ID()
+            val funcExprCtx = ctx.funcExpr
+            if (funcExprCtx !is VariableContext) {
+                // function to call is not a variable, so skip the reference check
+                return
+            }
+
+            val idToken = funcExprCtx.ID()
             val functionName = idToken.text
             val functionSymbol: Symbol? = currentScope?.resolve(functionName)
 

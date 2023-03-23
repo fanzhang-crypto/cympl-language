@@ -3,13 +3,12 @@
 () -> int fibonacci() {
     int a = 0;
     int b = 1;
-    int fib() {
+    return () -> {
         int c = a;
         a = b;
         b = a + c;
         return c;
-    }
-    return fib;
+    };
 }
 
 () -> int fibo = fibonacci();

@@ -8,7 +8,7 @@ statement
     | funcDecl                      #FunctionDeclaration
     | assign ';'                    #Assignment
     | indexAssign ';'               #IndexAssignment
-    | expr';'                       #Expression
+    | expr ';'                      #Expression
     | returnStat                    #ReturnStatement
     | ifStat                        #IfStatement
     | whileStat                     #WhileStatement
@@ -21,7 +21,8 @@ statement
 
 type: INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE | type '[]' | funcType;
 
-funcType: '(' paramTypes=type? ')' '->' retType=type;
+typeList: type (',' type)*;
+funcType: '(' paramTypes=typeList? ')' ARROW_RIGHT retType=type;
 
 varDecl: type ID '=' expr;
 
@@ -55,9 +56,12 @@ assign: ID '=' expr;
 
 indexAssign: arrayExpr=expr '[' indexExpr=expr ']' '=' valueExpr=expr;
 
-expr: ID '(' exprlist? ')'                              # FunctionCall
+idList: ID (',' ID)*;
+
+expr: funcExpr=expr '(' paramList=exprlist? ')'                            # FunctionCall
     | NEW type ('[' expr ']')+                          # NewArray
     | arrayExpr=expr '[' indexExpr=expr ']'             # Index
+    | '(' idList? ')' ARROW_RIGHT (expr | statement)    # Lambda
     | MINUS expr                                        # Negation
     | NOT expr                                          # LogicalNot
     | '(' expr ')'                                      # ParenthesizedExpression
@@ -80,6 +84,7 @@ expr: ID '(' exprlist? ')'                              # FunctionCall
 
 exprlist: expr (',' expr)*;
 
+ARROW_RIGHT: '->';
 INC: '++';
 DEC: '--';
 PLUS: '+';

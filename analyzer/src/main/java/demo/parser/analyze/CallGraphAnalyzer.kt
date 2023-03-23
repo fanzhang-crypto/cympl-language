@@ -93,7 +93,10 @@ class CallGraphAnalyzer {
         when (expression) {
             is Expression.FunctionCall -> {
                 if (currentScope is FunctionSymbol) {
-                    edges.add(currentScope.scopeName to expression.id)
+                    val funcExpr = expression.funcExpr
+                    if (funcExpr is Expression.Variable) {
+                        edges.add(currentScope.scopeName to funcExpr.id)
+                    }
                 }
             }
 
@@ -205,6 +208,13 @@ class CallGraphAnalyzer {
             is Expression.IntLiteral,
             is Expression.Decrement,
             is Expression.Increment -> {
+            }
+
+            is Expression.Lambda -> {
+//                currentScope = FunctionSymbol("lambda", expression.returnType, emptyList(), currentScope)
+//                nodes += currentScope.scopeName
+                analyze(expression.body)
+//                currentScope = currentScope.enclosingScope!!
             }
         }
     }

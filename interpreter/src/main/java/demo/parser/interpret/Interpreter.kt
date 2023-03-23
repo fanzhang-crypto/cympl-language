@@ -162,11 +162,12 @@ class Interpreter(private val runtime: Runtime) {
     }
 
     private fun Statement.Assignment.evaluate(scope: Scope): TValue {
-        val variable = scope.resolveVariable(id)
+        scope.resolveVariable(id)
             ?: throw InterpretException("variable $id not defined")
 
         val value = expr.evaluate(scope)
-        return variable.withValue(value.value).also { scope.setVariable(id, it) }
+        scope.setVariable(id, value)
+        return value
     }
 
     private fun Statement.IndexAssignment.evaluate(scope: Scope): TValue {
@@ -366,13 +367,21 @@ class Interpreter(private val runtime: Runtime) {
         }
 
         is Expression.FunctionCall -> {
-            val closure = scope.resolveVariable(id) as? Closure
-                ?: throw InterpretException("function not defined: $id")
+            val closure = when (val funcExpr = this.funcExpr) {
+                is Expression.Variable -> {
+                    scope.resolveVariable(funcExpr.id) as? Closure
+                        ?: throw InterpretException("function not defined: $funcExpr")
+                }
+                else -> {
+                    funcExpr.evaluate(scope) as? Closure
+                        ?: throw InterpretException("not a function: $funcExpr")
+                }
+            }
 
             val function = closure.function
             val args = args.map { it.evaluate(scope) }
             if (args.size != function.parameters.size) {
-                throw InterpretException("function $id expects ${function.parameters.size} arguments, got ${args.size}")
+                throw InterpretException("function $funcExpr expects ${function.parameters.size} arguments, got ${args.size}")
             }
 
             val functionScope = Scope(closure.scope).apply {
@@ -420,6 +429,23 @@ class Interpreter(private val runtime: Runtime) {
 
                 else -> throw InterpretException("cannot access property $propertyName of type ${owner.type}")
             }
+        }
+
+        is Expression.Lambda -> {
+            val paramTypes = type.paramTypes
+            val returnType = type.returnType
+
+            val paramDecls = paramNames.zip(paramTypes).map { (name, type) ->
+                Statement.VariableDeclaration(name, type)
+            }
+
+            val functionDeclaration = Statement.FunctionDeclaration(
+                id = "<lambda>",
+                parameters = paramDecls,
+                returnType = returnType,
+                body = Statement.Block(listOf(body))
+            )
+            Closure(functionDeclaration, scope)
         }
     }
 
