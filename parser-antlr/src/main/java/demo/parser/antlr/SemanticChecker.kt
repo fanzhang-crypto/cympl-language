@@ -49,10 +49,10 @@ class SemanticChecker : TypeResolver {
 
         override fun exitFuncDecl(ctx: FuncDeclContext) {
             currentScope = currentScope?.enclosingScope
-            if (semanticErrors.isNotEmpty()) {
-                // remove function from scope if there are errors
-                currentScope?.remove(ctx.ID().text)
-            }
+//            if (semanticErrors.isNotEmpty()) {
+//                // remove function from scope if there are errors
+//                currentScope?.remove(ctx.ID().text)
+//            }
         }
 
         override fun enterBlock(ctx: BlockContext) {
@@ -82,11 +82,11 @@ class SemanticChecker : TypeResolver {
             paramsContext: ParamDeclsContext?
         ): FunctionSymbol {
             val name: String = idToken.text
-            val functionSymbol: Symbol? = currentScope?.resolve(name)
+            val existingSymbol: Symbol? = currentScope?.resolve(name)
 
-            if (functionSymbol != null) {
+            if (existingSymbol != null) {
                 val location = getLocation(idToken)
-                if (functionSymbol.scope == currentScope) {
+                if (existingSymbol.scope == currentScope) {
                     semanticErrors += SemanticException("function $name already defined", location)
                 } else {
                     println("function shadowed at $location: $name")
@@ -112,7 +112,7 @@ class SemanticChecker : TypeResolver {
             if (variableSymbol != null) {
                 val location = getLocation(idToken)
                 if (variableSymbol.scope == currentScope) {
-                    semanticErrors += SemanticException("variable $name already defined", location)
+                    semanticErrors += SemanticException("symbol $name already defined", location)
                 } else {
                     println("variable shadowed at $location: $name")
                 }
@@ -338,7 +338,7 @@ class SemanticChecker : TypeResolver {
                     location
                 )
             }
-            types.put(ctx, functionSymbol.type)
+            types.put(ctx, functionSymbol.returnType)
         }
 
         override fun exitReturnStat(ctx: ReturnStatContext) {
@@ -349,7 +349,7 @@ class SemanticChecker : TypeResolver {
                 return
             }
 
-            val returnType = currentFunctionSymbol.type
+            val returnType = currentFunctionSymbol.returnType
             val exprType = ctx.expr()?.let { types.get(it) } ?: BuiltinType.VOID
             if (returnType != exprType) {
                 val location = getLocation(ctx.expr().start)

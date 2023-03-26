@@ -157,11 +157,7 @@ internal class StatementCompiler {
     private fun Statement.Switch.compile(ctx: CompilationContext) {
         expressionCompiler.compile(expr, ctx)
 
-        val caseByKey = mutableMapOf<Int, Statement.Case>()
-        for (case in cases) {
-            val key = (case.condition as Expression.IntLiteral).value
-            caseByKey[key] = case
-        }
+        val caseByKey = cases.associateBy { (it.condition as Expression.IntLiteral).value }
 
         val tableSwitchGenerator = object : TableSwitchGenerator {
             override fun generateCase(key: Int, end: Label) {

@@ -97,9 +97,9 @@ class ExpressionTests {
 
         val errors = parser().parse(input).shouldBeInstanceOf<ParseResult.Failure<*>>().errors
         errors shouldHaveSize 4
-        errors[0].shouldHaveMessage("semantic error at (3:16): variable i already defined")
+        errors[0].shouldHaveMessage("semantic error at (3:16): symbol i already defined")
         errors[1].shouldHaveMessage("semantic error at (5:17): variable k not defined")
-        errors[2].shouldHaveMessage("semantic error at (6:16): variable i already defined")
+        errors[2].shouldHaveMessage("semantic error at (6:16): symbol i already defined")
         errors[3].shouldHaveMessage("semantic error at (7:12): variable j not defined")
     }
 

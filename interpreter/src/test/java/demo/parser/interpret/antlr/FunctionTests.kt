@@ -186,7 +186,7 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors.first().shouldHaveMessage("semantic error at (2:29): variable x already defined")
+                r.errors.first().shouldHaveMessage("semantic error at (2:29): symbol x already defined")
             }
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
@@ -207,7 +207,7 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors.first().shouldHaveMessage("semantic error at (4:20): variable x already defined")
+                r.errors.first().shouldHaveMessage("semantic error at (4:20): symbol x already defined")
             }
 
             is ParseResult.Success -> {
