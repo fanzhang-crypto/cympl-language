@@ -15,6 +15,7 @@ statement
     | forStat                       #ForStatement
     | breakStat                     #BreakStatement
     | continueStat                  #ContinueStatement
+    | switchStat                    #SwitchStatement
     | block                         #BlockStatement
 ;
 
@@ -42,6 +43,11 @@ forStat: FOR '(' forInit? ';' cond=expr? ';' (updateExpr=expr | updateAssign=ass
 breakStat: BREAK ';';
 
 continueStat: CONTINUE ';';
+
+switchStat: SWITCH '(' expr ')' '{' caseStat* defaultCase? '}';
+
+caseStat: CASE expr ':' statement? breakStat?;
+defaultCase: DEFAULT ':' statement;
 
 assign: ID '=' expr;
 
@@ -106,6 +112,9 @@ IF: 'if';
 ELSE: 'else';
 WHILE: 'while';
 FOR: 'for';
+SWITCH: 'switch';
+CASE: 'case';
+DEFAULT: 'default';
 BREAK: 'break';
 CONTINUE: 'continue';
 RETURN: 'return';

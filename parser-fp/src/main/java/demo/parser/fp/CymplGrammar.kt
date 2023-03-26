@@ -20,6 +20,9 @@ internal class CymplGrammar(
     private val FOR by literalToken(Symbols.FOR)
     private val BREAK by literalToken(Symbols.BREAK)
     private val CONTINUE by literalToken(Symbols.CONTINUE)
+    private val SWITCH by literalToken(Symbols.SWITCH)
+    private val CASE by literalToken(Symbols.CASE)
+    private val DEFAULT by literalToken(Symbols.DEFAULT)
 
     private val VOID_TYPE by literalToken(Symbols.VOID_TYPE)
     private val BOOL_TYPE by literalToken(Symbols.BOOL_TYPE)
@@ -291,6 +294,25 @@ internal class CymplGrammar(
                     parser(this::statement)
             ).map { (init, cond, update, body) -> Statement.For(init, cond, update, body) }
 
+    private val caseStat: Parser<Statement.Case> by (
+            -CASE *
+                    expression *
+                    -COLON *
+                    optional(parser(this::statement)) *
+                    optional(breakStat)
+            ).map { (condition, action, breakStat) -> Statement.Case(condition, action, breakStat != null) }
+
+    private val switchStat: Parser<Statement.Switch> by (
+            -SWITCH *
+                    -LPR *
+                    expression *
+                    -RPR *
+                    -LBRACE *
+                    zeroOrMore(caseStat) *
+                    optional(-DEFAULT * -COLON * parser(this::statement)) *
+                    -RBRACE
+            ).map { (expr, cases, defaultCase) -> Statement.Switch(expr, cases, defaultCase) }
+
     private val statement: Parser<Statement> by functionDecl or
             (variableDecl * -SEMICOLON) or
             (assign * -SEMICOLON) or
@@ -302,6 +324,7 @@ internal class CymplGrammar(
             forStat or
             breakStat or
             continueStat or
+            switchStat or
             block
 
     private val prog: Parser<Program> by oneOrMore(statement).map { Program(it) }
@@ -316,6 +339,9 @@ internal class CymplGrammar(
         const val FOR = "for"
         const val BREAK = "break"
         const val CONTINUE = "continue"
+        const val SWITCH = "switch"
+        const val CASE = "case"
+        const val DEFAULT = "default"
         const val VOID_TYPE = "void"
         const val BOOL_TYPE = "bool"
         const val INT_TYPE = "int"

@@ -118,5 +118,19 @@ internal class AntlrToStatement(
 
     override fun visitContinueStatement(ctx: CymplParser.ContinueStatementContext) = Statement.Continue()
 
+    override fun visitSwitchStat(ctx: CymplParser.SwitchStatContext): Statement {
+        val condition = antlrToExpression.visit(ctx.expr())
+        val cases = ctx.caseStat().map { visitCaseStat(it) }
+        val defaultCase = ctx.defaultCase()?.let { visit(it) }
+        return Statement.Switch(condition, cases, defaultCase)
+    }
 
+    override fun visitCaseStat(ctx: CymplParser.CaseStatContext): Statement.Case {
+        val condition = antlrToExpression.visit(ctx.expr())
+        val action = ctx.statement()?.let { visit(it) }
+        val hasBreak = ctx.breakStat() != null
+        return Statement.Case(condition, action, hasBreak)
+    }
+
+    override fun visitSwitchStatement(ctx: CymplParser.SwitchStatementContext) = visitSwitchStat(ctx.switchStat())
 }

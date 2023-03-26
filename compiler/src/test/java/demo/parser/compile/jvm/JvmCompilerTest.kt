@@ -805,6 +805,103 @@ class JvmCompilerTest {
     }
 
     @Test
+    fun `support switch case`() {
+        val input = """
+            String f(int x) {
+                String s = "";
+                switch (x) {
+                    case 1:
+                        s = "1";
+                        break;
+                    case 2:
+                        s = "2";
+                        break;
+                    case 3:
+                        s = "3";
+                        break;
+                    default:
+                        s = "0";
+                }
+                return s;
+            }
+            println(f(1));
+            println(f(2));
+            println(f(3));
+            println(f(4));
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            1
+            2
+            3
+            0
+        """.trimIndent()
+    }
+
+    @Test
+    fun `support switch case with fall through`() {
+        val input = """
+            String f(int x) {
+                String s = "";
+                switch (x) {
+                    case 1:
+                        s = "1";
+                    case 2:
+                        s = "2";
+                    case 3:
+                        s = "3";
+                        break;
+                    default:
+                        s = "0";
+                }
+                return s;
+            }
+            println(f(1));
+            println(f(2));
+            println(f(3));
+            println(f(4));
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            3
+            3
+            3
+            0
+        """.trimIndent()
+    }
+
+    @Test
+    fun `support return from switch case statement`() {
+        val input = """
+            String f(int x) {
+                switch (x) {
+                    case 1: return "1";
+                    case 2: return "2";
+                    case 3: return "3";
+                    default: return "0";
+                }
+            }
+            println(f(1));
+            println(f(2));
+            println(f(3));
+            println(f(4));
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            1
+            2
+            3
+            0
+        """.trimIndent()
+    }
+
+    @Test
     fun `quick sort test`() {
         val input = """
             int[] quickSort(int[] arr) {

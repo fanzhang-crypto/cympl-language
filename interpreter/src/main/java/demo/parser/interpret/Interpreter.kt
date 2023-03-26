@@ -77,6 +77,8 @@ class Interpreter(private val runtime: Runtime) {
             throw Jump.Return(value)
         }
 
+        is Statement.Switch -> evaluate(scope)
+
         else -> throw InterpretException("unknown statement $this")
     }
 
@@ -129,6 +131,26 @@ class Interpreter(private val runtime: Runtime) {
             update?.evaluate(scope)
         }
         return@withinLoop TValue.VOID
+    }
+
+    private fun Statement.Switch.evaluate(scope: Scope): TValue {
+        val value = expr.evaluate(scope)
+        var matched = false
+        for (case in cases) {
+            matched = matched || case.condition.evaluate(scope) == value
+            if (matched) {
+                case.action?.evaluate(scope)
+            } else {
+                continue
+            }
+            if (case.hasBreak) {
+                break
+            }
+        }
+        if (!matched) {
+            defaultCase?.evaluate(scope)
+        }
+        return TValue.VOID
     }
 
     private fun Statement.FunctionDeclaration.evaluate(scope: Scope): TValue {
@@ -327,6 +349,7 @@ class Interpreter(private val runtime: Runtime) {
                 val elements = Array(dimension) { TValue.defaultValueOf(elementType) }
                 TValue(resolvedType, elements)
             }
+
             dimensions.size > 1 -> {
                 val dimension = dimensions.first().evaluate(scope).let { checkArrayDimension(it) }
 
@@ -334,6 +357,7 @@ class Interpreter(private val runtime: Runtime) {
                     Expression.NewArray(elementType, dimensions.drop(1)).evaluate(scope)
                 })
             }
+
             else -> {
                 throw InterpretException("cannot create array with zero or negative dimensions")
             }

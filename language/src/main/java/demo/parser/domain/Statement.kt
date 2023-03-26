@@ -10,7 +10,8 @@ sealed interface Statement {
         override fun toString() = "$id = $expr;"
     }
 
-    data class IndexAssignment(val arrayExpr: Expression, val indexExpr: Expression, val valueExpr: Expression) : Statement {
+    data class IndexAssignment(val arrayExpr: Expression, val indexExpr: Expression, val valueExpr: Expression) :
+        Statement {
         override fun toString() = "$arrayExpr[$indexExpr] = $valueExpr"
     }
 
@@ -41,6 +42,20 @@ sealed interface Statement {
         val body: Statement
     ) : Statement {
         override fun toString() = "for (${init ?: ""} ${condition ?: ""}; ${update ?: ""}) $body"
+    }
+
+    data class Switch(val expr: Expression, val cases: List<Case>, val defaultCase: Statement?) : Statement {
+        override fun toString(): String {
+            val casesString = cases.joinToString("\n")
+            val defaultCaseString = if (defaultCase != null) "default:$defaultCase\n" else ""
+            return "switch ($expr) {\n$casesString\n$defaultCaseString}"
+        }
+    }
+
+    data class Case(val condition: Expression, val action: Statement?, val hasBreak: Boolean) : Statement {
+        override fun toString(): String {
+            return "case $condition:${action ?: ""}${if (hasBreak) "break;" else ""}"
+        }
     }
 
     data class Return(val expr: Expression?) : Statement {

@@ -41,7 +41,7 @@ Simple and clean implementation just to practice the theory of Compilers and Int
 - `int add(int x, int y) { return x + y; }`
 
 #### C-like syntax for control flow
-- if, else, while, for, break, continue, return
+- if, else, while, for, break, continue, return, switch, case, default
 
 #### C-like syntax for expression
 - arithmetic: `+`, `-`, `*`, `/`, `%`. `+` is also defined on String, performs String concatenation

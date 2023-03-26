@@ -44,6 +44,12 @@ open class TValue(val type: BuiltinType, val value: Any) {
 
     override fun toString() = asString()
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TValue) return false
+        return type == other.type && value == other.value
+    }
+
     companion object {
         fun defaultValueOf(type: BuiltinType) = when (type) {
             BuiltinType.ANY -> NULL

@@ -4,7 +4,9 @@ import demo.parser.compile.CompilationException
 import demo.parser.domain.BuiltinType
 import demo.parser.domain.Expression
 import demo.parser.domain.Statement
+import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.commons.TableSwitchGenerator
 
 internal class StatementCompiler {
 
@@ -21,6 +23,8 @@ internal class StatementCompiler {
             is Statement.For -> statement.compile(ctx)
             is Statement.Break -> statement.compile(ctx)
             is Statement.Continue -> statement.compile(ctx)
+            is Statement.Switch -> statement.compile(ctx)
+            is Statement.Case -> statement.compile(ctx)
             is Statement.IndexAssignment -> statement.compile(ctx)
 
             is Statement.Return -> statement.compile(ctx)
@@ -119,13 +123,13 @@ internal class StatementCompiler {
     }
 
     private fun Statement.Break.compile(ctx: CompilationContext) {
-        ctx.loopContext.nearestBreakLabel ?.let {
+        ctx.loopContext.nearestBreakLabel?.let {
             ctx.mv.goTo(it)
         } ?: run { throw CompilationException("Break statement outside of loop") }
     }
 
     private fun Statement.Continue.compile(ctx: CompilationContext) {
-        ctx.loopContext.nearestContinueLabel ?.let {
+        ctx.loopContext.nearestContinueLabel?.let {
             ctx.mv.goTo(it)
         } ?: run { throw CompilationException("Continue statement outside of loop") }
     }
@@ -148,5 +152,35 @@ internal class StatementCompiler {
             ctx.mv.returnValue()
         }
         ctx.returnGenerated = true
+    }
+
+    private fun Statement.Switch.compile(ctx: CompilationContext) {
+        expressionCompiler.compile(expr, ctx)
+
+        val caseByKey = mutableMapOf<Int, Statement.Case>()
+        for (case in cases) {
+            val key = (case.condition as Expression.IntLiteral).value
+            caseByKey[key] = case
+        }
+
+        val tableSwitchGenerator = object : TableSwitchGenerator {
+            override fun generateCase(key: Int, end: Label) {
+                val case = caseByKey[key] ?: throw CompilationException("No case for key $key")
+                compile(case, ctx)
+                if (case.hasBreak) {
+                    ctx.mv.goTo(end)
+                }
+            }
+
+            override fun generateDefault() {
+                defaultCase?.let { compile(it, ctx) }
+            }
+        }
+
+        ctx.mv.tableSwitch(caseByKey.keys.toIntArray(), tableSwitchGenerator)
+    }
+
+    private fun Statement.Case.compile(ctx: CompilationContext) {
+        action?.let { compile(it, ctx) }
     }
 }
