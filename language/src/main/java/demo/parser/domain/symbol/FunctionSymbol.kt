@@ -9,9 +9,7 @@ class FunctionSymbol(
     override val enclosingScope: Scope?
 ) : Symbol(name, BuiltinType.FUNCTION(parameters.map { it.type }, returnType)), FunctionScope {
 
-    private val locals: MutableMap<String, Symbol> = LinkedHashMap<String, Symbol>().also {
-        parameters.forEach { arg -> it[arg.name] = arg }
-    }
+    private val locals: MutableMap<String, Symbol> = LinkedHashMap()
 
     override fun define(symbol: Symbol) {
         locals[symbol.name] = symbol
@@ -26,6 +24,4 @@ class FunctionSymbol(
     }
 
     override val scopeName: String = name
-
-    override fun toString(): String = "function${super.toString()}:${locals.values}"
 }
