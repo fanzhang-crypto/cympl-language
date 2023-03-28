@@ -144,7 +144,6 @@ internal object StatementCompiler {
     private fun Statement.Return.compile(ctx: CompilationContext) {
         if (expr != null) {
             ExpressionCompiler.compile(expr!!, ctx)
-//            ctx.mv.pop()
             ctx.mv.returnValue()
         } else {
             ctx.mv.returnValue()

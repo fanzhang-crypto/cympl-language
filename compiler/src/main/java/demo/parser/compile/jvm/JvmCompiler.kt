@@ -2,32 +2,17 @@ package demo.parser.compile.jvm
 
 import demo.parser.compile.Compiler
 import demo.parser.domain.Program
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.util.TraceClassVisitor
-import java.io.PrintWriter
 
 class JvmCompileOptions(
     val debug: Boolean = false,
     val mainClassName: String
 )
 
-class JvmCompiler : Compiler<JvmCompileOptions, ByteArray> {
+class JvmCompiler : Compiler<JvmCompileOptions, Map<String, ByteArray>> {
 
-    override fun compile(program: Program, options: JvmCompileOptions): ByteArray {
-        val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-
-        val cv: ClassVisitor = if (options.debug) {
-            val printWriter = PrintWriter(System.out)
-            TraceClassVisitor(cw, printWriter)
-        } else {
-            cw
-        }
-
-        val ctx = CompilationContext(cv, options)
+    override fun compile(program: Program, options: JvmCompileOptions): Map<String, ByteArray> {
+        val ctx = CompilationContext(options)
         ProgramCompiler.compile(program, ctx)
-        cv.visitEnd()
-
-        return cw.toByteArray()
+        return ctx.toByteArrays()
     }
 }

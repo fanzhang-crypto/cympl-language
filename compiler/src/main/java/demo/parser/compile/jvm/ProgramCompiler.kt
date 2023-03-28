@@ -16,6 +16,10 @@ internal object ProgramCompiler {
         program.specificProcess(Statement.FunctionDeclaration::class.java) { functionDeclaration ->
             generateSubMethod(functionDeclaration, ctx)
         }
+
+        /*program.specificProcess(Expression.Lambda::class.java) { lambda ->
+            generateLambdaClass(lambda, ctx)
+        }*/
     }
 
     private fun generateMainMethod(program: Program, ctx: CompilationContext) = with(ctx){

@@ -44,7 +44,12 @@ internal object ExpressionCompiler {
             is Expression.Property -> source.compile(ctx)
             is Expression.FunctionCall -> source.compile(ctx)
             is Expression.NewArray -> source.compile(ctx)
-            is Expression.Lambda -> TODO()
+            is Expression.Lambda -> {
+                val lambdaClassType = ctx.defineLambdaClass(source)
+                ctx.mv.newInstance(lambdaClassType)
+                ctx.mv.dup()
+                ctx.mv.invokeConstructor(lambdaClassType, AsmUtil.DEFAULT_CONSTRUCTOR)
+            }
         }
     }
 
@@ -322,7 +327,7 @@ internal object ExpressionCompiler {
     private fun Expression.FunctionCall.compile(ctx: CompilationContext) {
         val funcExpr = this.funcExpr
         if (funcExpr !is Expression.Variable) {
-            //high order functions are not supported
+            //high order function call expression like `f()()` are not supported yet
             throw CompilationException("function call unsupported for expression: $funcExpr")
         }
 

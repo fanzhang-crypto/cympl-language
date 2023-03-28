@@ -917,6 +917,20 @@ class JvmCompilerTest {
     }
 
     @Test
+    fun `function can return a closure`() {
+        val input = """
+              (int) -> int add1 = (x) -> x + 1;
+//              add1(2);
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            3
+        """.trimIndent()
+    }
+
+    @Test
     fun `quick sort test`() {
         val input = """
             int[] quickSort(int[] arr) {
@@ -970,9 +984,10 @@ class JvmCompilerTest {
 
     private fun compileAndExecute(script: String, input: String = ""): String {
         val program = parse(script)
-        val bytecode = compiler.compile(program, compileOptions)
 
-        File("build/classes/${DEFAULT_MAIN_CLASS_NAME}.class").writeBytes(bytecode)
+        compiler.compile(program, compileOptions).forEach{(name, bytecode) ->
+            File("build/classes/$name.class").writeBytes(bytecode)
+        }
 
         return Runtime.getRuntime()
             .exec("java -cp build/classes $DEFAULT_MAIN_CLASS_NAME").let {

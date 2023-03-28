@@ -31,11 +31,11 @@ class CompileCommand(
             help = "cympl script file path to compile",
             valueProvider = FileValueProvider::class
         ) sourceFile: File?,
-        @ShellOption(
-            value = ["-d"],
-            defaultValue = ShellOption.NULL,
-            help = "output file directory",
-        ) outputDir: File?
+//        @ShellOption(
+//            value = ["-d"],
+//            defaultValue = ShellOption.NULL,
+//            help = "output file directory",
+//        ) outputDir: File?
     ) {
         if (sourceFile == null) {
             terminal.writer().println("source file is required")
@@ -49,14 +49,15 @@ class CompileCommand(
         }
 
         val mainClassName = CaseUtils.toCamelCase(sourceFile.nameWithoutExtension, true, '_', '-', ' ')
-        val outputFile = (outputDir ?: sourceFile.parentFile).resolve("${mainClassName}.class")
+        val outputDir = sourceFile.parentFile
         val options = JvmCompileOptions(mainClassName = mainClassName)
 
         FileInputStream(sourceFile).use {
             when (val r = parserFactory().parse(it)) {
                 is ParseResult.Success<Program> -> {
-                    val bytecode = compiler.compile(r.value, options)
-                    outputFile.writeBytes(bytecode)
+                    compiler.compile(r.value, options).forEach { (name, bytes) ->
+                        File(outputDir, "$name.class").writeBytes(bytes)
+                    }
                 }
 
                 is ParseResult.Failure -> r.errors.forEach { e -> System.err.println(e.message) }

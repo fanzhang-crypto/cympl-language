@@ -7,6 +7,7 @@ import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.GeneratorAdapter
+import org.objectweb.asm.signature.SignatureWriter
 
 internal sealed interface VariableContext {
 
@@ -29,7 +30,7 @@ internal class GlobalVarContext(
 
     override fun declare(name: String, type: BuiltinType): Int {
         cv.visitField(
-            Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, name, type.jvmDescription, null, null
+            Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, name, type.jvmDescription, type.signature, null
         ).visitEnd()
         return -1
     }
