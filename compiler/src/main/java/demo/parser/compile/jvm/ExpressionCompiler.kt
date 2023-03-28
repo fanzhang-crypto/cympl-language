@@ -3,16 +3,16 @@ package demo.parser.compile.jvm
 import demo.parser.compile.CompilationException
 import demo.parser.domain.BuiltinType
 import demo.parser.domain.Expression
+import demo.parser.domain.IntrinsicFunction
 import demo.parser.domain.symbol.ArrayScope
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.GeneratorAdapter
 import org.objectweb.asm.commons.Method
-import java.io.PrintStream
 import java.util.*
 
-internal class ExpressionCompiler {
+internal object ExpressionCompiler {
 
     fun compile(source: Expression, ctx: CompilationContext) {
         when (source) {
@@ -326,44 +326,15 @@ internal class ExpressionCompiler {
             throw CompilationException("function call unsupported for expression: $funcExpr")
         }
 
-        if (funcExpr.id == "println") {
-            compileIntrinsicCalls(this, ctx)
-            return
-        }
-
-        args.forEach { compile(it, ctx) }
-
-        ctx.invokeMethod(funcExpr.id, args.map { it.resolvedType.asmType }.toTypedArray(), resolvedType.asmType)
-    }
-
-    private fun compileIntrinsicCalls(functionCall: Expression.FunctionCall, ctx: CompilationContext): Unit =
-        with(ctx) {
-            mv.getStatic(Type.getType(System::class.java), "out", Type.getType(PrintStream::class.java))
-            val arg = functionCall.args[0]
-            compile(arg, this)
-
-            val argType = arg.resolvedType
-
-            if (argType is BuiltinType.ARRAY) {
-                if (argType.elementType is BuiltinType.ARRAY) {
-                    // for arrays with dimension > 1
-                    mv.invokeStatic(
-                        Type.getType(Arrays::class.java),
-                        Method.getMethod("String deepToString (Object[])")
-                    )
-                } else {
-                    mv.invokeStatic(
-                        Type.getType(Arrays::class.java),
-                        Method.getMethod("String toString (${arg.resolvedType.asmType.className})")
-                    )
-                }
+        when(funcExpr.id) {
+            IntrinsicFunction.PrintLine.id ->
+                IntrinsicCallCompiler.compilePrintLineCall(this, ctx)
+            IntrinsicFunction.ReadLine.id ->
+                IntrinsicCallCompiler.compileReadLineCall(this, ctx)
+            else -> {
+                args.forEach { compile(it, ctx) }
+                ctx.invokeMethod(funcExpr.id, args.map { it.resolvedType.asmType }.toTypedArray(), resolvedType.asmType)
             }
-
-            val typeSignature = if (arg.resolvedType.isPrimitive) arg.resolvedType.asmType.className else "Object"
-
-            mv.invokeVirtual(
-                Type.getType(PrintStream::class.java),
-                Method.getMethod("void println ($typeSignature)")
-            )
         }
+    }
 }

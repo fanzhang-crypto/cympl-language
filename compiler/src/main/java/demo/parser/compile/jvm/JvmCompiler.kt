@@ -14,8 +14,6 @@ class JvmCompileOptions(
 
 class JvmCompiler : Compiler<JvmCompileOptions, ByteArray> {
 
-    private val programCompiler = ProgramCompiler()
-
     override fun compile(program: Program, options: JvmCompileOptions): ByteArray {
         val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
 
@@ -27,7 +25,7 @@ class JvmCompiler : Compiler<JvmCompileOptions, ByteArray> {
         }
 
         val ctx = CompilationContext(cv, options)
-        programCompiler.compile(program, ctx)
+        ProgramCompiler.compile(program, ctx)
         cv.visitEnd()
 
         return cw.toByteArray()

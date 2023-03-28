@@ -8,9 +8,7 @@ import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.commons.TableSwitchGenerator
 
-internal class StatementCompiler {
-
-    private val expressionCompiler = ExpressionCompiler()
+internal object StatementCompiler {
 
     fun compile(statement: Statement, ctx: CompilationContext) {
         when (statement) {
@@ -38,21 +36,21 @@ internal class StatementCompiler {
         ctx.declareVar(id, type)
 
         expr?.let {
-            expressionCompiler.compile(it, ctx)
+            ExpressionCompiler.compile(it, ctx)
             ctx.setVar(id, type)
         }
     }
 
     private fun Statement.Assignment.compile(ctx: CompilationContext) {
-        expressionCompiler.compile(expr, ctx)
+        ExpressionCompiler.compile(expr, ctx)
         ctx.setVar(id, expr.resolvedType)
     }
 
     private fun Statement.ExpressionStatement.compile(ctx: CompilationContext) {
         when (val expr = this.expr) {
-            is Expression.Increment -> expressionCompiler.compile(expr, ctx, true)
-            is Expression.Decrement -> expressionCompiler.compile(expr, ctx, true)
-            else -> expressionCompiler.compile(expr, ctx)
+            is Expression.Increment -> ExpressionCompiler.compile(expr, ctx, true)
+            is Expression.Decrement -> ExpressionCompiler.compile(expr, ctx, true)
+            else -> ExpressionCompiler.compile(expr, ctx)
         }
     }
 
@@ -66,7 +64,7 @@ internal class StatementCompiler {
         val endLabel = ctx.mv.newLabel()
         val elseLabel = if (elseBranch == null) endLabel else ctx.mv.newLabel()
 
-        expressionCompiler.compile(condition, ctx)
+        ExpressionCompiler.compile(condition, ctx)
 
         ctx.mv.ifZCmp(Opcodes.IFEQ, elseLabel)
 
@@ -88,7 +86,7 @@ internal class StatementCompiler {
         ctx.loopContext.mark(loopStartLabel, loopEndLabel)
 
         ctx.mv.mark(loopStartLabel)
-        expressionCompiler.compile(condition, ctx)
+        ExpressionCompiler.compile(condition, ctx)
         ctx.mv.ifZCmp(Opcodes.IFEQ, loopEndLabel)
         compile(body, ctx)
         ctx.mv.goTo(loopStartLabel)
@@ -108,7 +106,7 @@ internal class StatementCompiler {
         this.init?.let { compile(it, ctx) }
 
         ctx.mv.mark(loopStartLabel)
-        this.condition?.let { expressionCompiler.compile(it, ctx) }
+        this.condition?.let { ExpressionCompiler.compile(it, ctx) }
         ctx.mv.ifZCmp(Opcodes.IFEQ, loopEndLabel)
 
         compile(this.body, ctx)
@@ -135,9 +133,9 @@ internal class StatementCompiler {
     }
 
     private fun Statement.IndexAssignment.compile(ctx: CompilationContext) {
-        expressionCompiler.compile(arrayExpr, ctx)
-        expressionCompiler.compile(indexExpr, ctx)
-        expressionCompiler.compile(valueExpr, ctx)
+        ExpressionCompiler.compile(arrayExpr, ctx)
+        ExpressionCompiler.compile(indexExpr, ctx)
+        ExpressionCompiler.compile(valueExpr, ctx)
 
         val arrayType = arrayExpr.resolvedType as BuiltinType.ARRAY
         ctx.mv.arrayStore(arrayType.elementType.asmType)
@@ -145,7 +143,7 @@ internal class StatementCompiler {
 
     private fun Statement.Return.compile(ctx: CompilationContext) {
         if (expr != null) {
-            expressionCompiler.compile(expr!!, ctx)
+            ExpressionCompiler.compile(expr!!, ctx)
 //            ctx.mv.pop()
             ctx.mv.returnValue()
         } else {
@@ -155,7 +153,7 @@ internal class StatementCompiler {
     }
 
     private fun Statement.Switch.compile(ctx: CompilationContext) {
-        expressionCompiler.compile(expr, ctx)
+        ExpressionCompiler.compile(expr, ctx)
 
         val caseByKey = cases.associateBy { (it.condition as Expression.IntLiteral).value }
 

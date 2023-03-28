@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.io.File
+import java.io.PrintWriter
 
 class JvmCompilerTest {
 
@@ -902,6 +903,20 @@ class JvmCompilerTest {
     }
 
     @Test
+    fun `readln test`() {
+        val input = """
+            String s = readln("Enter a string: ");
+            println(s);
+        """.trimIndent()
+
+        val output = compileAndExecute(input, "hello world")
+
+        output shouldBe """
+            Enter a string: hello world
+        """.trimIndent()
+    }
+
+    @Test
     fun `quick sort test`() {
         val input = """
             int[] quickSort(int[] arr) {
@@ -953,7 +968,7 @@ class JvmCompilerTest {
         mainClassName = DEFAULT_MAIN_CLASS_NAME,
     )
 
-    private fun compileAndExecute(script: String): String {
+    private fun compileAndExecute(script: String, input: String = ""): String {
         val program = parse(script)
         val bytecode = compiler.compile(program, compileOptions)
 
@@ -961,7 +976,13 @@ class JvmCompilerTest {
 
         return Runtime.getRuntime()
             .exec("java -cp build/classes $DEFAULT_MAIN_CLASS_NAME").let {
+                PrintWriter(it.outputStream).use { writer ->
+                    writer.println(input)
+                    writer.flush()
+                }
+
                 it.waitFor()
+
                 val errorLines = it.errorLines()
                 if (errorLines.isNotEmpty()) {
                     errorLines.forEach { System.err.println(it) }

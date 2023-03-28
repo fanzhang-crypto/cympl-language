@@ -6,9 +6,7 @@ import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.commons.Method
 
-internal class ProgramCompiler {
-
-    private val statementCompiler = StatementCompiler()
+internal object ProgramCompiler {
 
     fun compile(program: Program, ctx: CompilationContext) = ctx.apply {
         defineMainClass()
@@ -28,7 +26,7 @@ internal class ProgramCompiler {
         val methodEnd = Label()
 
         mv.mark(methodStart)
-        program.statements.forEach { statementCompiler.compile(it, ctx) }
+        program.statements.forEach { StatementCompiler.compile(it, ctx) }
         mv.returnValue()
         mv.mark(methodEnd)
         ctx.writeLocalVarTable(methodStart, methodEnd)
@@ -55,7 +53,7 @@ internal class ProgramCompiler {
             mv.storeLocal(localIndex)
         }
 
-        statementCompiler.compile(functionDecl.body, ctx)
+        StatementCompiler.compile(functionDecl.body, ctx)
         ctx.exitScope()
         mv.returnValue()
         mv.mark(methodEnd)
