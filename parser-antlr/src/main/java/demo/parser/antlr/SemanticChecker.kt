@@ -131,6 +131,9 @@ class SemanticChecker : TypeResolver {
 
             val id = idToken.text
             val type = resolveType(typeContext)
+            if (type is BuiltinType.FUNCTION) {
+                type.isLambda = true
+            }
             val symbol = VariableSymbol(id, type, currentScope)
             currentScope?.define(symbol)
         }

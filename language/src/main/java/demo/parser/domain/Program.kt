@@ -3,11 +3,11 @@ package demo.parser.domain
 data class Program(val statements: List<Statement>) {
     override fun toString() = statements.joinToString("\n")
 
-    fun <T : Statement> specificProcess(clazz: Class<T>, action: (T) -> Unit) {
-        statements.forEach { it.specificProcess(clazz, action) }
+    fun <T : Statement> forEvery(clazz: Class<T>, action: (T) -> Unit) {
+        statements.forEach { it.forEvery(clazz, action) }
     }
 
-    private fun <T : Statement> Statement.specificProcess(clazz: Class<T>, action: (T) -> Unit) {
+    private fun <T : Statement> Statement.forEvery(clazz: Class<T>, action: (T) -> Unit) {
         if (this.javaClass == clazz) {
             @Suppress("UNCHECKED_CAST")
             action(this as T)
@@ -19,23 +19,23 @@ data class Program(val statements: List<Statement>) {
             }
 
             is Statement.Block -> {
-                statements.forEach { it.specificProcess(clazz, action) }
+                statements.forEach { it.forEvery(clazz, action) }
             }
 
             is Statement.Break -> {}
             is Statement.Continue -> {}
             is Statement.ExpressionStatement -> {}
             is Statement.For -> {
-                body.specificProcess(clazz, action)
+                body.forEvery(clazz, action)
             }
 
             is Statement.FunctionDeclaration -> {
-                body.specificProcess(clazz, action)
+                body.forEvery(clazz, action)
             }
 
             is Statement.If -> {
-                thenBranch.specificProcess(clazz, action)
-                elseBranch?.specificProcess(clazz, action)
+                thenBranch.forEvery(clazz, action)
+                elseBranch?.forEvery(clazz, action)
             }
 
             is Statement.IndexAssignment -> {}
@@ -45,16 +45,16 @@ data class Program(val statements: List<Statement>) {
 
             is Statement.VariableDeclaration -> {}
             is Statement.While -> {
-                body.specificProcess(clazz, action)
+                body.forEvery(clazz, action)
             }
 
             is Statement.Switch -> {
-                cases.forEach { it.specificProcess(clazz, action) }
-                defaultCase?.specificProcess(clazz, action)
+                cases.forEach { it.forEvery(clazz, action) }
+                defaultCase?.forEvery(clazz, action)
             }
 
             is Statement.Case -> {
-                this.action?.specificProcess(clazz, action)
+                this.action?.forEvery(clazz, action)
             }
         }
 

@@ -8,63 +8,44 @@ import org.objectweb.asm.commons.Method
 
 internal object ProgramCompiler {
 
-    fun compile(program: Program, ctx: CompilationContext) = ctx.apply {
-        defineMainClass()
+    fun compile(program: Program, ctx: CompilationContext) {
+        ctx.defineMainClass {
+            val mainMethod = Method.getMethod("void main (String[])")
 
-        generateMainMethod(program, ctx)
+            defineMethod(mainMethod, ACC_PUBLIC + ACC_STATIC) {
+                val methodStart = Label()
+                val methodEnd = Label()
 
-        program.specificProcess(Statement.FunctionDeclaration::class.java) { functionDeclaration ->
-            generateSubMethod(functionDeclaration, ctx)
+                mv.mark(methodStart)
+                program.statements.forEach { StatementCompiler.compile(it, this) }
+                mv.returnValue()
+                mv.mark(methodEnd)
+                writeLocalVarTable(methodStart, methodEnd)
+                mv.endMethod()
+            }
+
+            program.forEvery(Statement.FunctionDeclaration::class.java) { funcDecl ->
+                defineMethod(funcDecl.asMethod()) {
+                    val methodStart = Label()
+                    val methodEnd = Label()
+
+                    mv.mark(methodStart)
+
+                    funcDecl.parameters.forEachIndexed { argIndex, arg ->
+                        val localIndex = declareVar(arg.id, arg.type)
+                        mv.loadArg(argIndex)
+                        mv.storeLocal(localIndex)
+                    }
+
+                    StatementCompiler.compile(funcDecl.body, this)
+
+                    mv.returnValue()
+                    mv.mark(methodEnd)
+                    writeLocalVarTable(methodStart, methodEnd)
+                    mv.endMethod()
+                }
+            }
         }
-
-        /*program.specificProcess(Expression.Lambda::class.java) { lambda ->
-            generateLambdaClass(lambda, ctx)
-        }*/
-    }
-
-    private fun generateMainMethod(program: Program, ctx: CompilationContext) = with(ctx){
-        val mainMethod = Method.getMethod("void main (String[])")
-        defineMethod(mainMethod, ACC_PUBLIC + ACC_STATIC)
-
-        val methodStart = Label()
-        val methodEnd = Label()
-
-        mv.mark(methodStart)
-        program.statements.forEach { StatementCompiler.compile(it, ctx) }
-        mv.returnValue()
-        mv.mark(methodEnd)
-        ctx.writeLocalVarTable(methodStart, methodEnd)
-        mv.endMethod()
-    }
-
-    private fun generateSubMethod(functionDecl: Statement.FunctionDeclaration, ctx: CompilationContext): Unit = with(ctx) {
-        val functionName = functionDecl.id
-        val returnType = functionDecl.returnType.asmType
-        val argTypes = functionDecl.parameters.map { it.type.asmType }.toTypedArray()
-
-        val method = Method(functionName, returnType, argTypes)
-        ctx.defineMethod(method)
-
-        val methodStart = Label()
-        val methodEnd = Label()
-
-        mv.mark(methodStart)
-        ctx.enterScope()
-
-        functionDecl.parameters.forEachIndexed { argIndex, arg ->
-            val localIndex = ctx.declareVar(arg.id, arg.type)
-            mv.loadArg(argIndex)
-            mv.storeLocal(localIndex)
-        }
-
-        StatementCompiler.compile(functionDecl.body, ctx)
-        ctx.exitScope()
-        mv.returnValue()
-        mv.mark(methodEnd)
-
-        ctx.writeLocalVarTable(methodStart, methodEnd)
-
-        mv.endMethod()
     }
 }
 

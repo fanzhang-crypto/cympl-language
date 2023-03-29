@@ -10,7 +10,7 @@ import java.util.*
 
 internal object IntrinsicCallCompiler {
 
-    fun compilePrintLineCall(functionCall: Expression.FunctionCall, ctx: CompilationContext): Unit =
+    fun compilePrintLineCall(functionCall: Expression.FunctionCall, ctx: MethodContext): Unit =
         with(ctx) {
             mv.getStatic(Type.getType(System::class.java), "out", Type.getType(PrintStream::class.java))
             val arg = functionCall.args[0]
@@ -41,7 +41,7 @@ internal object IntrinsicCallCompiler {
             )
         }
 
-    fun compileReadLineCall(functionCall: Expression.FunctionCall, ctx: CompilationContext): Unit =
+    fun compileReadLineCall(functionCall: Expression.FunctionCall, ctx: MethodContext): Unit =
         with(ctx) {
             mv.getStatic(Type.getType(System::class.java), "out", Type.getType(PrintStream::class.java))
             val arg = functionCall.args[0]

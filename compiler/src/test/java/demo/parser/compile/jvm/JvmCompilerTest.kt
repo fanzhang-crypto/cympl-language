@@ -920,7 +920,7 @@ class JvmCompilerTest {
     fun `function can return a closure`() {
         val input = """
               (int) -> int add1 = (x) -> x + 1;
-//              add1(2);
+              println(add1(2));
         """.trimIndent()
 
         val output = compileAndExecute(input)

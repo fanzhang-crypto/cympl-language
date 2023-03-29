@@ -13,6 +13,6 @@ class JvmCompiler : Compiler<JvmCompileOptions, Map<String, ByteArray>> {
     override fun compile(program: Program, options: JvmCompileOptions): Map<String, ByteArray> {
         val ctx = CompilationContext(options)
         ProgramCompiler.compile(program, ctx)
-        return ctx.toByteArrays()
+        return ctx.toByteCodes()
     }
 }

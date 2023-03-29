@@ -2,7 +2,9 @@ package demo.parser.compile.jvm
 
 import demo.parser.compile.CompilationException
 import demo.parser.domain.BuiltinType
+import demo.parser.domain.Statement
 import org.objectweb.asm.Type
+import org.objectweb.asm.commons.Method
 import org.objectweb.asm.signature.SignatureWriter
 import java.util.function.BiConsumer
 import java.util.function.BiFunction
@@ -33,7 +35,7 @@ internal val Type.wrapperType
         else -> this
     }
 
-internal val BuiltinType.jvmDescription get() = asmType.descriptor
+internal val BuiltinType.jvmDescriptor get() = asmType.descriptor
 
 internal val BuiltinType.FUNCTION.asJavaFunctionInterface
     get() = when (paramTypes.size) {
@@ -87,4 +89,11 @@ private fun SignatureWriter.visitBuiltinType(builtinType: BuiltinType) {
     visitTypeArgument('=')
     visitClassType(builtinType.asmType.wrapperType.internalName)
     visitEnd()
+}
+
+internal fun Statement.FunctionDeclaration.asMethod(): Method {
+    val functionName = id
+    val returnType = returnType.asmType
+    val argTypes = parameters.map { it.type.asmType }.toTypedArray()
+    return Method(functionName, returnType, argTypes)
 }

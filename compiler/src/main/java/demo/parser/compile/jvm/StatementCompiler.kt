@@ -10,7 +10,7 @@ import org.objectweb.asm.commons.TableSwitchGenerator
 
 internal object StatementCompiler {
 
-    fun compile(statement: Statement, ctx: CompilationContext) {
+    fun compile(statement: Statement, ctx: MethodContext) {
         when (statement) {
             is Statement.VariableDeclaration -> statement.compile(ctx)
             is Statement.Assignment -> statement.compile(ctx)
@@ -32,7 +32,7 @@ internal object StatementCompiler {
         }
     }
 
-    private fun Statement.VariableDeclaration.compile(ctx: CompilationContext) {
+    private fun Statement.VariableDeclaration.compile(ctx: MethodContext) {
         ctx.declareVar(id, type)
 
         expr?.let {
@@ -41,12 +41,12 @@ internal object StatementCompiler {
         }
     }
 
-    private fun Statement.Assignment.compile(ctx: CompilationContext) {
+    private fun Statement.Assignment.compile(ctx: MethodContext) {
         ExpressionCompiler.compile(expr, ctx)
         ctx.setVar(id, expr.resolvedType)
     }
 
-    private fun Statement.ExpressionStatement.compile(ctx: CompilationContext) {
+    private fun Statement.ExpressionStatement.compile(ctx: MethodContext) {
         when (val expr = this.expr) {
             is Expression.Increment -> ExpressionCompiler.compile(expr, ctx, true)
             is Expression.Decrement -> ExpressionCompiler.compile(expr, ctx, true)
@@ -54,13 +54,13 @@ internal object StatementCompiler {
         }
     }
 
-    private fun Statement.Block.compile(ctx: CompilationContext) {
+    private fun Statement.Block.compile(ctx: MethodContext) {
         ctx.enterScope()
         statements.forEach { compile(it, ctx) }
         ctx.exitScope()
     }
 
-    private fun Statement.If.compile(ctx: CompilationContext) {
+    private fun Statement.If.compile(ctx: MethodContext) {
         val endLabel = ctx.mv.newLabel()
         val elseLabel = if (elseBranch == null) endLabel else ctx.mv.newLabel()
 
@@ -79,7 +79,7 @@ internal object StatementCompiler {
         ctx.mv.mark(endLabel)
     }
 
-    private fun Statement.While.compile(ctx: CompilationContext) {
+    private fun Statement.While.compile(ctx: MethodContext) {
         val loopStartLabel = ctx.mv.newLabel()
         val loopEndLabel = ctx.mv.newLabel()
 
@@ -96,7 +96,7 @@ internal object StatementCompiler {
         ctx.loopContext.unmark()
     }
 
-    private fun Statement.For.compile(ctx: CompilationContext) {
+    private fun Statement.For.compile(ctx: MethodContext) {
         val loopStartLabel = ctx.mv.newLabel()
         val loopEndLabel = ctx.mv.newLabel()
         val loopContinueLabel = ctx.mv.newLabel()
@@ -120,19 +120,19 @@ internal object StatementCompiler {
         ctx.loopContext.unmark()
     }
 
-    private fun Statement.Break.compile(ctx: CompilationContext) {
+    private fun Statement.Break.compile(ctx: MethodContext) {
         ctx.loopContext.nearestBreakLabel?.let {
             ctx.mv.goTo(it)
         } ?: run { throw CompilationException("Break statement outside of loop") }
     }
 
-    private fun Statement.Continue.compile(ctx: CompilationContext) {
+    private fun Statement.Continue.compile(ctx: MethodContext) {
         ctx.loopContext.nearestContinueLabel?.let {
             ctx.mv.goTo(it)
         } ?: run { throw CompilationException("Continue statement outside of loop") }
     }
 
-    private fun Statement.IndexAssignment.compile(ctx: CompilationContext) {
+    private fun Statement.IndexAssignment.compile(ctx: MethodContext) {
         ExpressionCompiler.compile(arrayExpr, ctx)
         ExpressionCompiler.compile(indexExpr, ctx)
         ExpressionCompiler.compile(valueExpr, ctx)
@@ -141,17 +141,19 @@ internal object StatementCompiler {
         ctx.mv.arrayStore(arrayType.elementType.asmType)
     }
 
-    private fun Statement.Return.compile(ctx: CompilationContext) {
+    private fun Statement.Return.compile(ctx: MethodContext) {
         if (expr != null) {
             ExpressionCompiler.compile(expr!!, ctx)
+            if (ctx.inLambda) {
+                ctx.mv.box(expr!!.resolvedType.asmType)
+            }
             ctx.mv.returnValue()
         } else {
             ctx.mv.returnValue()
         }
-        ctx.returnGenerated = true
     }
 
-    private fun Statement.Switch.compile(ctx: CompilationContext) {
+    private fun Statement.Switch.compile(ctx: MethodContext) {
         ExpressionCompiler.compile(expr, ctx)
 
         val caseByKey = cases.associateBy { (it.condition as Expression.IntLiteral).value }
@@ -173,7 +175,7 @@ internal object StatementCompiler {
         ctx.mv.tableSwitch(caseByKey.keys.toIntArray(), tableSwitchGenerator)
     }
 
-    private fun Statement.Case.compile(ctx: CompilationContext) {
+    private fun Statement.Case.compile(ctx: MethodContext) {
         action?.let { compile(it, ctx) }
     }
 }

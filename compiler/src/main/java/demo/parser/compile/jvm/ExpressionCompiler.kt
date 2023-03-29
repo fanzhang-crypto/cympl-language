@@ -10,11 +10,10 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.GeneratorAdapter
 import org.objectweb.asm.commons.Method
-import java.util.*
 
 internal object ExpressionCompiler {
 
-    fun compile(source: Expression, ctx: CompilationContext) {
+    fun compile(source: Expression, ctx: MethodContext) {
         when (source) {
             is Expression.Parenthesized -> compile(source.expr, ctx)
             is Expression.Variable -> source.compile(ctx)
@@ -45,7 +44,7 @@ internal object ExpressionCompiler {
             is Expression.FunctionCall -> source.compile(ctx)
             is Expression.NewArray -> source.compile(ctx)
             is Expression.Lambda -> {
-                val lambdaClassType = ctx.defineLambdaClass(source)
+                val lambdaClassType = ctx.classContext.rootContext.defineLambdaClass(source)
                 ctx.mv.newInstance(lambdaClassType)
                 ctx.mv.dup()
                 ctx.mv.invokeConstructor(lambdaClassType, AsmUtil.DEFAULT_CONSTRUCTOR)
@@ -53,21 +52,21 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.NewArray.compile(ctx: CompilationContext) {
+    private fun Expression.NewArray.compile(ctx: MethodContext) {
         for (dimension in dimensions) {
             compile(dimension, ctx)
         }
-        ctx.mv.visitMultiANewArrayInsn(resolvedType.jvmDescription, dimensions.size)
+        ctx.mv.visitMultiANewArrayInsn(resolvedType.jvmDescriptor, dimensions.size)
     }
 
-    private fun Expression.Property.compile(ctx: CompilationContext) {
+    private fun Expression.Property.compile(ctx: MethodContext) {
         if (expr.resolvedType is BuiltinType.ARRAY && propertyName == ArrayScope.LENGTH_PROPERTY.name) {
             compile(expr, ctx)
             ctx.mv.arrayLength()
         }
     }
 
-    private fun Expression.Index.compile(ctx: CompilationContext) {
+    private fun Expression.Index.compile(ctx: MethodContext) {
         compile(arrayExpr, ctx)
         compile(indexExpr, ctx)
 
@@ -75,12 +74,12 @@ internal object ExpressionCompiler {
         ctx.mv.arrayLoad(arrayType.asmType)
     }
 
-    private fun Expression.Not.compile(ctx: CompilationContext) {
+    private fun Expression.Not.compile(ctx: MethodContext) {
         compile(expr, ctx)
         ctx.mv.not()
     }
 
-    private fun Expression.And.compile(ctx: CompilationContext) {
+    private fun Expression.And.compile(ctx: MethodContext) {
         val trueLabel = Label()
         val falseLabel = Label()
         val endLabel = Label()
@@ -101,7 +100,7 @@ internal object ExpressionCompiler {
         ctx.mv.mark(endLabel)
     }
 
-    private fun Expression.Or.compile(ctx: CompilationContext) {
+    private fun Expression.Or.compile(ctx: MethodContext) {
         val trueLabel = Label()
         val falseLabel = Label()
         val trueEndLabel = Label()
@@ -126,11 +125,11 @@ internal object ExpressionCompiler {
         ctx.mv.mark(falseEndLabel)
     }
 
-    private fun Expression.Variable.compile(ctx: CompilationContext) {
+    private fun Expression.Variable.compile(ctx: MethodContext) {
         ctx.getVar(id, resolvedType)
     }
 
-    private fun Expression.Negation.compile(ctx: CompilationContext) {
+    private fun Expression.Negation.compile(ctx: MethodContext) {
         val exprType = resolvedType
         expr.compileAndCast(ctx, exprType)
         when (exprType) {
@@ -141,7 +140,7 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.Addition.compile(ctx: CompilationContext) {
+    private fun Expression.Addition.compile(ctx: MethodContext) {
         val exprType = resolvedType
         left.compileAndCast(ctx, exprType)
         right.compileAndCast(ctx, exprType)
@@ -159,7 +158,7 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.Subtraction.compile(ctx: CompilationContext) {
+    private fun Expression.Subtraction.compile(ctx: MethodContext) {
         val exprType = resolvedType
         left.compileAndCast(ctx, exprType)
         right.compileAndCast(ctx, exprType)
@@ -171,7 +170,7 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.Multiplication.compile(ctx: CompilationContext) {
+    private fun Expression.Multiplication.compile(ctx: MethodContext) {
         val exprType = resolvedType
         left.compileAndCast(ctx, exprType)
         right.compileAndCast(ctx, exprType)
@@ -183,7 +182,7 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.Division.compile(ctx: CompilationContext) {
+    private fun Expression.Division.compile(ctx: MethodContext) {
         val exprType = resolvedType
         left.compileAndCast(ctx, exprType)
         right.compileAndCast(ctx, exprType)
@@ -195,7 +194,7 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.Remainder.compile(ctx: CompilationContext) {
+    private fun Expression.Remainder.compile(ctx: MethodContext) {
         val exprType = resolvedType
         left.compileAndCast(ctx, exprType)
         right.compileAndCast(ctx, exprType)
@@ -207,7 +206,7 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.Power.compile(ctx: CompilationContext) {
+    private fun Expression.Power.compile(ctx: MethodContext) {
         left.compileAndCast(ctx, BuiltinType.FLOAT)
         right.compileAndCast(ctx, BuiltinType.FLOAT)
         ctx.mv.invokeStatic(
@@ -216,7 +215,7 @@ internal object ExpressionCompiler {
         )
     }
 
-    fun compile(increment: Expression.Increment, ctx: CompilationContext, asStatement: Boolean = false) {
+    fun compile(increment: Expression.Increment, ctx: MethodContext, asStatement: Boolean = false) {
         val target = increment.expr
         if (target !is Expression.Variable) {
             throw CompilationException("increment unsupported for expression: $target")
@@ -224,7 +223,7 @@ internal object ExpressionCompiler {
         ctx.increment(target.id, target.resolvedType, increment.postfix, asStatement)
     }
 
-    fun compile(decrement: Expression.Decrement, ctx: CompilationContext, asStatement: Boolean = false) {
+    fun compile(decrement: Expression.Decrement, ctx: MethodContext, asStatement: Boolean = false) {
         val target = decrement.expr
         if (target !is Expression.Variable) {
             throw CompilationException("decrement unsupported for expression: $target")
@@ -232,7 +231,7 @@ internal object ExpressionCompiler {
         ctx.decrement(target.id, target.resolvedType, decrement.postfix, asStatement)
     }
 
-    private fun Expression.ComparisonExpression.compile(ctx: CompilationContext) {
+    private fun Expression.ComparisonExpression.compile(ctx: MethodContext) {
         val compareType = BuiltinType.compatibleTypeOf(left.resolvedType, right.resolvedType)
 
         left.compileAndCast(ctx, compareType)
@@ -302,7 +301,7 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.ArrayLiteral.compile(ctx: CompilationContext) {
+    private fun Expression.ArrayLiteral.compile(ctx: MethodContext) {
         val elementType = resolvedType.elementType.asmType
 
         ctx.mv.push(elements.size)
@@ -315,7 +314,7 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.compileAndCast(ctx: CompilationContext, expectedType: BuiltinType) {
+    private fun Expression.compileAndCast(ctx: MethodContext, expectedType: BuiltinType) {
         compile(this, ctx)
         when {
             resolvedType == BuiltinType.INT && expectedType == BuiltinType.FLOAT -> ctx.mv.visitInsn(Opcodes.I2D)
@@ -324,21 +323,45 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.FunctionCall.compile(ctx: CompilationContext) {
+    private fun Expression.FunctionCall.compile(ctx: MethodContext) {
         val funcExpr = this.funcExpr
         if (funcExpr !is Expression.Variable) {
             //high order function call expression like `f()()` are not supported yet
             throw CompilationException("function call unsupported for expression: $funcExpr")
         }
+        val funcType = funcExpr.type
+        if (funcType !is BuiltinType.FUNCTION) {
+            throw CompilationException("not a function: $funcExpr")
+        }
 
-        when(funcExpr.id) {
+        when (funcExpr.id) {
             IntrinsicFunction.PrintLine.id ->
                 IntrinsicCallCompiler.compilePrintLineCall(this, ctx)
+
             IntrinsicFunction.ReadLine.id ->
                 IntrinsicCallCompiler.compileReadLineCall(this, ctx)
+
             else -> {
-                args.forEach { compile(it, ctx) }
-                ctx.invokeMethod(funcExpr.id, args.map { it.resolvedType.asmType }.toTypedArray(), resolvedType.asmType)
+                if (funcType.isLambda) {
+                    ctx.getVar(funcExpr.id, funcType)
+                    args.forEachIndexed { i, arg ->
+                        compile(arg, ctx)
+                        ctx.mv.box(funcType.paramTypes[i].asmType)
+                    }
+
+                    ctx.mv.invokeInterface(
+                        Type.getType(java.util.function.Function::class.java),
+                        Method.getMethod("Object apply(Object)")
+                    )
+                    ctx.mv.unbox(resolvedType.asmType)
+                } else {
+                    args.forEach { compile(it, ctx) }
+                    ctx.invokeMethod(
+                        funcExpr.id,
+                        args.map { it.resolvedType.asmType }.toTypedArray(),
+                        resolvedType.asmType
+                    )
+                }
             }
         }
     }
