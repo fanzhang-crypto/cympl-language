@@ -19,7 +19,7 @@ statement
     | block                         #BlockStatement
 ;
 
-type: INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE | type '[]' | funcType;
+type: VOID_TYPE | INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE | type '[]' | funcType;
 
 typeList: type (',' type)*;
 funcType: '(' paramTypes=typeList? ')' ARROW_RIGHT retType=type;

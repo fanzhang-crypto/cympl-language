@@ -12,10 +12,11 @@ internal class MethodContext(
     cw: ClassWriter,
     access: Int = ACC_PRIVATE + ACC_STATIC,
     private val method: Method,
+    signature: String? = null,
     val classContext: ClassContext,
     val inLambda: Boolean = false,
 ) {
-    val mv = GeneratorAdapter(access, method, null, null, cw)
+    val mv = GeneratorAdapter(access, method, signature, null, cw)
 
     private var namingScope = NamingScope(null)
 

@@ -5,6 +5,7 @@ import demo.parser.domain.ParseResult
 import demo.parser.domain.Program
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.io.File
@@ -917,10 +918,41 @@ class JvmCompilerTest {
     }
 
     @Test
-    fun `function can return a closure`() {
+    fun `support declaring variable as lambda`() {
         val input = """
-              (int) -> int add1 = (x) -> x + 1;
-              println(add1(2));
+            () -> String hello = () -> "hello";
+            (int) -> int add1 = (x) -> x + 1;
+            (int) -> int sub1 = (x) -> x - 1;
+            (int, int) -> int add = (x, y) -> x + y;
+            (String) -> void greeting = (name) -> println("hello " + name);
+            
+            println(hello());
+            println(add1(2));
+            println(sub1(2));
+            println(add(2, 3));
+            greeting("world");
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            hello
+            3
+            1
+            5
+            hello world
+        """.trimIndent()
+    }
+
+    @Disabled("not supported yet")
+    @Test
+    fun `lambda can be return from a function call`() {
+        val input = """
+            (int) -> int f(int x) {
+                return (y) -> x + y;
+            }
+            (int) -> int add1 = f(1);
+            println(add1(2));
         """.trimIndent()
 
         val output = compileAndExecute(input)
@@ -985,12 +1017,19 @@ class JvmCompilerTest {
     private fun compileAndExecute(script: String, input: String = ""): String {
         val program = parse(script)
 
-        compiler.compile(program, compileOptions).forEach{(name, bytecode) ->
-            File("build/classes/$name.class").writeBytes(bytecode)
+        compiler.compile(program, compileOptions).forEach { (name, bytecode) ->
+            if (name.contains(".")) {
+                val classFilePath = name.replace(".", "/")
+                val classFileDir = classFilePath.substringBeforeLast("/")
+                File("build/classes/$classFileDir").mkdirs()
+                File("build/classes/$classFilePath.class").writeBytes(bytecode)
+            } else {
+                File("build/classes/$name.class").writeBytes(bytecode)
+            }
         }
 
         return Runtime.getRuntime()
-            .exec("java -cp build/classes $DEFAULT_MAIN_CLASS_NAME").let {
+            .exec("java -cp build/classes/cympl/runtime -cp build/classes  $DEFAULT_MAIN_CLASS_NAME").let {
                 PrintWriter(it.outputStream).use { writer ->
                     writer.println(input)
                     writer.flush()

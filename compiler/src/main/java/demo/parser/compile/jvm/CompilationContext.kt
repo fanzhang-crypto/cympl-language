@@ -1,98 +1,66 @@
 package demo.parser.compile.jvm
 
 import demo.parser.compile.jvm.AsmUtil.generateDefaultConstructor
-import demo.parser.domain.Expression
 import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
-import org.objectweb.asm.commons.Method
 
 internal class CompilationContext(
     private val options: JvmCompileOptions
 ) {
-    private val mainClassType: Type = Type.getObjectType(options.mainClassName)
-    private val mainClassWriter = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-    private val innerClassWriters = mutableMapOf<String, ClassWriter>()
+    private lateinit var mainClassWriter: ClassWriter
+
+    val innerClassWriters = mutableMapOf<String, ClassWriter>()
+    val outerClassWriters = mutableMapOf<String, ClassWriter>()
 
     fun defineMainClass(block: ClassContext.() -> Unit) {
-        mainClassWriter.visit(
-            V11, ACC_PUBLIC + ACC_SUPER,
-            mainClassType.className, null, "java/lang/Object", null
-        )
+        mainClassWriter = createClassWriter(options.mainClassName, null, emptyArray(), ACC_PUBLIC + ACC_SUPER)
+        val mainClassType: Type = Type.getObjectType(options.mainClassName)
         ClassContext(mainClassType, mainClassWriter, this).apply(block)
     }
 
-    private fun defineInnerClass(
+    fun defineInnerClass(
         className: String,
         signature: String?,
         interfaces: Array<String>,
+        access: Int = ACC_PRIVATE + ACC_STATIC,
         block: ClassContext.() -> Unit
     ): Type {
-        val qualifiedName = "${options.mainClassName}\$$className"
-
-        val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
-        cw.visit(
-            V11, ACC_PRIVATE + ACC_STATIC,
-            qualifiedName, signature, "java/lang/Object", interfaces
-        )
-        cw.generateDefaultConstructor()
-
+        val internalName = "${options.mainClassName}\$$className"
+        val cw = createClassWriter(internalName, signature, interfaces, access)
         innerClassWriters[className] = cw
 
-        ClassContext(Type.getObjectType(qualifiedName), cw, this).apply(block)
-
-        return Type.getObjectType(qualifiedName)
+        return Type.getObjectType(internalName).also {
+            ClassContext(it, cw, this).apply(block)
+        }
     }
 
-    fun defineLambdaClass(lambda: Expression.Lambda): Type {
-        val classIndex = innerClassWriters.size + 1
-        val className = "Lambda$classIndex"
-        val interfaceType = lambda.type.asmType
-        val classSignature = lambda.type.signature
+    inline fun defineOuterClass(
+        qualifiedName: String,
+        signature: String?,
+        interfaces: Array<String>,
+        access: Int,
+        block: ClassContext.() -> Unit
+    ): Type {
+        val internalName = qualifiedName.replace('.', '/')
+        val cw = createClassWriter(internalName, signature, interfaces, access)
+        outerClassWriters[qualifiedName] = cw
 
-        return defineInnerClass(className, classSignature, arrayOf(interfaceType.internalName)) {
-            val method = Method(
-                "apply",
-                lambda.type.returnType.asmType.wrapperType,
-                lambda.type.paramTypes.map { it.asmType.wrapperType }.toTypedArray()
-            )
-
-            defineMethod(method, ACC_PUBLIC) {
-                val methodStart = Label()
-                val methodEnd = Label()
-
-                mv.mark(methodStart)
-
-                lambda.paramNames.forEachIndexed { argIndex, name ->
-                    val localIndex = declareVar(name, lambda.type.paramTypes[argIndex])
-                    mv.loadArg(argIndex)
-                    mv.unbox(lambda.type.paramTypes[argIndex].asmType)
-                    mv.storeLocal(localIndex)
-                }
-
-                StatementCompiler.compile(lambda.body, this)
-
-                mv.mark(methodEnd)
-                writeLocalVarTable(methodStart, methodEnd)
-                mv.endMethod()
-            }
-
-            val bridgeMethod = Method(
-                "apply",
-                Type.getType("Ljava/lang/Object;"),
-                arrayOf(Type.getType("Ljava/lang/Object;"))
-            )
-
-            defineMethod(bridgeMethod, ACC_PUBLIC + ACC_SYNTHETIC + ACC_BRIDGE) {
-                mv.loadThis()
-                mv.loadArg(0)
-                mv.checkCast(lambda.type.paramTypes[0].asmType.wrapperType)
-                mv.invokeVirtual(classType, method)
-                mv.returnValue()
-                mv.endMethod()
-            }
+        return Type.getObjectType(internalName).also {
+            ClassContext(it, cw, this).apply(block)
         }
+    }
+
+    private fun createClassWriter(
+        internalName: String, signature: String?,
+        interfaces: Array<String>, access: Int,
+    ): ClassWriter {
+        val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
+        cw.visit(V11, access, internalName, signature, "java/lang/Object", interfaces)
+        if (access and ACC_INTERFACE == 0) {
+            cw.generateDefaultConstructor()
+        }
+        return cw
     }
 
     fun toByteCodes(): Map<String, ByteArray> {
@@ -119,11 +87,13 @@ internal class CompilationContext(
 
         byteCodes[options.mainClassName] = mainClassWriter.toByteArray()
 
+        outerClassWriters.forEach { (name, cw) ->
+            byteCodes[name] = cw.toByteArray()
+        }
+
         return byteCodes
     }
 
     private fun getQualifiedInnerClassName(className: String) =
         "${options.mainClassName}\$$className"
 }
-
-

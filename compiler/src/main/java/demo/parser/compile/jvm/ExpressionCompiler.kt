@@ -44,7 +44,7 @@ internal object ExpressionCompiler {
             is Expression.FunctionCall -> source.compile(ctx)
             is Expression.NewArray -> source.compile(ctx)
             is Expression.Lambda -> {
-                val lambdaClassType = ctx.classContext.rootContext.defineLambdaClass(source)
+                val lambdaClassType = LambdaCompiler.compile(source, ctx.classContext.rootContext)
                 ctx.mv.newInstance(lambdaClassType)
                 ctx.mv.dup()
                 ctx.mv.invokeConstructor(lambdaClassType, AsmUtil.DEFAULT_CONSTRUCTOR)
@@ -344,17 +344,16 @@ internal object ExpressionCompiler {
             else -> {
                 if (funcType.isLambda) {
                     ctx.getVar(funcExpr.id, funcType)
-                    args.forEachIndexed { i, arg ->
+                    args.forEach { arg ->
                         compile(arg, ctx)
-                        ctx.mv.box(funcType.paramTypes[i].asmType)
+                        ctx.mv.box(arg.resolvedType.asmType)
                     }
-
-                    ctx.mv.invokeInterface(
-                        Type.getType(java.util.function.Function::class.java),
-                        Method.getMethod("Object apply(Object)")
-                    )
+                    val interfaceType = Type.getType(funcType.asJavaFunctionInterface)
+                    val interfaceMethod = LambdaCompiler.getApplyBridgeMethod(interfaceType)
+                    ctx.mv.invokeInterface(interfaceType, interfaceMethod)
                     ctx.mv.unbox(resolvedType.asmType)
                 } else {
+                    // normal function call
                     args.forEach { compile(it, ctx) }
                     ctx.invokeMethod(
                         funcExpr.id,
