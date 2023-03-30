@@ -13,11 +13,14 @@ internal class ClassContext(
     val rootContext: CompilationContext
 ) {
     fun defineMethod(
+        access: Int,
         method: Method,
-        access: Int = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC,
+        signature: String? = null,
         block: MethodContext.() -> Unit
-    ) =
-        MethodContext(cw, access, method, this, classType.className.contains("Lambda")).apply(block)
+    ) {
+        val inLambda = classType.className.contains("Lambda")
+        MethodContext(cw, access, method, signature, this, inLambda).apply(block)
+    }
 
     fun declare(name: String, type: BuiltinType, asWrapperType: Boolean = false) {
         val descriptor = if (asWrapperType) type.asmType.wrapperType.descriptor else type.asmType.descriptor
