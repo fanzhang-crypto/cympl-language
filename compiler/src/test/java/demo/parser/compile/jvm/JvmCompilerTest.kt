@@ -5,7 +5,6 @@ import demo.parser.domain.ParseResult
 import demo.parser.domain.Program
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.io.File
@@ -944,12 +943,12 @@ class JvmCompilerTest {
         """.trimIndent()
     }
 
-    @Disabled("not supported yet")
     @Test
     fun `lambda can be return from a function call`() {
         val input = """
+            int z = 3;
             (int) -> int f(int x) {
-                return (y) -> x + y;
+                return (y) -> x + y + z;
             }
             (int) -> int add1 = f(1);
             println(add1(2));
@@ -958,6 +957,45 @@ class JvmCompilerTest {
         val output = compileAndExecute(input)
 
         output shouldBe """
+            6
+        """.trimIndent()
+    }
+
+    @Test
+    fun `lambda can be passed as argument`() {
+        val input = """
+            int z = 3;
+            void f((int) -> int g) {
+                println(g(2));
+            }
+            f((y) -> 1 + y + z);
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            6
+        """.trimIndent()
+    }
+
+    @Test
+    fun `lambda that return an array of integers`() {
+        val input = """
+            (int) -> int[] f() {
+                return (x) -> [x, x + 1, x + 2];
+            }
+            (int) -> int[] ff = f();
+            int[] arr = ff(1);
+            println(arr[0]);
+            println(arr[1]);
+            println(arr[2]);
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            1
+            2
             3
         """.trimIndent()
     }
@@ -1014,7 +1052,7 @@ class JvmCompilerTest {
         mainClassName = DEFAULT_MAIN_CLASS_NAME,
     )
 
-    private fun compileAndExecute(script: String, input: String = ""): String {
+    private fun compileAndExecute(script: String, input: String? = null): String {
         val program = parse(script)
 
         compiler.compile(program, compileOptions).forEach { (name, bytecode) ->
@@ -1030,9 +1068,11 @@ class JvmCompilerTest {
 
         return Runtime.getRuntime()
             .exec("java -cp build/classes/cympl/runtime -cp build/classes  $DEFAULT_MAIN_CLASS_NAME").let {
-                PrintWriter(it.outputStream).use { writer ->
-                    writer.println(input)
-                    writer.flush()
+                if (input != null) {
+                    PrintWriter(it.outputStream).use { writer ->
+                        writer.println(input)
+                        writer.flush()
+                    }
                 }
 
                 it.waitFor()
@@ -1063,6 +1103,6 @@ class JvmCompilerTest {
     private fun Process.outputLines(): List<String> = inputStream.bufferedReader().lines().toList()
 
     companion object {
-        private const val DEFAULT_MAIN_CLASS_NAME = "MainTest"
+        private const val DEFAULT_MAIN_CLASS_NAME = "JvmTest"
     }
 }

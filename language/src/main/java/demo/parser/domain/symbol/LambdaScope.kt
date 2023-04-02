@@ -19,4 +19,17 @@ class LambdaScope(
     }
 
     override fun toString(): String = scopeName
+
+    val captures get(): List<VariableSymbol> {
+        val captured = mutableListOf<VariableSymbol>()
+        var scope: Scope? = enclosingScope
+        while (scope != null) {
+            when (scope) {
+                is FunctionScope -> captured.addAll(scope.symbols.filterIsInstance<VariableSymbol>())
+                is BaseScope -> captured.addAll(scope.symbols.filterIsInstance<VariableSymbol>().filter { it.type !is BuiltinType.FUNCTION })
+            }
+            scope = scope.enclosingScope
+        }
+        return captured
+    }
 }

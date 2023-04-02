@@ -1,11 +1,11 @@
 package demo.parser.compile.jvm
 
 import demo.parser.domain.Program
+import demo.parser.domain.ProgramVisitor.forStatementType
 import demo.parser.domain.Statement
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.commons.Method
-import org.objectweb.asm.signature.SignatureWriter
 
 internal object ProgramCompiler {
 
@@ -24,62 +24,33 @@ internal object ProgramCompiler {
             mv.endMethod()
         }
 
-        program.forEvery(Statement.FunctionDeclaration::class.java) { funcDecl ->
-            defineMethod(ACC_PRIVATE + ACC_STATIC, funcDecl.asMethod()) {
-                val methodStart = Label()
-                val methodEnd = Label()
-
-                mv.mark(methodStart)
-
-                funcDecl.parameters.forEachIndexed { argIndex, arg ->
-                    val localIndex = declareVar(arg.id, arg.type)
-                    mv.loadArg(argIndex)
-                    mv.storeLocal(localIndex)
-                }
-
-                StatementCompiler.compile(funcDecl.body, this)
-
-                mv.returnValue()
-                mv.mark(methodEnd)
-                writeLocalVarTable(methodStart, methodEnd)
-                mv.endMethod()
-            }
+        //define non-main methods
+        program.forStatementType(Statement.FunctionDeclaration::class.java) { funcDecl ->
+            definePrivateStaticMethod(funcDecl)
         }
     }
 
-    private fun defineInterfaceFunction0(ctx: CompilationContext) = with(ctx) {
-        val classSignature = SignatureWriter().apply {
-            visitFormalTypeParameter("T")
-            visitClassType("java/lang/Object")
-            visitEnd()
-            visitSuperclass()
+    private fun ClassContext.definePrivateStaticMethod(funcDecl: Statement.FunctionDeclaration) {
+        val method = funcDecl.asMethod()
+        val signature = funcDecl.resolvedType.signature
+        defineMethod(ACC_PRIVATE + ACC_STATIC, method, signature) {
+            val methodStart = Label()
+            val methodEnd = Label()
 
-            visitClassType("java/lang/Object")
-            visitEnd()
-        }.toString()
+            mv.mark(methodStart)
 
-        defineInnerClass(
-            "Function0",
-            classSignature,
-            emptyArray(),
-            ACC_INTERFACE + ACC_ABSTRACT
-        ) {
-            val methodSignature = SignatureWriter().apply {
-                visitParameterType()
-                visitReturnType()
-                visitTypeVariable("T")
-            }.toString()
-
-            defineMethod(
-                ACC_PUBLIC + ACC_ABSTRACT,
-                Method.getMethod("T apply ()"),
-                methodSignature
-            ) {
-                mv.visitEnd()
+            funcDecl.parameters.forEachIndexed { argIndex, arg ->
+                val localIndex = declareVar(arg.id, arg.type)
+                mv.loadArg(argIndex)
+                mv.storeLocal(localIndex)
             }
+
+            StatementCompiler.compile(funcDecl.body, this)
+
+            mv.returnValue()
+            mv.mark(methodEnd)
+            writeLocalVarTable(methodStart, methodEnd)
+            mv.endMethod()
         }
     }
-
 }
-
-

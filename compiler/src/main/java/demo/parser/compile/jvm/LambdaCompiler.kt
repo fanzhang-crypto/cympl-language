@@ -24,6 +24,22 @@ internal object LambdaCompiler {
         }
 
         return ctx.defineInnerClass(className, classSignature, arrayOf(interfaceType.internalName)) {
+            lambda.captures.forEach { (name, type) ->
+                declare(name, type)
+            }
+
+            defineConstructor(lambda.captures) {
+                mv.loadThis()
+                mv.invokeConstructor(Type.getType(Object::class.java), Method("<init>", Type.VOID_TYPE, emptyArray()))
+                lambda.captures.forEachIndexed { index, param ->
+                    mv.loadThis()
+                    mv.loadArg(index)
+                    mv.putStatic(classType, param.id, param.type.asmType)
+                }
+                mv.returnValue()
+                mv.endMethod()
+            }
+
             val applyMethod = defineApplyMethod(lambda, this)
             defineBridgeMethod(applyMethod, lambdaType, interfaceType, this)
         }

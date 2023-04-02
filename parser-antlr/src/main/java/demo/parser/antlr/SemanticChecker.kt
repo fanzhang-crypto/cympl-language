@@ -10,7 +10,7 @@ import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.ParseTreeProperty
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
-class SemanticChecker : TypeResolver {
+class SemanticChecker : TypeResolver, ScopeResolver {
 
     private val globals = GlobalScope()
     private val scopes = ParseTreeProperty<Scope>()
@@ -29,6 +29,10 @@ class SemanticChecker : TypeResolver {
         walker.walk(refPhase, programAST)
 
         return (defPhase.semanticErrors + typeCheckPhase.semanticErrors + refPhase.semanticErrors).sorted()
+    }
+
+    override fun resolveScope(ctx: LambdaContext): LambdaScope {
+        return scopes.get(ctx) as LambdaScope
     }
 
     override fun resolveType(node: ExprContext): BuiltinType {
@@ -132,7 +136,7 @@ class SemanticChecker : TypeResolver {
             val id = idToken.text
             val type = resolveType(typeContext)
             if (type is BuiltinType.FUNCTION) {
-                type.isLambda = true
+                type.isFirstClass = true
             }
             val symbol = VariableSymbol(id, type, currentScope)
             currentScope?.define(symbol)
@@ -218,6 +222,7 @@ class SemanticChecker : TypeResolver {
                 )
                 return
             }
+            lambdaType.isFirstClass = true
             if (lambdaType.paramTypes.size != (ctx.idList()?.ID()?.size ?: 0)) {
                 val location = ctx.start.location
                 semanticErrors += SemanticException(
