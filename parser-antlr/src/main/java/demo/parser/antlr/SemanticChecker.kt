@@ -516,12 +516,11 @@ class SemanticChecker : TypeResolver, ScopeResolver {
         }
 
         override fun exitProperty(ctx: PropertyContext) {
-            val ownerType = types.get(ctx.expr())
-
-            when (ownerType) {
+            when (val ownerType = types.get(ctx.expr())) {
                 is BuiltinType.ARRAY, is BuiltinType.STRING -> {
                     val propertyName = ctx.ID().text
-                    val propertySymbol = ownerType.scope?.resolve(propertyName)
+                    val scope = if (ownerType is BuiltinType.ARRAY) ArrayScope else StringScope
+                    val propertySymbol = scope.resolve(propertyName)
                     if (propertySymbol !is VariableSymbol) {
                         val location = ctx.ID().symbol.location
                         semanticErrors += SemanticException("property $propertyName not found", location)
@@ -533,7 +532,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                 else -> {
                     val location = ctx.expr().start.location
                     semanticErrors += SemanticException(
-                        "property access only works on arrays and strings for now, but got $ownerType",
+                        "property access only works on array and string for now, but got $ownerType",
                         location
                     )
                 }

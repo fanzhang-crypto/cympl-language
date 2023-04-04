@@ -1,9 +1,5 @@
 package demo.parser.domain
 
-import demo.parser.domain.symbol.ArrayScope
-import demo.parser.domain.symbol.Scope
-import demo.parser.domain.symbol.StringScope
-
 sealed class BuiltinType {
 
     val isPrimitive: Boolean
@@ -24,20 +20,14 @@ sealed class BuiltinType {
             is FUNCTION -> toString()
         }
 
-    open val scope: Scope? = null
-
     object ANY : BuiltinType()
     object VOID : BuiltinType()
     object BOOL : BuiltinType()
     object INT : BuiltinType()
     object FLOAT : BuiltinType()
-
-    object STRING : BuiltinType() {
-        override val scope: Scope = StringScope
-    }
+    object STRING : BuiltinType()
 
     data class ARRAY(val elementType: BuiltinType) : BuiltinType() {
-        override val scope: Scope = ArrayScope
         override fun toString() = "$elementType[]"
     }
 
@@ -50,8 +40,8 @@ sealed class BuiltinType {
     override fun toString() = name
 
     companion object {
-        fun compatibleTypeOf(typeLeft: BuiltinType, typeRight: BuiltinType): BuiltinType {
-            return when {
+        fun compatibleTypeOf(typeLeft: BuiltinType, typeRight: BuiltinType): BuiltinType =
+            when {
                 typeLeft == typeRight -> typeLeft
                 typeLeft == FLOAT && typeRight == INT -> FLOAT
                 typeLeft == INT && typeRight == FLOAT -> FLOAT
@@ -62,7 +52,6 @@ sealed class BuiltinType {
 
                 else -> VOID
             }
-        }
     }
 }
 

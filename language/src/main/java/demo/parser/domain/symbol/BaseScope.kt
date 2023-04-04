@@ -2,7 +2,7 @@ package demo.parser.domain.symbol
 
 abstract class BaseScope(override val enclosingScope: Scope?) : Scope {
 
-    protected val symbolTable: MutableMap<String, Symbol> = LinkedHashMap()
+    private val symbolTable: MutableMap<String, Symbol> = LinkedHashMap()
 
     override fun define(symbol: Symbol) {
         symbolTable[symbol.name] = symbol

@@ -1,14 +1,13 @@
 grammar JSON;
 
-json
-    : object
-    | array;
+json: object | array;
 
-object: '{' pair (','pair)* '}' | '{' '}';
-
+object: '{' pairs? '}' ;
+pairs: pair (',' pair)* ;
 pair: STRING ':' value ;
 
-array: '[' value (','value)* ']' | '[' ']';
+array: '[' values? ']';
+values: value (',' value)*;
 
 value
     : NUM

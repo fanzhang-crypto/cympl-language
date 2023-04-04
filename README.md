@@ -1,6 +1,6 @@
 ## Cympl: A Simple Language
 
-Simple and clean implementation just to practice the theory of Compilers and Interpreters.
+A toy language implementation to learn how to build a compiler and interpreter.
 
 ### Language highlights
 - Statically typed
@@ -57,3 +57,32 @@ Simple and clean implementation just to practice the theory of Compilers and Int
 #### Built-in functions
 - `println(any x)`
 - `String readln(String prompt)`
+
+## How to build and run
+
+### Pre-requisites
+- [Install GraalVM](https://www.graalvm.org/docs/getting-started/#install-graalvm)
+The cli module needs graalvm compiler to be built into native executable.
+To install GraalVM on macOS or Linux, I recommend using SDKMAN!. 
+Get SDKMAN! from [sdkman.io](https://sdkman.io/) and install the Liberica GraalVM distribution by using the following commands:
+```shell
+$ sdk install java 22.3.r17-nik
+$ sdk use java 22.3.r17-nik
+```
+
+- [Install Gradle](https://gradle.org/install/)
+SDKMAN! can also be used to install Gradle. 
+```shell
+$ sdk install gradle 8.0.2
+```
+
+### Build and run
+- build and run as a jar file
+```shell
+$ gradle build && java -jar cli/build/libs/cli-1.0-SNAPSHOT.jar
+```
+
+- build and run as a native executable
+```shell
+$ gradle nativeCompile && ./cli/build/bin/cympl
+```
