@@ -7,7 +7,6 @@ dependencies {
     implementation(project(":language"))
     implementation("org.ow2.asm:asm-commons:9.4")
     implementation("org.ow2.asm:asm-util:9.4")
-    implementation("org.javassist:javassist:3.29.2-GA")
 
 //    implementation("org.graalvm.truffle:truffle-api:22.3.1")
 //    compileOnly("org.graalvm.truffle:truffle-dsl-processor:22.3.1")

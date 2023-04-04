@@ -7,6 +7,8 @@ sealed interface Scope {
     /** Where to look next for symbols  */
     val enclosingScope: Scope?
 
+    val symbols: List<Symbol>
+
     /** Define a symbol in the current scope  */
     fun define(symbol: Symbol)
 

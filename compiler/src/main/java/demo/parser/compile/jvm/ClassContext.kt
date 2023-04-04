@@ -1,8 +1,9 @@
 package demo.parser.compile.jvm
 
 import demo.parser.domain.BuiltinType
+import demo.parser.domain.Expression
 import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.GeneratorAdapter
 import org.objectweb.asm.commons.Method
@@ -12,7 +13,12 @@ internal class ClassContext(
     private val cw: ClassWriter,
     val rootContext: CompilationContext
 ) {
-    fun defineMethod(
+    fun defineConstructor(initializingParams: List<Expression.Variable>, block: MethodContext.() -> Unit) {
+        val constructor = Method("<init>", Type.VOID_TYPE, initializingParams.map { it.type.asmType }.toTypedArray())
+        defineMethod(ACC_PUBLIC, constructor, block = block)
+    }
+
+    inline fun defineMethod(
         access: Int,
         method: Method,
         signature: String? = null,
@@ -24,9 +30,7 @@ internal class ClassContext(
 
     fun declare(name: String, type: BuiltinType, asWrapperType: Boolean = false) {
         val descriptor = if (asWrapperType) type.asmType.wrapperType.descriptor else type.asmType.descriptor
-        cw.visitField(
-            Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, name, descriptor, type.signature, null
-        ).visitEnd()
+        cw.visitField(ACC_PRIVATE + ACC_STATIC, name, descriptor, type.signature, null).visitEnd()
     }
 
     fun set(mv: GeneratorAdapter, name: String, type: BuiltinType) {
@@ -46,7 +50,7 @@ internal class ClassContext(
                     mv.dup()
                 }
                 mv.push(1)
-                mv.visitInsn(Opcodes.IADD)
+                mv.visitInsn(IADD)
                 if (!postfix && !asStatement) {
                     mv.dup()
                 }
@@ -57,7 +61,7 @@ internal class ClassContext(
                     mv.dup2()
                 }
                 mv.push(1.0)
-                mv.visitInsn(Opcodes.DADD)
+                mv.visitInsn(DADD)
                 if (!postfix && !asStatement) {
                     mv.dup2()
                 }
@@ -78,7 +82,7 @@ internal class ClassContext(
                     mv.dup()
                 }
                 mv.push(1)
-                mv.visitInsn(Opcodes.ISUB)
+                mv.visitInsn(ISUB)
                 if (!postfix && !asStatement) {
                     mv.dup()
                 }
@@ -89,7 +93,7 @@ internal class ClassContext(
                     mv.dup2()
                 }
                 mv.push(1.0)
-                mv.visitInsn(Opcodes.DSUB)
+                mv.visitInsn(DSUB)
                 if (!postfix && !asStatement) {
                     mv.dup2()
                 }

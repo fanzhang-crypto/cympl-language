@@ -175,7 +175,11 @@ sealed interface Expression : Typed {
         override fun toString() = "$expr.$propertyName"
     }
 
-    data class Lambda(val paramNames: List<String>, val body: Statement, val type: BuiltinType.FUNCTION) : Expression {
+    data class Lambda(val paramNames: List<String>,
+                      val body: Statement,
+                      val type: BuiltinType.FUNCTION,
+                      val captures: List<Variable> = emptyList()
+    ) : Expression {
         override val resolvedType = type
 
         override fun toString(): String {

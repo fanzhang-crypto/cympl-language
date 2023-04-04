@@ -43,13 +43,22 @@ internal object ExpressionCompiler {
             is Expression.Property -> source.compile(ctx)
             is Expression.FunctionCall -> source.compile(ctx)
             is Expression.NewArray -> source.compile(ctx)
-            is Expression.Lambda -> {
-                val lambdaClassType = LambdaCompiler.compile(source, ctx.classContext.rootContext)
-                ctx.mv.newInstance(lambdaClassType)
-                ctx.mv.dup()
-                ctx.mv.invokeConstructor(lambdaClassType, AsmUtil.DEFAULT_CONSTRUCTOR)
-            }
+            is Expression.Lambda -> source.compile(ctx)
         }
+    }
+
+    private fun Expression.Lambda.compile(ctx: MethodContext) {
+        val lambdaClassType = LambdaCompiler.compile(this, ctx.classContext.rootContext)
+        ctx.mv.newInstance(lambdaClassType)
+        ctx.mv.dup()
+
+        val argumentTypes = captures.map {
+            ctx.getVar(it.id, it.type)
+            it.type.asmType
+        }.toTypedArray()
+
+        val constructor = Method("<init>", Type.VOID_TYPE, argumentTypes)
+        ctx.mv.invokeConstructor(lambdaClassType, constructor)
     }
 
     private fun Expression.NewArray.compile(ctx: MethodContext) {
@@ -342,7 +351,7 @@ internal object ExpressionCompiler {
                 IntrinsicCallCompiler.compileReadLineCall(this, ctx)
 
             else -> {
-                if (funcType.isLambda) {
+                if (funcType.isFirstClass) {
                     ctx.getVar(funcExpr.id, funcType)
                     args.forEach { arg ->
                         compile(arg, ctx)

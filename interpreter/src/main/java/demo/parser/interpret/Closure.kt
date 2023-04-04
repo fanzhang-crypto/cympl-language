@@ -4,7 +4,7 @@ import demo.parser.domain.Statement
 
 class Closure(
     val function: Statement.FunctionDeclaration,
-    val scope: Scope
+    val env: Environment
 ) : TValue(function.resolvedType, function) {
 
     override fun toString(): String {

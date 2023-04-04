@@ -5,6 +5,7 @@ import demo.parser.domain.*
 
 internal class AntlrToExpression(
     private val typeResolver: TypeResolver,
+    private val scopeResolver: ScopeResolver,
     private val antlrToStatement: AntlrToStatement
 ) : CymplBaseVisitor<Expression>() {
 
@@ -165,6 +166,10 @@ internal class AntlrToExpression(
             else -> Statement.Block(emptyList())
         }
         val type = typeResolver.resolveType(ctx) as BuiltinType.FUNCTION
-        return Expression.Lambda(paramNames, body, type)
+
+        val lambdaScope = scopeResolver.resolveScope(ctx)
+        val captures = lambdaScope.captures.map { Expression.Variable(it.name, it.type) }
+
+        return Expression.Lambda(paramNames, body, type, captures)
     }
 }

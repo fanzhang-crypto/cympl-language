@@ -7,8 +7,7 @@ class FunctionSymbol(
     override val returnType: BuiltinType,
     override val parameters: List<VariableSymbol>,
     override val enclosingScope: Scope?,
-    val isLambda: Boolean = false
-) : Symbol(name, BuiltinType.FUNCTION(parameters.map { it.type }, returnType, false)), FunctionScope {
+) : Symbol(name, BuiltinType.FUNCTION(parameters.map { it.type }, returnType)), FunctionScope {
 
     private val locals: MutableMap<String, Symbol> = LinkedHashMap()
 
@@ -25,4 +24,7 @@ class FunctionSymbol(
     }
 
     override val scopeName: String = name
+
+    override val symbols: List<Symbol>
+        get() = locals.values.toList()
 }

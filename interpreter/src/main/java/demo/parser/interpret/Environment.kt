@@ -1,6 +1,6 @@
 package demo.parser.interpret
 
-class Scope(private val parent: Scope? = null) {
+class Environment(private val parent: Environment? = null) {
 
     private val variables = mutableMapOf<String, TValue>()
 

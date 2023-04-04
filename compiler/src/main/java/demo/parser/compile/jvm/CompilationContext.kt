@@ -1,6 +1,5 @@
 package demo.parser.compile.jvm
 
-import demo.parser.compile.jvm.AsmUtil.generateDefaultConstructor
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
@@ -35,7 +34,7 @@ internal class CompilationContext(
         }
     }
 
-    fun defineOuterClass(
+    inline fun defineOuterClass(
         qualifiedName: String,
         signature: String?,
         interfaces: Array<String>,
@@ -57,9 +56,6 @@ internal class CompilationContext(
     ): ClassWriter {
         val cw = ClassWriter(ClassWriter.COMPUTE_FRAMES)
         cw.visit(V11, access, internalName, signature, "java/lang/Object", interfaces)
-        if (access and ACC_INTERFACE == 0) {
-            cw.generateDefaultConstructor()
-        }
         return cw
     }
 

@@ -39,28 +39,53 @@ internal val BuiltinType.FUNCTION.asJavaFunctionInterface
         else -> throw CompilationException("unsupported function type: $this")
     }
 
-internal val BuiltinType.signature: String?
-    get() = when (this) {
-        is BuiltinType.FUNCTION -> SignatureWriter().apply {
-            visitClassType("java/lang/Object")
-            visitEnd()
+internal val BuiltinType.signature: String
+    get() = SignatureWriter().also { it.visitBuiltinType(this) }.toString()
 
-            val functionalInterface = asJavaFunctionInterface
-            visitClassType(Type.getInternalName(functionalInterface))
-            // handle the generic types
-            paramTypes.forEach { visitBuiltinType(it) }
-            visitBuiltinType(returnType)
-            visitEnd()
-        }.toString()
+private fun SignatureWriter.visitBuiltinType(builtinType: BuiltinType, asWrapperType: Boolean = false) {
+    when (builtinType) {
+        is BuiltinType.FUNCTION -> {
+            if (builtinType.isFirstClass) {
+                val functionalInterface = builtinType.asJavaFunctionInterface
+                visitClassType(Type.getInternalName(functionalInterface))
+                // handle the generic types
+                builtinType.paramTypes.forEach {
+                    visitTypeArgument('=')
+                    visitBuiltinType(it, true)
+                    visitEnd()
+                }
+                builtinType.returnType.let {
+                    visitTypeArgument('=')
+                    visitBuiltinType(it, true)
+                    visitEnd()
+                }
+                visitEnd()
+            } else {
+                visitParameterType()
+                builtinType.paramTypes.forEach {
+                    visitBuiltinType(it)
+                }
+                visitReturnType()
+                visitBuiltinType(builtinType.returnType)
+            }
+        }
+        is BuiltinType.ARRAY -> {
+            visitArrayType()
+            visitBuiltinType(builtinType.elementType, true)
+        }
+        BuiltinType.VOID, BuiltinType.BOOL, BuiltinType.INT, BuiltinType.FLOAT ->
+            if(asWrapperType)
+                visitClassType(builtinType.asmType.wrapperType.internalName)
+            else
+                visitBaseType(builtinType.jvmDescriptor[0])
 
-        else -> null
+        BuiltinType.STRING -> {
+            visitClassType(builtinType.asmType.internalName)
+        }
+        BuiltinType.ANY -> visitClassType(builtinType.asmType.internalName)
     }
-
-private fun SignatureWriter.visitBuiltinType(builtinType: BuiltinType) {
-    visitTypeArgument('=')
-    visitClassType(builtinType.asmType.wrapperType.internalName)
-    visitEnd()
 }
+
 
 internal fun Statement.FunctionDeclaration.asMethod(): Method {
     val functionName = id

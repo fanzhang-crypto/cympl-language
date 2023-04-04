@@ -41,7 +41,9 @@ sealed class BuiltinType {
         override fun toString() = "$elementType[]"
     }
 
-    data class FUNCTION(val paramTypes: List<BuiltinType>, val returnType: BuiltinType, var isLambda: Boolean = false) : BuiltinType() {
+    data class FUNCTION(val paramTypes: List<BuiltinType>, val returnType: BuiltinType) : BuiltinType() {
+        var isFirstClass: Boolean = false
+
         override fun toString() = "(${paramTypes.joinToString(", ")}) -> $returnType"
     }
 

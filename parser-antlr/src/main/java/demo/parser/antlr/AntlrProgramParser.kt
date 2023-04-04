@@ -12,7 +12,7 @@ import java.io.InputStream
 class AntlrProgramParser: Parser<Program> {
 
     private val semanticChecker = SemanticChecker()
-    private val programVisitor = AntlrToProgram(semanticChecker)
+    private val programVisitor = AntlrToProgram(semanticChecker, semanticChecker)
 
     override fun parse(inputStream: InputStream): ParseResult<Program> {
         val errorListener = SyntaxErrorListener()

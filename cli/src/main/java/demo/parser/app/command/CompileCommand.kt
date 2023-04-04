@@ -31,11 +31,6 @@ class CompileCommand(
             help = "cympl script file path to compile",
             valueProvider = FileValueProvider::class
         ) sourceFile: File?,
-//        @ShellOption(
-//            value = ["-d"],
-//            defaultValue = ShellOption.NULL,
-//            help = "output file directory",
-//        ) outputDir: File?
     ) {
         if (sourceFile == null) {
             terminal.writer().println("source file is required")
@@ -55,8 +50,18 @@ class CompileCommand(
         FileInputStream(sourceFile).use {
             when (val r = parserFactory().parse(it)) {
                 is ParseResult.Success<Program> -> {
-                    compiler.compile(r.value, options).forEach { (name, bytes) ->
-                        File(outputDir, "$name.class").writeBytes(bytes)
+                    val program = r.value
+
+                    compiler.compile(program, options).forEach { (name, bytecode) ->
+                        if (name.contains(".")) {
+                            // for classes with package name, create the directory structure accordingly
+                            val classFilePath = name.replace(".", "/")
+                            val classFileDir = classFilePath.substringBeforeLast("/")
+                            File("$outputDir/$classFileDir").mkdirs()
+                            File("$outputDir/$classFilePath.class").writeBytes(bytecode)
+                        } else {
+                            File("$outputDir/$name.class").writeBytes(bytecode)
+                        }
                     }
                 }
 
