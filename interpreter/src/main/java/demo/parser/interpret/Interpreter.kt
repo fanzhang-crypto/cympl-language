@@ -8,7 +8,7 @@ import demo.parser.interpret.RuntimeTypeChecker.checkArrayDimension
 
 class Interpreter(private val runtime: Runtime) {
 
-    private val globalScope = Scope()
+    private val globalScope = Environment()
 
     init {
         val printLine = Closure(IntrinsicFunction.PrintLine, globalScope)
@@ -48,7 +48,7 @@ class Interpreter(private val runtime: Runtime) {
         }
     }
 
-    private fun Statement.evaluate(scope: Scope): TValue = when (this) {
+    private fun Statement.evaluate(scope: Environment): TValue = when (this) {
         is Statement.VariableDeclaration -> evaluate(scope)
         is Statement.Assignment -> evaluate(scope)
         is Statement.IndexAssignment -> evaluate(scope)
@@ -82,8 +82,8 @@ class Interpreter(private val runtime: Runtime) {
         else -> throw InterpretException("unknown statement $this")
     }
 
-    private fun Statement.Block.evaluate(parent: Scope): TValue {
-        val currentScope = Scope(parent)
+    private fun Statement.Block.evaluate(parent: Environment): TValue {
+        val currentScope = Environment(parent)
 
         for (stat in statements) {
             stat.evaluate(currentScope)
@@ -92,7 +92,7 @@ class Interpreter(private val runtime: Runtime) {
         return TValue.VOID
     }
 
-    private fun Statement.If.evaluate(scope: Scope): TValue {
+    private fun Statement.If.evaluate(scope: Environment): TValue {
         return if (condition.evaluate(scope).asBoolean()) {
             thenBranch.evaluate(scope)
         } else {
@@ -100,7 +100,7 @@ class Interpreter(private val runtime: Runtime) {
         }
     }
 
-    private fun Statement.While.evaluate(scope: Scope): TValue = scope.withinLoop {
+    private fun Statement.While.evaluate(scope: Environment): TValue = scope.withinLoop {
         while (condition.evaluate(scope).asBoolean()) {
             try {
                 body.evaluate(scope)
@@ -115,7 +115,7 @@ class Interpreter(private val runtime: Runtime) {
         return@withinLoop TValue.VOID
     }
 
-    private fun Statement.For.evaluate(scope: Scope): TValue = scope.withinLoop {
+    private fun Statement.For.evaluate(scope: Environment): TValue = scope.withinLoop {
         init?.evaluate(scope)
 
         while (condition?.evaluate(scope)?.asBoolean() != false) {
@@ -133,7 +133,7 @@ class Interpreter(private val runtime: Runtime) {
         return@withinLoop TValue.VOID
     }
 
-    private fun Statement.Switch.evaluate(scope: Scope): TValue {
+    private fun Statement.Switch.evaluate(scope: Environment): TValue {
         val value = expr.evaluate(scope)
         var matched = false
         for (case in cases) {
@@ -153,7 +153,7 @@ class Interpreter(private val runtime: Runtime) {
         return TValue.VOID
     }
 
-    private fun Statement.FunctionDeclaration.evaluate(scope: Scope): TValue {
+    private fun Statement.FunctionDeclaration.evaluate(scope: Environment): TValue {
         if (scope.containsVariable(id, true)) {
             throw InterpretException("function $id already declared")
         }
@@ -161,7 +161,7 @@ class Interpreter(private val runtime: Runtime) {
             .also { scope.defineVariable(id, it) }
     }
 
-    private fun Statement.Assignment.evaluate(scope: Scope): TValue {
+    private fun Statement.Assignment.evaluate(scope: Environment): TValue {
         scope.resolveVariable(id)
             ?: throw InterpretException("variable $id not defined")
 
@@ -170,7 +170,7 @@ class Interpreter(private val runtime: Runtime) {
         return value
     }
 
-    private fun Statement.IndexAssignment.evaluate(scope: Scope): TValue {
+    private fun Statement.IndexAssignment.evaluate(scope: Environment): TValue {
         val arrayIndexing = ArrayIndexing(arrayExpr, indexExpr, scope)
 
         val value = valueExpr.evaluate(scope)
@@ -181,7 +181,7 @@ class Interpreter(private val runtime: Runtime) {
         return value
     }
 
-    private fun Statement.VariableDeclaration.evaluate(scope: Scope): TValue {
+    private fun Statement.VariableDeclaration.evaluate(scope: Environment): TValue {
         if (scope.containsVariable(id, true)) {
             throw InterpretException("variable $id already declared")
         }
@@ -194,7 +194,7 @@ class Interpreter(private val runtime: Runtime) {
             }
     }
 
-    private fun Expression.evaluate(scope: Scope): TValue = when (this) {
+    private fun Expression.evaluate(scope: Environment): TValue = when (this) {
         is Expression.Parenthesized -> expr.evaluate(scope)
 
         is Expression.Addition -> {
@@ -384,7 +384,7 @@ class Interpreter(private val runtime: Runtime) {
                 throw InterpretException("function $funcExpr expects ${function.parameters.size} arguments, got ${args.size}")
             }
 
-            val functionScope = Scope(closure.scope).apply {
+            val functionScope = Environment(closure.env).apply {
                 function.parameters.forEachIndexed { i, (name, type) ->
                     assertValueType(args[i], type)
                     defineVariable(name, args[i])
@@ -494,7 +494,7 @@ class Interpreter(private val runtime: Runtime) {
         }
     }
 
-    private inner class ArrayIndexing(arrayExpr: Expression, indexExpr: Expression, scope: Scope) {
+    private inner class ArrayIndexing(arrayExpr: Expression, indexExpr: Expression, scope: Environment) {
         val array: Array<TValue>
         val index: Int
         val arrayType: BuiltinType.ARRAY
