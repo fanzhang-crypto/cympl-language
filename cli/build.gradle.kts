@@ -1,8 +1,12 @@
 plugins {
     kotlin("jvm")
+    id("com.gorylenko.gradle-git-properties") version "2.4.1"
     id("org.springframework.boot") version "3.0.1"
     id("org.graalvm.buildtools.native") version "0.9.17"
 }
+
+group = parent!!.group
+version = parent!!.version
 
 dependencies {
     implementation(project(":analyzer"))
@@ -20,6 +24,10 @@ kotlin {
     jvmToolchain(17)
 }
 
+springBoot {
+    buildInfo()
+}
+
 graalvmNative {
     binaries {
         named("main") {
@@ -31,12 +39,14 @@ graalvmNative {
 tasks.bootJar {
     manifest {
         attributes(
-            "Implementation-Version" to parent?.version
+            "Implementation-Version" to version
         )
     }
+    archiveFileName.set("cli.jar")
 }
 
 // gradle runInteractive -q --console=plain
 tasks.bootRun {
     standardInput = System.`in`
 }
+

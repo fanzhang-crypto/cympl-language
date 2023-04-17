@@ -182,6 +182,47 @@ class TypeCheckTests {
         errors[2] shouldHaveMessage "semantic error at (3:10): type mismatch: expected String, but got float"
     }
 
+    @Test
+    fun `should check condition type on if statement`() {
+        val input = """
+            if (1) {
+                println("1");
+            }
+        """.trimIndent()
+
+        val errors = check(input)
+        errors shouldHaveSize 1
+        errors[0] shouldHaveMessage "semantic error at (1:4): if condition must be of type bool, but got int"
+    }
+
+    @Test
+    fun `should check condition type of while statement`() {
+        val input = """
+            while (1) {
+                println("1");
+            }
+        """.trimIndent()
+
+        val errors = check(input)
+        errors shouldHaveSize 1
+        errors[0] shouldHaveMessage "semantic error at (1:7): while condition must be of type bool, but got int"
+    }
+
+    @Test
+    fun `should check condition type of for statement`() {
+        val input = """
+            for (int i = 0; "s"; i = i + 1) {
+                println("1");
+            }
+        """.trimIndent()
+
+        val errors = check(input)
+        errors shouldHaveSize 1
+        errors[0] shouldHaveMessage "semantic error at (1:16): for condition must be of type bool, but got String"
+    }
+
+
+
     private fun check(input: String): List<ParseException> =
         when (val r = parser().parse(input.byteInputStream())) {
             is ParseResult.Failure ->

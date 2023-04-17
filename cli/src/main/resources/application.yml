@@ -3,3 +3,12 @@ spring:
     name: cli
   main:
     banner-mode: console
+  shell:
+    command:
+      version:
+        enabled: true
+        show-build-time: true
+        show-build-version: true
+        show-git-branch: true
+        show-git-short-commit-id: true
+        show-git-commit-time: true

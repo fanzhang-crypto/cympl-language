@@ -539,6 +539,30 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             }
         }
 
+        override fun exitIfStat(ctx: IfStatContext) {
+            val conditionType = types.get(ctx.expr())
+            if (conditionType != BuiltinType.BOOL) {
+                val location = ctx.expr().start.location
+                semanticErrors += SemanticException("if condition must be of type bool, but got $conditionType", location)
+            }
+        }
+
+        override fun exitWhileStat(ctx: WhileStatContext) {
+            val conditionType = types.get(ctx.expr())
+            if (conditionType != BuiltinType.BOOL) {
+                val location = ctx.expr().start.location
+                semanticErrors += SemanticException("while condition must be of type bool, but got $conditionType", location)
+            }
+        }
+
+        override fun exitForStat(ctx: ForStatContext) {
+            val conditionType = types.get(ctx.cond) ?: return
+            if (conditionType != BuiltinType.BOOL) {
+                val location = ctx.cond.start.location
+                semanticErrors += SemanticException("for condition must be of type bool, but got $conditionType", location)
+            }
+        }
+
         private fun checkArithmeticBop(ctx: ParserRuleContext, leftType: BuiltinType?, rightType: BuiltinType?) {
             if (leftType == null || rightType == null) {
                 return
