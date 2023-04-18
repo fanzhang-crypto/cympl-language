@@ -24,7 +24,7 @@ class ArrayTests {
     @Test
     fun `array can be declared as empty`() {
         val input = """
-            int[] arr = [ ];
+            int[] arr = [];
         """
 
         val output = """

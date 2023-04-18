@@ -2,7 +2,7 @@ package cympl.language
 
 sealed interface Statement {
 
-    data class VariableDeclaration(val id: String, val type: cympl.language.BuiltinType, val expr: Expression? = null) : Statement {
+    data class VariableDeclaration(val id: String, val type: BuiltinType, val expr: Expression? = null) : Statement {
         override fun toString() = if (expr != null) "$id:${type.name} = $expr;" else "$id:${type.name}"
     }
 
@@ -72,13 +72,13 @@ sealed interface Statement {
 
     open class FunctionDeclaration(
         val id: String,
-        val returnType: cympl.language.BuiltinType,
+        val returnType: BuiltinType,
         val parameters: List<VariableDeclaration>,
         val body: Block
     ) : Statement, Typed {
 
-        override val resolvedType: cympl.language.BuiltinType
-            get() = cympl.language.BuiltinType.FUNCTION(parameters.map { it.type }, returnType)
+        override val resolvedType: BuiltinType
+            get() = BuiltinType.FUNCTION(parameters.map { it.type }, returnType)
 
         override fun toString() = "func $id(${parameters.joinToString(", ")}):$returnType $body"
     }

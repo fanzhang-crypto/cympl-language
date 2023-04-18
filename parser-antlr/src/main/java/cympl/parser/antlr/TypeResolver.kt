@@ -25,7 +25,7 @@ interface TypeResolver {
             return resolveByText(typeContext)
         }
 
-        if (typeContext.childCount == 2) {
+        if (typeContext.childCount == 3) {
             val elementTypeContext = typeContext.type()
             val elementType = resolveType(elementTypeContext)
             return BuiltinType.ARRAY(elementType)

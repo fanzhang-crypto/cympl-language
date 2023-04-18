@@ -1,8 +1,8 @@
 package cympl.interpreter
 
-class Environment(private val parent: cympl.interpreter.Environment? = null) {
+class Environment(private val parent: Environment? = null) {
 
-    private val variables = mutableMapOf<String, cympl.interpreter.TValue>()
+    private val variables = mutableMapOf<String, TValue>()
 
     private var inLoop:Boolean = false
 
@@ -17,11 +17,11 @@ class Environment(private val parent: cympl.interpreter.Environment? = null) {
         return result
     }
 
-    fun defineVariable(name: String, value: cympl.interpreter.TValue) {
+    fun defineVariable(name: String, value: TValue) {
         variables[name] = value
     }
 
-    fun setVariable(name: String, value: cympl.interpreter.TValue) {
+    fun setVariable(name: String, value: TValue) {
         if (variables.contains(name)) {
             variables[name] = value
         } else {
@@ -35,11 +35,11 @@ class Environment(private val parent: cympl.interpreter.Environment? = null) {
         else
             variables.contains(id) || parent?.containsVariable(id, false) ?: false
 
-    fun resolveVariable(id: String): cympl.interpreter.TValue? {
+    fun resolveVariable(id: String): TValue? {
         return variables[id] ?: parent?.resolveVariable(id)
     }
 
-    fun getVariables(): Map<String, cympl.interpreter.TValue> {
+    fun getVariables(): Map<String, TValue> {
         return variables.toMap()
     }
 }

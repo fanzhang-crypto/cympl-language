@@ -1,7 +1,9 @@
 package cympl.language.symbol
 
+import cympl.language.BuiltinType
+
 class LambdaScope(
-    override var returnType: cympl.language.BuiltinType,
+    override var returnType: BuiltinType,
     override val parameters: List<VariableSymbol>,
     enclosingScope: Scope?
 ) : BaseScope(enclosingScope), FunctionScope {
@@ -24,7 +26,7 @@ class LambdaScope(
         while (scope != null) {
             when (scope) {
                 is FunctionScope -> captured.addAll(scope.symbols.filterIsInstance<VariableSymbol>())
-                is BaseScope -> captured.addAll(scope.symbols.filterIsInstance<VariableSymbol>().filter { it.type !is cympl.language.BuiltinType.FUNCTION })
+                is BaseScope -> captured.addAll(scope.symbols.filterIsInstance<VariableSymbol>().filter { it.type !is BuiltinType.FUNCTION })
             }
             scope = scope.enclosingScope
         }
