@@ -12,6 +12,7 @@ dependencies {
 //    compileOnly("org.graalvm.truffle:truffle-dsl-processor:22.3.1")
 //    implementation("org.graalvm.sdk:graal-sdk:22.3.1")
 
+    testImplementation(project(":parser-common"))
     testImplementation(project(":parser-antlr"))
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.5.5")

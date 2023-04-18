@@ -26,7 +26,7 @@ funcType: '(' paramTypes=typeList? ')' ARROW_RIGHT retType=type;
 
 varDecl: type ID '=' expr;
 
-funcDecl:  (type | VOID_TYPE) ID '(' paramDecls? ')' block;
+funcDecl:  type ID '(' paramDecls? ')' block;
 
 paramDecls: paramDecl (',' paramDecl)*;
 

@@ -7,6 +7,7 @@ dependencies {
     api("guru.nidi:graphviz-kotlin:0.18.1")
     implementation("ch.qos.logback:logback-classic:1.4.6")
 
+    testImplementation(project(":parser-common"))
     testImplementation(project(":parser-antlr"))
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.5.5")

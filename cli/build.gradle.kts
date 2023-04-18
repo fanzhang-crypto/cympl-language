@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":interpreter"))
     implementation(project(":compiler"))
     implementation(project(":language"))
+    implementation(project(":parser-common"))
     implementation(project(":parser-antlr"))
     implementation(project(":parser-fp"))
 

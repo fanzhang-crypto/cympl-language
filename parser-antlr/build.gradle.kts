@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":language"))
+    implementation(project(":parser-common"))
     implementation("org.antlr:antlr4:4.12.0")
     antlr("org.antlr:antlr4:4.12.0")
 

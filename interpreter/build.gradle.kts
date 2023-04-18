@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation(project(":language"))
 
+    testImplementation(project(":parser-common"))
     testImplementation(project(":parser-antlr"))
     testImplementation(project(":parser-fp"))
 

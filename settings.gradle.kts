@@ -18,3 +18,4 @@ include(
     "parser-fp",
     "antlr-sample"
 )
+include("parser-common")
