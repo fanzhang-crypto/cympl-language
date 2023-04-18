@@ -188,8 +188,11 @@ class Interpreter(private val runtime: Runtime) {
         return expr!!.evaluate(scope)
             .also { result ->
                 assertValueType(result, type)
-                // TEmptyArray has no type, so we need to set it as the type of the variable
-                val variable = if (result == TValue.TEmptyArray) TValue(type, result.value) else result
+                // TEmptyArray has no concrete type, so we need to cast it to the type of the variable
+                val variable = if (result == TValue.TEmptyArray)
+                    TValue.TEmptyArray.castTo(type as BuiltinType.ARRAY)
+                else result
+
                 scope.defineVariable(id, variable)
             }
     }
@@ -372,6 +375,7 @@ class Interpreter(private val runtime: Runtime) {
                     scope.resolveVariable(funcExpr.id) as? Closure
                         ?: throw InterpretException("function not defined: $funcExpr")
                 }
+
                 else -> {
                     funcExpr.evaluate(scope) as? Closure
                         ?: throw InterpretException("not a function: $funcExpr")

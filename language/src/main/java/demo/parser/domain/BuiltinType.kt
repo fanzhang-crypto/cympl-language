@@ -54,5 +54,3 @@ sealed class BuiltinType {
             }
     }
 }
-
-val EmptyArray = BuiltinType.ARRAY(BuiltinType.VOID)

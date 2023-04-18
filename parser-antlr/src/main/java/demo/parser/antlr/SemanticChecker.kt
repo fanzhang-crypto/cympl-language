@@ -307,14 +307,13 @@ class SemanticChecker : TypeResolver, ScopeResolver {
         }
 
         override fun exitArrayLiteral(ctx: ArrayLiteralContext) {
-            val elementTypes = ctx.exprlist()?.expr()?.map { types.get(it) }?.toSet() ?: emptySet()
+            val elementTypes = ctx.elements?.expr()?.map { types.get(it) }?.toSet() ?: emptySet()
 
             if (elementTypes.size > 1) {
                 val location = ctx.start.location
                 semanticErrors += SemanticException("array elements must be of the same type", location)
             }
-
-            val elementType = elementTypes.firstOrNull() ?: BuiltinType.VOID
+            val elementType = elementTypes.firstOrNull() ?: BuiltinType.ANY
             types.put(ctx, BuiltinType.ARRAY(elementType))
         }
 
@@ -391,7 +390,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             val exprType = ctx.expr()?.let { types[it] } ?: BuiltinType.VOID
             val varType = resolveType(ctx.type())
 
-            if (varType is BuiltinType.ARRAY && exprType == EmptyArray) {
+            if (varType is BuiltinType.ARRAY && exprType is BuiltinType.ARRAY && exprType.elementType == BuiltinType.ANY) {
                 //empty array is allowed to assign to any array type
                 return
             }
@@ -543,7 +542,10 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             val conditionType = types.get(ctx.expr())
             if (conditionType != BuiltinType.BOOL) {
                 val location = ctx.expr().start.location
-                semanticErrors += SemanticException("if condition must be of type bool, but got $conditionType", location)
+                semanticErrors += SemanticException(
+                    "if condition must be of type bool, but got $conditionType",
+                    location
+                )
             }
         }
 
@@ -551,7 +553,10 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             val conditionType = types.get(ctx.expr())
             if (conditionType != BuiltinType.BOOL) {
                 val location = ctx.expr().start.location
-                semanticErrors += SemanticException("while condition must be of type bool, but got $conditionType", location)
+                semanticErrors += SemanticException(
+                    "while condition must be of type bool, but got $conditionType",
+                    location
+                )
             }
         }
 
@@ -559,7 +564,10 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             val conditionType = types.get(ctx.cond) ?: return
             if (conditionType != BuiltinType.BOOL) {
                 val location = ctx.cond.start.location
-                semanticErrors += SemanticException("for condition must be of type bool, but got $conditionType", location)
+                semanticErrors += SemanticException(
+                    "for condition must be of type bool, but got $conditionType",
+                    location
+                )
             }
         }
 

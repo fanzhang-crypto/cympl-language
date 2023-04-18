@@ -79,7 +79,7 @@ expr: funcExpr=expr '(' paramList=exprlist? ')'                            # Fun
     | INT                                               # IntLiteral
     | FLOAT                                             # FloatLiteral
     | STRING                                            # StringLiteral
-    | '[' exprlist? ']'                                 # ArrayLiteral
+    | '[' elements=exprlist? ']'                        # ArrayLiteral
     ;
 
 exprlist: expr (',' expr)*;

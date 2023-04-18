@@ -5,7 +5,10 @@ import demo.parser.interpret.RuntimeTypeChecker.assertValueType
 
 open class TValue(val type: BuiltinType, val value: Any) {
 
-    object TEmptyArray : TValue(EmptyArray, emptyArray<TValue>())
+    object TEmptyArray : TValue(BuiltinType.ARRAY(BuiltinType.ANY), emptyArray<TValue>()) {
+        fun castTo(type: BuiltinType.ARRAY) = TValue(type, emptyArray<TValue>())
+        override fun toString() = "[]"
+    }
 
     object NULL: TValue(BuiltinType.ANY, "null") {
         override fun toString() = "null"
@@ -58,7 +61,7 @@ open class TValue(val type: BuiltinType, val value: Any) {
             BuiltinType.INT -> TValue(type, 0)
             BuiltinType.FLOAT -> TValue(type, 0.0)
             BuiltinType.STRING -> TValue(type, "")
-            is BuiltinType.ARRAY -> TEmptyArray
+            is BuiltinType.ARRAY -> NULL
             else -> throw InterpretException("unknown type $type")
         }
     }
