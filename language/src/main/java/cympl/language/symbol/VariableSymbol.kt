@@ -1,3 +1,5 @@
 package cympl.language.symbol
 
-class VariableSymbol(name: String, type: cympl.language.BuiltinType, scope: Scope?) : Symbol(name, type, scope)
+import cympl.language.BuiltinType
+
+class VariableSymbol(name: String, type: BuiltinType, scope: Scope?) : Symbol(name, type, scope)

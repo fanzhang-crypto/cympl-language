@@ -29,7 +29,7 @@ internal class MethodContext(
         mv.invokeStatic(classContext.classType, method)
     }
 
-    fun declareVar(name: String, type: cympl.language.BuiltinType, asWrapperType: Boolean = false): Int =
+    fun declareVar(name: String, type: BuiltinType, asWrapperType: Boolean = false): Int =
         if (inMainMethod && namingScope.isRoot) {
             classContext.declare(name, type, asWrapperType)
             -1
@@ -37,7 +37,7 @@ internal class MethodContext(
             localVarContext.declare(name, type, asWrapperType)
         }
 
-    fun getVar(name: String, type: cympl.language.BuiltinType) {
+    fun getVar(name: String, type: BuiltinType) {
         if ((inMainMethod && namingScope.isRoot) || !localVarContext.contains(name)) {
             classContext.get(mv, name, type)
         } else {
@@ -45,7 +45,7 @@ internal class MethodContext(
         }
     }
 
-    fun setVar(name: String, type: cympl.language.BuiltinType) {
+    fun setVar(name: String, type: BuiltinType) {
         if ((inMainMethod && namingScope.isRoot) || !localVarContext.contains(name)) {
             classContext.set(mv, name, type)
         } else {
@@ -53,7 +53,7 @@ internal class MethodContext(
         }
     }
 
-    fun increment(name: String, type: cympl.language.BuiltinType, postfix: Boolean, asStatement: Boolean) {
+    fun increment(name: String, type: BuiltinType, postfix: Boolean, asStatement: Boolean) {
         if ((inMainMethod && namingScope.isRoot) || !localVarContext.contains(name)) {
             classContext.increment(mv, name, type, postfix, asStatement)
         } else {
@@ -61,7 +61,7 @@ internal class MethodContext(
         }
     }
 
-    fun decrement(name: String, type: cympl.language.BuiltinType, postfix: Boolean, asStatement: Boolean) {
+    fun decrement(name: String, type: BuiltinType, postfix: Boolean, asStatement: Boolean) {
         if ((inMainMethod && namingScope.isRoot) || !localVarContext.contains(name)) {
             classContext.decrement(mv, name, type, postfix, asStatement)
         } else {

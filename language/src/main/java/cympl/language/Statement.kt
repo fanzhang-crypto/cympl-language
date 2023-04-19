@@ -72,15 +72,27 @@ sealed interface Statement {
 
     open class FunctionDeclaration(
         val id: String,
-        val returnType: BuiltinType,
+        final override val resolvedType: BuiltinType.FUNCTION,
         val parameters: List<VariableDeclaration>,
         val body: Block
     ) : Statement, Typed {
 
-        override val resolvedType: BuiltinType
-            get() = BuiltinType.FUNCTION(parameters.map { it.type }, returnType)
+        val returnType = resolvedType.returnType
 
-        override fun toString() = "func $id(${parameters.joinToString(", ")}):$returnType $body"
+        override fun toString() : String {
+            val paramTypesString = if (!resolvedType.supportVarargs)
+                parameters.joinToString(", ")
+            else
+                parameters.withIndex().joinToString(", ") { (i, param) ->
+                    if (i == parameters.size - 1) {
+                        val varargType = (param.type as BuiltinType.ARRAY).elementType
+                        "${param.id}:$varargType..."
+                    } else
+                        param.toString()
+                }
+
+            return "func $id($paramTypesString):$returnType $body"
+        }
     }
 }
 

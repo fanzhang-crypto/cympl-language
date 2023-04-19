@@ -5,112 +5,112 @@ import kotlin.math.pow
 
 sealed interface BinaryOperation {
 
-    sealed interface Arithmetic : cympl.interpreter.BinaryOperation {
-        fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue
+    sealed interface Arithmetic : BinaryOperation {
+        fun apply(left: TValue, right: TValue): TValue
 
-        object Plus : cympl.interpreter.BinaryOperation.Arithmetic {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue = when (left.type) {
+        object Plus : Arithmetic {
+            override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
                 BuiltinType.INT -> when (right.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.INT, left.asInt() + right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asInt() + right.asDouble())
-                    BuiltinType.STRING -> cympl.interpreter.TValue(
+                    BuiltinType.INT -> TValue(BuiltinType.INT, left.asInt() + right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asInt() + right.asDouble())
+                    BuiltinType.STRING -> TValue(
                         BuiltinType.STRING,
                         left.asString() + right.asString()
                     )
-                    else -> throw cympl.interpreter.InterpretException("cannot add ${left.type} to ${right.type}")
+                    else -> throw InterpretException("cannot add ${left.type} to ${right.type}")
                 }
 
                 BuiltinType.FLOAT -> when (right.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() + right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() + right.asDouble())
-                    BuiltinType.STRING -> cympl.interpreter.TValue(
+                    BuiltinType.INT -> TValue(BuiltinType.FLOAT, left.asDouble() + right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() + right.asDouble())
+                    BuiltinType.STRING -> TValue(
                         BuiltinType.STRING,
                         left.asString() + right.asString()
                     )
-                    else -> throw cympl.interpreter.InterpretException("cannot add ${left.type} to ${right.type}")
+                    else -> throw InterpretException("cannot add ${left.type} to ${right.type}")
                 }
 
-                BuiltinType.STRING -> cympl.interpreter.TValue(BuiltinType.STRING, left.asString() + right.asString())
+                BuiltinType.STRING -> TValue(BuiltinType.STRING, left.asString() + right.asString())
                 else -> {
-                    throw cympl.interpreter.InterpretException("cannot add ${left.type} to ${right.type}")
+                    throw InterpretException("cannot add ${left.type} to ${right.type}")
                 }
             }
         }
 
-        object Minus : cympl.interpreter.BinaryOperation.Arithmetic {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue = when (left.type) {
+        object Minus : Arithmetic {
+            override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
                 BuiltinType.INT -> when (right.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.INT, left.asInt() - right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() - right.asDouble())
-                    else -> throw cympl.interpreter.InterpretException("cannot subtract ${right.type} from ${left.type}")
+                    BuiltinType.INT -> TValue(BuiltinType.INT, left.asInt() - right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() - right.asDouble())
+                    else -> throw InterpretException("cannot subtract ${right.type} from ${left.type}")
                 }
 
                 BuiltinType.FLOAT -> when (right.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() - right.asDouble())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() - right.asDouble())
-                    else -> throw cympl.interpreter.InterpretException("cannot subtract ${right.type} from ${left.type}")
+                    BuiltinType.INT -> TValue(BuiltinType.FLOAT, left.asDouble() - right.asDouble())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() - right.asDouble())
+                    else -> throw InterpretException("cannot subtract ${right.type} from ${left.type}")
                 }
 
-                else -> throw cympl.interpreter.InterpretException("cannot subtract ${right.type} from ${left.type}")
+                else -> throw InterpretException("cannot subtract ${right.type} from ${left.type}")
             }
         }
 
-        object Times : cympl.interpreter.BinaryOperation.Arithmetic {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue = when (left.type) {
+        object Times : Arithmetic {
+            override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
                 BuiltinType.INT -> when (right.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.INT, left.asInt() * right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asInt() * right.asDouble())
-                    else -> throw cympl.interpreter.InterpretException("cannot multiply ${left.type} by ${right.type}")
+                    BuiltinType.INT -> TValue(BuiltinType.INT, left.asInt() * right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asInt() * right.asDouble())
+                    else -> throw InterpretException("cannot multiply ${left.type} by ${right.type}")
                 }
 
                 BuiltinType.FLOAT -> when (right.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() * right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() * right.asDouble())
-                    else -> throw cympl.interpreter.InterpretException("cannot multiply ${left.type} by ${right.type}")
+                    BuiltinType.INT -> TValue(BuiltinType.FLOAT, left.asDouble() * right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() * right.asDouble())
+                    else -> throw InterpretException("cannot multiply ${left.type} by ${right.type}")
                 }
 
-                else -> throw cympl.interpreter.InterpretException("cannot multiply ${left.type} by ${right.type}")
+                else -> throw InterpretException("cannot multiply ${left.type} by ${right.type}")
             }
         }
 
-        object Div : cympl.interpreter.BinaryOperation.Arithmetic {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue = when (left.type) {
+        object Div : Arithmetic {
+            override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
                 BuiltinType.INT -> when (right.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.INT, left.asInt() / right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asInt() / right.asDouble())
-                    else -> throw cympl.interpreter.InterpretException("cannot divide ${left.type} by ${right.type}")
+                    BuiltinType.INT -> TValue(BuiltinType.INT, left.asInt() / right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asInt() / right.asDouble())
+                    else -> throw InterpretException("cannot divide ${left.type} by ${right.type}")
                 }
 
                 BuiltinType.FLOAT -> when (right.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() / right.asDouble())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() / right.asDouble())
-                    else -> throw cympl.interpreter.InterpretException("cannot divide ${left.type} by ${right.type}")
+                    BuiltinType.INT -> TValue(BuiltinType.FLOAT, left.asDouble() / right.asDouble())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() / right.asDouble())
+                    else -> throw InterpretException("cannot divide ${left.type} by ${right.type}")
                 }
 
-                else -> throw cympl.interpreter.InterpretException("cannot divide ${left.type} by ${right.type}")
+                else -> throw InterpretException("cannot divide ${left.type} by ${right.type}")
             }
         }
 
-        object Rem : cympl.interpreter.BinaryOperation.Arithmetic {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue = when (left.type) {
+        object Rem : Arithmetic {
+            override fun apply(left: TValue, right: TValue): TValue = when (left.type) {
                 BuiltinType.INT -> when (right.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.INT, left.asInt() % right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asInt() % right.asDouble())
-                    else -> throw cympl.interpreter.InterpretException("cannot  ${left.type} by ${right.type}")
+                    BuiltinType.INT -> TValue(BuiltinType.INT, left.asInt() % right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asInt() % right.asDouble())
+                    else -> throw InterpretException("cannot  ${left.type} by ${right.type}")
                 }
 
                 BuiltinType.FLOAT -> when (right.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() % right.asDouble())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.FLOAT, left.asDouble() % right.asDouble())
-                    else -> throw cympl.interpreter.InterpretException("cannot divide ${left.type} by ${right.type}")
+                    BuiltinType.INT -> TValue(BuiltinType.FLOAT, left.asDouble() % right.asDouble())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.FLOAT, left.asDouble() % right.asDouble())
+                    else -> throw InterpretException("cannot divide ${left.type} by ${right.type}")
                 }
 
-                else -> throw cympl.interpreter.InterpretException("cannot divide ${left.type} by ${right.type}")
+                else -> throw InterpretException("cannot divide ${left.type} by ${right.type}")
             }
         }
 
-        object Pow : cympl.interpreter.BinaryOperation.Arithmetic {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue {
+        object Pow : Arithmetic {
+            override fun apply(left: TValue, right: TValue): TValue {
                 val leftValue = left.asDouble()
                 val rightValue = right.asDouble()
                 return left.withValue(leftValue.pow(rightValue))
@@ -118,99 +118,99 @@ sealed interface BinaryOperation {
         }
     }
 
-    sealed interface Logical : cympl.interpreter.BinaryOperation {
+    sealed interface Logical : BinaryOperation {
 
-        fun apply(left: cympl.interpreter.TValue, right: () -> cympl.interpreter.TValue): cympl.interpreter.TValue {
+        fun apply(left: TValue, right: () -> TValue): TValue {
             return when (this) {
-                is cympl.interpreter.BinaryOperation.Logical.And -> left.withValue(left.asBoolean() && right().asBoolean())
-                is cympl.interpreter.BinaryOperation.Logical.Or -> left.withValue(left.asBoolean() || right().asBoolean())
+                is And -> left.withValue(left.asBoolean() && right().asBoolean())
+                is Or -> left.withValue(left.asBoolean() || right().asBoolean())
             }
         }
 
-        object And : cympl.interpreter.BinaryOperation.Logical
-        object Or : cympl.interpreter.BinaryOperation.Logical
+        object And : Logical
+        object Or : Logical
     }
 
-    sealed interface Comparison : cympl.interpreter.BinaryOperation {
+    sealed interface Comparison : BinaryOperation {
 
-        fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue
+        fun apply(left: TValue, right: TValue): TValue
 
-        object Eq : cympl.interpreter.BinaryOperation.Comparison {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue {
+        object Eq : Comparison {
+            override fun apply(left: TValue, right: TValue): TValue {
                 if (left.type != right.type) {
-                    throw cympl.interpreter.InterpretException("cannot compare ${left.type} to ${right.type}")
+                    throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
-                return cympl.interpreter.TValue(BuiltinType.BOOL, left.value == right.value)
+                return TValue(BuiltinType.BOOL, left.value == right.value)
             }
         }
 
-        object Neq : cympl.interpreter.BinaryOperation.Comparison {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue {
+        object Neq : Comparison {
+            override fun apply(left: TValue, right: TValue): TValue {
                 if (left.type != right.type) {
-                    throw cympl.interpreter.InterpretException("cannot compare ${left.type} to ${right.type}")
+                    throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
-                return cympl.interpreter.TValue(BuiltinType.BOOL, left.value != right.value)
+                return TValue(BuiltinType.BOOL, left.value != right.value)
             }
         }
 
-        object Gt : cympl.interpreter.BinaryOperation.Comparison {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue {
+        object Gt : Comparison {
+            override fun apply(left: TValue, right: TValue): TValue {
                 if (left.type != right.type) {
-                    throw cympl.interpreter.InterpretException("cannot compare ${left.type} to ${right.type}")
+                    throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
                 return when (left.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.BOOL, left.asInt() > right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.BOOL, left.asDouble() > right.asDouble())
-                    BuiltinType.STRING -> cympl.interpreter.TValue(BuiltinType.BOOL, left.asString() > right.asString())
-                    else -> throw cympl.interpreter.InterpretException("cannot compare ${left.type} to ${right.type}")
+                    BuiltinType.INT -> TValue(BuiltinType.BOOL, left.asInt() > right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.BOOL, left.asDouble() > right.asDouble())
+                    BuiltinType.STRING -> TValue(BuiltinType.BOOL, left.asString() > right.asString())
+                    else -> throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
             }
         }
 
-        object Lt : cympl.interpreter.BinaryOperation.Comparison {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue {
+        object Lt : Comparison {
+            override fun apply(left: TValue, right: TValue): TValue {
                 if (left.type != right.type) {
-                    throw cympl.interpreter.InterpretException("cannot compare ${left.type} to ${right.type}")
+                    throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
                 return when (left.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.BOOL, left.asInt() < right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.BOOL, left.asDouble() < right.asDouble())
-                    BuiltinType.STRING -> cympl.interpreter.TValue(BuiltinType.BOOL, left.asString() < right.asString())
-                    else -> throw cympl.interpreter.InterpretException("cannot compare ${left.type} to ${right.type}")
+                    BuiltinType.INT -> TValue(BuiltinType.BOOL, left.asInt() < right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.BOOL, left.asDouble() < right.asDouble())
+                    BuiltinType.STRING -> TValue(BuiltinType.BOOL, left.asString() < right.asString())
+                    else -> throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
             }
         }
 
-        object Leq : cympl.interpreter.BinaryOperation.Comparison {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue {
+        object Leq : Comparison {
+            override fun apply(left: TValue, right: TValue): TValue {
                 if (left.type != right.type) {
-                    throw cympl.interpreter.InterpretException("cannot compare ${left.type} to ${right.type}")
+                    throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
                 return when (left.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.BOOL, left.asInt() <= right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.BOOL, left.asDouble() <= right.asDouble())
-                    BuiltinType.STRING -> cympl.interpreter.TValue(
+                    BuiltinType.INT -> TValue(BuiltinType.BOOL, left.asInt() <= right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.BOOL, left.asDouble() <= right.asDouble())
+                    BuiltinType.STRING -> TValue(
                         BuiltinType.BOOL,
                         left.asString() <= right.asString()
                     )
-                    else -> throw cympl.interpreter.InterpretException("cannot compare ${left.type} to ${right.type}")
+                    else -> throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
             }
         }
 
-        object Geq : cympl.interpreter.BinaryOperation.Comparison {
-            override fun apply(left: cympl.interpreter.TValue, right: cympl.interpreter.TValue): cympl.interpreter.TValue {
+        object Geq : Comparison {
+            override fun apply(left: TValue, right: TValue): TValue {
                 if (left.type != right.type) {
-                    throw cympl.interpreter.InterpretException("cannot compare ${left.type} to ${right.type}")
+                    throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
                 return when (left.type) {
-                    BuiltinType.INT -> cympl.interpreter.TValue(BuiltinType.BOOL, left.asInt() >= right.asInt())
-                    BuiltinType.FLOAT -> cympl.interpreter.TValue(BuiltinType.BOOL, left.asDouble() >= right.asDouble())
-                    BuiltinType.STRING -> cympl.interpreter.TValue(
+                    BuiltinType.INT -> TValue(BuiltinType.BOOL, left.asInt() >= right.asInt())
+                    BuiltinType.FLOAT -> TValue(BuiltinType.BOOL, left.asDouble() >= right.asDouble())
+                    BuiltinType.STRING -> TValue(
                         BuiltinType.BOOL,
                         left.asString() >= right.asString()
                     )
-                    else -> throw cympl.interpreter.InterpretException("cannot compare ${left.type} to ${right.type}")
+                    else -> throw InterpretException("cannot compare ${left.type} to ${right.type}")
                 }
             }
         }

@@ -11,7 +11,19 @@ internal class AntlrToExpression(
 
     override fun visitFunctionCall(ctx: CymplParser.FunctionCallContext): Expression {
         val funcExpr = visit(ctx.funcExpr)
-        val arguments = ctx.exprlist()?.expr()?.map { visit(it) } ?: emptyList()
+
+        val funcType = funcExpr.resolvedType as BuiltinType.FUNCTION
+        val arguments = if (funcType.supportVarargs) {
+            val fixArgsNum = funcType.paramTypes.size - 1
+            val fixArgs = ctx.exprlist()?.expr()?.take(fixArgsNum)?.map { visit(it) } ?: emptyList()
+            val variableArgs = Expression.ArrayLiteral(
+                ctx.exprlist()?.expr()?.drop(fixArgsNum)?.map { visit(it) } ?: emptyList()
+            )
+            fixArgs + variableArgs
+        } else {
+            ctx.exprlist()?.expr()?.map { visit(it) } ?: emptyList()
+        }
+
         val type = typeResolver.resolveType(ctx)
         return Expression.FunctionCall(funcExpr, arguments, type)
     }
@@ -165,7 +177,7 @@ internal class AntlrToExpression(
             ctx.statement() != null -> antlrToStatement.visit(ctx.statement())
             else -> Statement.Block(emptyList())
         }
-        val type = typeResolver.resolveType(ctx) as cympl.language.BuiltinType.FUNCTION
+        val type = typeResolver.resolveType(ctx) as BuiltinType.FUNCTION
 
         val lambdaScope = scopeResolver.resolveScope(ctx)
         val captures = lambdaScope.captures.map { Expression.Variable(it.name, it.type) }

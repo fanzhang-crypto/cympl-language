@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import cympl.interpreter.fp.FpInterpretVerifier.parser
 import cympl.interpreter.fp.FpInterpretVerifier.verify
+import cympl.language.BuiltinType
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Disabled
@@ -257,7 +258,7 @@ class FunctionTests {
                 val program = r.value
                 program.statements shouldHaveSize 1
                 val funcDecl = program.statements[0].shouldBeInstanceOf<Statement.FunctionDeclaration>()
-                funcDecl.returnType shouldBe cympl.language.BuiltinType.VOID
+                funcDecl.returnType shouldBe BuiltinType.VOID
             }
         }
     }

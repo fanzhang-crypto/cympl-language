@@ -145,18 +145,18 @@ internal class CymplGrammar(
     private val functionCall by (ID * -LPR * optional(exprList) * -RPR)
         .map { (idToken, e) ->
             semanticChecker.checkFunctionRef(idToken)
-            val funcExpr = Expression.Variable(idToken.text, cympl.language.BuiltinType.VOID)
-            Expression.FunctionCall(funcExpr, e ?: emptyList(), cympl.language.BuiltinType.VOID)
+            val funcExpr = Expression.Variable(idToken.text, BuiltinType.VOID)
+            Expression.FunctionCall(funcExpr, e ?: emptyList(), BuiltinType.VOID)
         }
 
     private val variable by ID.map { idToken ->
         semanticChecker.checkVariableRef(idToken)
-        Expression.Variable(idToken.text, cympl.language.BuiltinType.VOID)
+        Expression.Variable(idToken.text, BuiltinType.VOID)
     }
 
     private val arrayIndex: Parser<Expression.Index> by (ID * oneOrMore(-LBRACKET * expression * -RBRACKET))
         .map { (idToken, indices) ->
-            val array = Expression.Variable(idToken.text, cympl.language.BuiltinType.VOID)
+            val array = Expression.Variable(idToken.text, BuiltinType.VOID)
             val initialArrayIndex = Expression.Index(array, indices[0])
             indices.subList(1, indices.size).fold(initialArrayIndex) { acc, index ->
                 Expression.Index(acc, index)
@@ -177,9 +177,9 @@ internal class CymplGrammar(
 
     private val property: Parser<Expression.Property> by ((arrayIndex or variable) * oneOrMore(-DOT * ID))
         .map { (obj, properties) ->
-            val initialProperty = Expression.Property(obj, properties[0].text, cympl.language.BuiltinType.INT)
+            val initialProperty = Expression.Property(obj, properties[0].text, BuiltinType.INT)
             properties.subList(1, properties.size).fold(initialProperty) { acc, property ->
-                Expression.Property(acc, property.text, cympl.language.BuiltinType.INT)
+                Expression.Property(acc, property.text, BuiltinType.INT)
             }
         }
 
@@ -263,13 +263,14 @@ internal class CymplGrammar(
     private data class FunctionHeader(
         val name: String,
         val parameters: List<Statement.VariableDeclaration>,
-        val returnType: cympl.language.BuiltinType
+        val returnType: BuiltinType
     )
 
     private val functionDecl: Parser<Statement> by (functionHeader * block)
         .map { (header, body) ->
             semanticChecker.exitFuncDecl()
-            Statement.FunctionDeclaration(header.name, header.returnType, header.parameters, body)
+            val funcType = BuiltinType.FUNCTION(header.parameters.map { it.type }, header.returnType)
+            Statement.FunctionDeclaration(header.name, funcType, header.parameters, body)
         }
 
     private val ifStat: Parser<Statement>

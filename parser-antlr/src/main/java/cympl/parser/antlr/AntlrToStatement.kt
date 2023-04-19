@@ -20,7 +20,7 @@ internal class AntlrToStatement(
 
         val id = idToken.text
         val type = typeResolver.resolveType(ctx.type())
-        if (type is cympl.language.BuiltinType.FUNCTION) {
+        if (type is BuiltinType.FUNCTION) {
             type.isFirstClass = true
         }
         val value = antlrToExpression.visit(ctx.expr())
@@ -46,14 +46,23 @@ internal class AntlrToStatement(
 
         val id = idToken.text
         val returnType = typeResolver.resolveType(ctx.type())
-        if (returnType is cympl.language.BuiltinType.FUNCTION) {
+        if (returnType is BuiltinType.FUNCTION) {
             returnType.isFirstClass = true
         }
 
-        val parameters = ctx.paramDecls()?.paramDecl()?.map { visitParamDecl(it) } ?: emptyList()
+        val fixParameters = ctx.paramDecls()?.paramDecl()?.map { visitParamDecl(it) } ?: emptyList()
+        val variableParameter = ctx.paramDecls()?.variableParamDecl()?.let { visitVariableParamDecl(it) }
+
+        val parameters = if (variableParameter != null)
+            fixParameters + variableParameter
+        else
+            fixParameters
+
         val body = ctx.block().statement().map { visit(it) }.let { Statement.Block(it) }
 
-        return Statement.FunctionDeclaration(id, returnType, parameters, body)
+        val funcType = BuiltinType.FUNCTION(parameters.map { it.type }, returnType, variableParameter != null)
+
+        return Statement.FunctionDeclaration(id, funcType, parameters, body)
     }
 
     override fun visitIfStat(ctx: CymplParser.IfStatContext): Statement {
@@ -101,11 +110,23 @@ internal class AntlrToStatement(
 
         val paramId = paramIdToken.text
         val paramType = typeResolver.resolveType(ctx.type())
-        if (paramType is cympl.language.BuiltinType.FUNCTION) {
+        if (paramType is BuiltinType.FUNCTION) {
             paramType.isFirstClass = true
         }
 
         return Statement.VariableDeclaration(paramId, paramType)
+    }
+
+    override fun visitVariableParamDecl(ctx: CymplParser.VariableParamDeclContext): Statement.VariableDeclaration {
+        val paramIdToken = ctx.ID().symbol
+
+        val paramId = paramIdToken.text
+        val type = typeResolver.resolveType(ctx.type())
+        if (type is BuiltinType.FUNCTION) {
+            type.isFirstClass = true
+        }
+
+        return Statement.VariableDeclaration(paramId, BuiltinType.ARRAY(type))
     }
 
     override fun visitBlock(ctx: CymplParser.BlockContext): Statement.Block {

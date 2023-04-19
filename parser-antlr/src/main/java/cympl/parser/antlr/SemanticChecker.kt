@@ -85,6 +85,10 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             defineVar(ctx.ID().symbol, ctx.type())
         }
 
+        override fun exitVariableParamDecl(ctx: VariableParamDeclContext) {
+            defineVar(ctx.ID().symbol, ctx.type(), isVarargs = true)
+        }
+
         override fun exitVarDecl(ctx: VarDeclContext) {
             defineVar(ctx.ID().symbol, ctx.type())
         }
@@ -112,35 +116,45 @@ class SemanticChecker : TypeResolver, ScopeResolver {
 
             val returnType: BuiltinType = resolveType(typeContext)
 
-            val parameters = paramsContext?.paramDecl()?.map { param ->
+            val fixParams = paramsContext?.paramDecl()?.map { param ->
                 val paramName = param.ID().text
                 val paramType = resolveType(param.type())
                 VariableSymbol(paramName, paramType, currentScope)
             } ?: emptyList()
 
-            return FunctionSymbol(name, returnType, parameters, currentScope)
+            val variableParam = paramsContext?.variableParamDecl()?.let { param ->
+                val paramName = param.ID().text
+                val paramType = resolveType(param.type())
+                VariableSymbol(paramName, paramType, currentScope)
+            }
+
+            val parameters = if (variableParam != null) fixParams + variableParam else fixParams
+
+            return FunctionSymbol(name, returnType, parameters, currentScope, supportVarargs = variableParam != null)
                 .also { currentScope?.define(it) }
         }
 
-        private fun defineVar(idToken: Token, typeContext: TypeContext) {
-            val name: String = idToken.text
-            val variableSymbol: Symbol? = currentScope?.resolve(name)
+        private fun defineVar(idToken: Token, typeContext: TypeContext, isVarargs: Boolean = false) {
+            val id: String = idToken.text
+            val variableSymbol: Symbol? = currentScope?.resolve(id)
 
             if (variableSymbol != null) {
                 val location = idToken.location
                 if (variableSymbol.scope == currentScope) {
-                    semanticErrors += SemanticException("symbol $name already defined", location)
+                    semanticErrors += SemanticException("symbol $id already defined", location)
                 } else {
 //                    println("variable shadowed at $location: $name")
                 }
             }
 
-            val id = idToken.text
             val type = resolveType(typeContext)
             if (type is BuiltinType.FUNCTION) {
                 type.isFirstClass = true
             }
-            val symbol = VariableSymbol(id, type, currentScope)
+
+            val resolvedType = if (isVarargs) BuiltinType.ARRAY(type) else type
+
+            val symbol = VariableSymbol(id, resolvedType, currentScope)
             currentScope?.define(symbol)
         }
     }
@@ -446,13 +460,36 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             val parameterTypes = functionType.paramTypes
             val argumentTypes = ctx.exprlist()?.expr()?.mapNotNull { types.get(it) } ?: emptyList()
 
-            if (!TypeChecker.typesMatch(argumentTypes, parameterTypes)) {
+            val fixParamTypes = if (functionType.supportVarargs) parameterTypes.dropLast(1) else parameterTypes
+            val variableParamType = if (functionType.supportVarargs) parameterTypes.last() else null
+
+            if (argumentTypes.size < fixParamTypes.size) {
                 val location = ctx.start.location
                 semanticErrors += SemanticException(
-                    "argument types mismatch: expected ${parameterTypes}, but got $argumentTypes",
+                    "argument count mismatch: expected at least ${fixParamTypes.size}, but got ${argumentTypes.size}",
                     location
                 )
             }
+            if (argumentTypes.size > parameterTypes.size && !functionType.supportVarargs) {
+                val location = ctx.start.location
+                semanticErrors += SemanticException(
+                    "argument count mismatch: expected ${parameterTypes.size}, but got ${argumentTypes.size}",
+                    location
+                )
+            }
+
+            argumentTypes.forEachIndexed { i, argType ->
+                val paramType = if (i < fixParamTypes.size) fixParamTypes[i] else variableParamType
+
+                if (paramType != null && !TypeChecker.typeMatch(argType, paramType)) {
+                    val location = ctx.exprlist().expr(i).start.location
+                    semanticErrors += SemanticException(
+                        "argument type mismatch at index $i: expected $paramType, but got $argType",
+                        location
+                    )
+                }
+            }
+
             types.put(ctx, functionType.returnType)
         }
 

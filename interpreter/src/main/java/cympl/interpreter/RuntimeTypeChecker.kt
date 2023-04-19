@@ -1,12 +1,11 @@
 package cympl.interpreter
 
-import cympl.language.BuiltinType.*
-import cympl.language.TypeChecker
+import cympl.language.*
 
 internal object RuntimeTypeChecker {
 
-    fun assertValueType(tvalue: TValue, expectedType: cympl.language.BuiltinType) {
-        if (tvalue == TValue.TEmptyArray && expectedType is ARRAY) {
+    fun assertValueType(tvalue: TValue, expectedType: BuiltinType) {
+        if (tvalue == TValue.TEmptyArray && expectedType is BuiltinType.ARRAY) {
             // empty array is assignable to any array type
             return
         }
@@ -17,7 +16,7 @@ internal object RuntimeTypeChecker {
     }
 
     fun checkArrayDimension(dimension: TValue) : Int {
-        if (dimension.type != INT) {
+        if (dimension.type != BuiltinType.INT) {
             throw InterpretException("array dimension must be an integer: $dimension")
         }
         if (dimension.value as Int <= 0) {

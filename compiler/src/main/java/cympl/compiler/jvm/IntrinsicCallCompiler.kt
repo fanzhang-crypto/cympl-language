@@ -1,6 +1,6 @@
 package cympl.compiler.jvm
 
-import cympl.language.Expression
+import cympl.language.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.Method
 import java.io.InputStream
@@ -17,8 +17,8 @@ internal object IntrinsicCallCompiler {
 
             val argType = arg.resolvedType
 
-            if (argType is cympl.language.BuiltinType.ARRAY) {
-                if (argType.elementType is cympl.language.BuiltinType.ARRAY) {
+            if (argType is BuiltinType.ARRAY) {
+                if (argType.elementType is BuiltinType.ARRAY) {
                     // for arrays with dimension > 1
                     mv.invokeStatic(
                         Type.getType(Arrays::class.java),

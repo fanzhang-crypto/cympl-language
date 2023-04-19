@@ -5,6 +5,7 @@ import cympl.parser.ParseResult
 import cympl.language.Program
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.io.File
@@ -1045,6 +1046,75 @@ class JvmCompilerTest {
 
         output shouldBe """
             [1, 2, 3, 9, 11, 15, 17, 21, 23, 32]
+        """.trimIndent()
+    }
+
+    @Test
+    fun `support function that has only varargs`() {
+        val input = """
+            void f(int... args) {
+                for (int i = 0; i < args.length; i++) {
+                    println(args[i]);
+                }
+            }
+            f(1, 2, 3, 4, 5);
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            1
+            2
+            3
+            4
+            5
+        """.trimIndent()
+    }
+
+    @Test
+    fun `support function having both fix and variable arguments`() {
+        val input = """
+            String join(String sep, String... parts) {
+                String s = "";
+                for(int i = 0; i < parts.length; i++) {
+                    s = s + parts[i];
+                    if (i < parts.length - 1) {
+                        s = s + sep;
+                    }
+                }
+                return s;
+            }
+            println(join(",", "a", "b", "c"));
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            a,b,c
+        """.trimIndent()
+    }
+
+    @Disabled("Not supported yet")
+    @Test
+    fun `support lambda that has variable arguments`() {
+        val input = """
+            (String, String...) -> String join = (sep, parts) -> {
+                String s = "";
+                for(int i = 0; i < parts.length; i++) {
+                    s = s + parts[i];
+                    if (i < parts.length - 1) {
+                        s = s + sep;
+                    }
+                }
+                return s;
+            }
+            println(join(",", "a", "b", "c"));
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            a,b,c
         """.trimIndent()
     }
 

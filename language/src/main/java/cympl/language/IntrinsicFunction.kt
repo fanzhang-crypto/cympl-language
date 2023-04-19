@@ -8,19 +8,19 @@ import cympl.language.symbol.IntrinsicSymbols
  */
 sealed class IntrinsicFunction(
     id: String,
-    returnType: BuiltinType,
+    type: BuiltinType.FUNCTION,
     parameters: List<Statement.VariableDeclaration>
-) : Statement.FunctionDeclaration(id, returnType, parameters, native) {
+) : Statement.FunctionDeclaration(id, type, parameters, native) {
 
     object PrintLine : IntrinsicFunction(
         IntrinsicSymbols.printLine.name,
-        BuiltinType.VOID,
+        BuiltinType.FUNCTION(listOf(BuiltinType.ANY), BuiltinType.VOID),
         listOf(Statement.VariableDeclaration("obj", BuiltinType.ANY))
     )
 
     object ReadLine : IntrinsicFunction(
         IntrinsicSymbols.readLine.name,
-        BuiltinType.STRING,
+        BuiltinType.FUNCTION(listOf(BuiltinType.STRING), BuiltinType.STRING),
         listOf(Statement.VariableDeclaration("prompt", BuiltinType.STRING))
     )
 

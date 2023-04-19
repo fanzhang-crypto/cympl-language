@@ -11,11 +11,11 @@ internal class LocalVarContext(
     private val namingScope: () -> NamingScope
 ) {
 
-    private class LocalVarSlot(val index: Int, val type: cympl.language.BuiltinType)
+    private class LocalVarSlot(val index: Int, val type: BuiltinType)
 
     private val table = mutableMapOf<String, LocalVarSlot>()
 
-    fun declare(name: String, type: cympl.language.BuiltinType, asWrapperType: Boolean = false): Int {
+    fun declare(name: String, type: BuiltinType, asWrapperType: Boolean = false): Int {
         val asmType = if (asWrapperType) type.asmType.wrapperType else type.asmType
         val index = mv.newLocal(asmType)
 
@@ -38,10 +38,10 @@ internal class LocalVarContext(
 
     fun contains(name: String) = indexOf(name) != null
 
-    fun increment(name: String, type: cympl.language.BuiltinType, postfix: Boolean, asStatement: Boolean) {
+    fun increment(name: String, type: BuiltinType, postfix: Boolean, asStatement: Boolean) {
         val index = indexOf(name)!!
         when (type) {
-            cympl.language.BuiltinType.INT -> {
+            BuiltinType.INT -> {
                 if (postfix) {
                     if (!asStatement) {
                         mv.loadLocal(index)
@@ -55,7 +55,7 @@ internal class LocalVarContext(
                 }
             }
 
-            cympl.language.BuiltinType.FLOAT -> {
+            BuiltinType.FLOAT -> {
                 if (postfix) {
                     mv.loadLocal(index)
                     if (!asStatement) {
@@ -79,10 +79,10 @@ internal class LocalVarContext(
         }
     }
 
-    fun decrement(name: String, type: cympl.language.BuiltinType, postfix: Boolean, asStatement: Boolean) {
+    fun decrement(name: String, type: BuiltinType, postfix: Boolean, asStatement: Boolean) {
         val index = indexOf(name)!!
         when (type) {
-            cympl.language.BuiltinType.INT -> {
+            BuiltinType.INT -> {
                 if (postfix) {
                     if (!asStatement) {
                         mv.loadLocal(index)
@@ -96,7 +96,7 @@ internal class LocalVarContext(
                 }
             }
 
-            cympl.language.BuiltinType.FLOAT -> {
+            BuiltinType.FLOAT -> {
                 if (postfix) {
                     mv.loadLocal(index)
                     if (!asStatement) {

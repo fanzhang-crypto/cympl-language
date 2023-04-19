@@ -21,16 +21,25 @@ statement
 
 type: VOID_TYPE | INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE | type '[' ']' | funcType;
 
-typeList: type (',' type)*;
 funcType: '(' paramTypes=typeList? ')' ARROW_RIGHT retType=type;
+typeList
+    : type (',' type)* (',' varargType)?
+    | varargType
+    ;
+varargType: type '...';
 
 varDecl: type ID '=' expr;
 
 funcDecl:  type ID '(' paramDecls? ')' block;
 
-paramDecls: paramDecl (',' paramDecl)*;
+paramDecls
+    : paramDecl (',' paramDecl)* (',' variableParamDecl)?
+    | variableParamDecl
+    ;
 
 paramDecl: type ID;
+
+variableParamDecl: type '...' ID;
 
 returnStat: RETURN expr? ';';
 

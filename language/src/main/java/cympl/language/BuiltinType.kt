@@ -31,10 +31,27 @@ sealed class BuiltinType {
         override fun toString() = "$elementType[]"
     }
 
-    data class FUNCTION(val paramTypes: List<BuiltinType>, val returnType: BuiltinType) : BuiltinType() {
+    data class FUNCTION(
+        val paramTypes: List<BuiltinType>,
+        val returnType: BuiltinType,
+        val supportVarargs: Boolean = false
+    ) : BuiltinType() {
         var isFirstClass: Boolean = false
 
-        override fun toString() = "(${paramTypes.joinToString(", ")}) -> $returnType"
+        override fun toString(): String {
+            val paramTypesString = if (!supportVarargs)
+                paramTypes.joinToString(", ")
+            else
+                paramTypes.withIndex().joinToString(", ") { (i, type) ->
+                    if (i == paramTypes.lastIndex) {
+                        val varargType = (type as ARRAY).elementType
+                        "$varargType..."
+                    } else
+                        type.toString()
+                }
+
+            return "($paramTypesString) -> $returnType"
+        }
     }
 
     override fun toString() = name

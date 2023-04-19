@@ -1,7 +1,7 @@
 package cympl.compiler.jvm
 
 import cympl.runtime.*
-import cympl.language.Expression
+import cympl.language.*
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -75,7 +75,7 @@ internal object LambdaCompiler {
 
     private fun defineBridgeMethod(
         delegate: Method,
-        lambdaType: cympl.language.BuiltinType.FUNCTION,
+        lambdaType: BuiltinType.FUNCTION,
         interfaceType: Type,
         ctx: ClassContext
     ) {
@@ -89,7 +89,7 @@ internal object LambdaCompiler {
                 mv.checkCast(type.asmType.wrapperType)
             }
             mv.invokeVirtual(ctx.classType, delegate)
-            if (lambdaType.returnType == cympl.language.BuiltinType.VOID) {
+            if (lambdaType.returnType == BuiltinType.VOID) {
                 mv.push(null as String?)
             }
             mv.returnValue()

@@ -1,11 +1,18 @@
 package cympl.language.symbol
 
+import cympl.language.BuiltinType
+
 class FunctionSymbol(
     name: String,
-    override val returnType: cympl.language.BuiltinType,
+    override val returnType: BuiltinType,
     override val parameters: List<VariableSymbol>,
     override val enclosingScope: Scope?,
-) : Symbol(name, cympl.language.BuiltinType.FUNCTION(parameters.map { it.type }, returnType), enclosingScope), FunctionScope {
+    supportVarargs: Boolean = false
+) : Symbol(
+    name,
+    BuiltinType.FUNCTION(parameters.map { it.type }, returnType, supportVarargs),
+    enclosingScope
+), FunctionScope {
 
     private val locals: MutableMap<String, Symbol> = LinkedHashMap()
 

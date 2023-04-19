@@ -1,5 +1,6 @@
 package cympl.compiler.jvm
 
+import cympl.language.BuiltinType
 import cympl.language.Expression
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes.*
@@ -27,24 +28,24 @@ internal class ClassContext(
         MethodContext(cw, access, method, signature, this, inLambda).apply(block)
     }
 
-    fun declare(name: String, type: cympl.language.BuiltinType, asWrapperType: Boolean = false) {
+    fun declare(name: String, type: BuiltinType, asWrapperType: Boolean = false) {
         val descriptor = if (asWrapperType) type.asmType.wrapperType.descriptor else type.asmType.descriptor
         cw.visitField(ACC_PRIVATE + ACC_STATIC, name, descriptor, type.signature, null).visitEnd()
     }
 
-    fun set(mv: GeneratorAdapter, name: String, type: cympl.language.BuiltinType) {
+    fun set(mv: GeneratorAdapter, name: String, type: BuiltinType) {
         mv.putStatic(classType, name, type.asmType)
     }
 
-    fun get(mv: GeneratorAdapter, name: String, type: cympl.language.BuiltinType) {
+    fun get(mv: GeneratorAdapter, name: String, type: BuiltinType) {
         mv.getStatic(classType, name, type.asmType)
     }
 
-    fun increment(mv: GeneratorAdapter, name: String, type: cympl.language.BuiltinType, postfix: Boolean, asStatement: Boolean) {
+    fun increment(mv: GeneratorAdapter, name: String, type: BuiltinType, postfix: Boolean, asStatement: Boolean) {
         get(mv, name, type)
 
         when (type) {
-            cympl.language.BuiltinType.INT -> {
+            BuiltinType.INT -> {
                 if (postfix && !asStatement) {
                     mv.dup()
                 }
@@ -55,7 +56,7 @@ internal class ClassContext(
                 }
             }
 
-            cympl.language.BuiltinType.FLOAT -> {
+            BuiltinType.FLOAT -> {
                 if (postfix && !asStatement) {
                     mv.dup2()
                 }
@@ -72,11 +73,11 @@ internal class ClassContext(
         set(mv, name, type)
     }
 
-    fun decrement(mv: GeneratorAdapter, name: String, type: cympl.language.BuiltinType, postfix: Boolean, asStatement: Boolean) {
+    fun decrement(mv: GeneratorAdapter, name: String, type: BuiltinType, postfix: Boolean, asStatement: Boolean) {
         get(mv, name, type)
 
         when (type) {
-            cympl.language.BuiltinType.INT -> {
+            BuiltinType.INT -> {
                 if (postfix && !asStatement) {
                     mv.dup()
                 }
@@ -87,7 +88,7 @@ internal class ClassContext(
                 }
             }
 
-            cympl.language.BuiltinType.FLOAT -> {
+            BuiltinType.FLOAT -> {
                 if (postfix && !asStatement) {
                     mv.dup2()
                 }

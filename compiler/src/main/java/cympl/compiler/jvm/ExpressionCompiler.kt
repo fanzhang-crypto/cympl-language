@@ -1,8 +1,7 @@
 package cympl.compiler.jvm
 
 import cympl.compiler.CompilationException
-import cympl.language.Expression
-import cympl.language.IntrinsicFunction
+import cympl.language.*
 import cympl.language.symbol.ArrayScope
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
@@ -68,7 +67,7 @@ internal object ExpressionCompiler {
     }
 
     private fun Expression.Property.compile(ctx: MethodContext) {
-        if (expr.resolvedType is cympl.language.BuiltinType.ARRAY && propertyName == ArrayScope.LENGTH_PROPERTY.name) {
+        if (expr.resolvedType is BuiltinType.ARRAY && propertyName == ArrayScope.LENGTH_PROPERTY.name) {
             compile(expr, ctx)
             ctx.mv.arrayLength()
         }
@@ -78,7 +77,7 @@ internal object ExpressionCompiler {
         compile(arrayExpr, ctx)
         compile(indexExpr, ctx)
 
-        val arrayType = (arrayExpr.resolvedType as cympl.language.BuiltinType.ARRAY).elementType
+        val arrayType = (arrayExpr.resolvedType as BuiltinType.ARRAY).elementType
         ctx.mv.arrayLoad(arrayType.asmType)
     }
 
@@ -141,7 +140,7 @@ internal object ExpressionCompiler {
         val exprType = resolvedType
         expr.compileAndCast(ctx, exprType)
         when (exprType) {
-            cympl.language.BuiltinType.INT, cympl.language.BuiltinType.FLOAT ->
+            BuiltinType.INT, BuiltinType.FLOAT ->
                 ctx.mv.math(GeneratorAdapter.NEG, exprType.asmType)
 
             else -> throw CompilationException("unsupported type for negation: $exprType")
@@ -154,10 +153,10 @@ internal object ExpressionCompiler {
         right.compileAndCast(ctx, exprType)
 
         when (exprType) {
-            cympl.language.BuiltinType.INT, cympl.language.BuiltinType.FLOAT ->
+            BuiltinType.INT, BuiltinType.FLOAT ->
                 ctx.mv.math(GeneratorAdapter.ADD, exprType.asmType)
 
-            cympl.language.BuiltinType.STRING -> ctx.mv.invokeVirtual(
+            BuiltinType.STRING -> ctx.mv.invokeVirtual(
                 Type.getType(String::class.java),
                 Method.getMethod("String concat(String)")
             )
@@ -171,7 +170,7 @@ internal object ExpressionCompiler {
         left.compileAndCast(ctx, exprType)
         right.compileAndCast(ctx, exprType)
         when (exprType) {
-            cympl.language.BuiltinType.INT, cympl.language.BuiltinType.FLOAT ->
+            BuiltinType.INT, BuiltinType.FLOAT ->
                 ctx.mv.math(GeneratorAdapter.SUB, exprType.asmType)
 
             else -> throw CompilationException("unsupported type for subtract: $this")
@@ -183,7 +182,7 @@ internal object ExpressionCompiler {
         left.compileAndCast(ctx, exprType)
         right.compileAndCast(ctx, exprType)
         when (exprType) {
-            cympl.language.BuiltinType.INT, cympl.language.BuiltinType.FLOAT ->
+            BuiltinType.INT, BuiltinType.FLOAT ->
                 ctx.mv.math(GeneratorAdapter.MUL, exprType.asmType)
 
             else -> throw CompilationException("unsupported type for add: $this")
@@ -195,7 +194,7 @@ internal object ExpressionCompiler {
         left.compileAndCast(ctx, exprType)
         right.compileAndCast(ctx, exprType)
         when (exprType) {
-            cympl.language.BuiltinType.INT, cympl.language.BuiltinType.FLOAT ->
+            BuiltinType.INT, BuiltinType.FLOAT ->
                 ctx.mv.math(GeneratorAdapter.DIV, exprType.asmType)
 
             else -> throw CompilationException("unsupported type for divide: $this")
@@ -207,7 +206,7 @@ internal object ExpressionCompiler {
         left.compileAndCast(ctx, exprType)
         right.compileAndCast(ctx, exprType)
         when (exprType) {
-            cympl.language.BuiltinType.INT, cympl.language.BuiltinType.FLOAT ->
+            BuiltinType.INT, BuiltinType.FLOAT ->
                 ctx.mv.math(GeneratorAdapter.REM, exprType.asmType)
 
             else -> throw CompilationException("unsupported type for remainder: $this")
@@ -215,8 +214,8 @@ internal object ExpressionCompiler {
     }
 
     private fun Expression.Power.compile(ctx: MethodContext) {
-        left.compileAndCast(ctx, cympl.language.BuiltinType.FLOAT)
-        right.compileAndCast(ctx, cympl.language.BuiltinType.FLOAT)
+        left.compileAndCast(ctx, BuiltinType.FLOAT)
+        right.compileAndCast(ctx, BuiltinType.FLOAT)
         ctx.mv.invokeStatic(
             Type.getType(Math::class.java),
             Method.getMethod("double pow(double, double)")
@@ -240,7 +239,7 @@ internal object ExpressionCompiler {
     }
 
     private fun Expression.ComparisonExpression.compile(ctx: MethodContext) {
-        val compareType = cympl.language.BuiltinType.compatibleTypeOf(left.resolvedType, right.resolvedType)
+        val compareType = BuiltinType.compatibleTypeOf(left.resolvedType, right.resolvedType)
 
         left.compileAndCast(ctx, compareType)
         right.compileAndCast(ctx, compareType)
@@ -257,7 +256,7 @@ internal object ExpressionCompiler {
         val endLabel = Label()
 
         when (compareType) {
-            cympl.language.BuiltinType.BOOL, cympl.language.BuiltinType.INT, cympl.language.BuiltinType.FLOAT -> {
+            BuiltinType.BOOL, BuiltinType.INT, BuiltinType.FLOAT -> {
                 ctx.mv.ifCmp(compareType.asmType, mode, trueLabel)
                 ctx.mv.push(false)
                 ctx.mv.goTo(endLabel)
@@ -268,7 +267,7 @@ internal object ExpressionCompiler {
                 ctx.mv.mark(endLabel)
             }
 
-            cympl.language.BuiltinType.STRING -> {
+            BuiltinType.STRING -> {
                 when (mode) {
                     GeneratorAdapter.EQ -> ctx.mv.invokeVirtual(
                         Type.getType(String::class.java),
@@ -322,11 +321,11 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.compileAndCast(ctx: MethodContext, expectedType: cympl.language.BuiltinType) {
+    private fun Expression.compileAndCast(ctx: MethodContext, expectedType: BuiltinType) {
         compile(this, ctx)
         when {
-            resolvedType == cympl.language.BuiltinType.INT && expectedType == cympl.language.BuiltinType.FLOAT -> ctx.mv.visitInsn(Opcodes.I2D)
-            resolvedType == cympl.language.BuiltinType.FLOAT && expectedType == cympl.language.BuiltinType.INT -> ctx.mv.visitInsn(Opcodes.D2I)
+            resolvedType == BuiltinType.INT && expectedType == BuiltinType.FLOAT -> ctx.mv.visitInsn(Opcodes.I2D)
+            resolvedType == BuiltinType.FLOAT && expectedType == BuiltinType.INT -> ctx.mv.visitInsn(Opcodes.D2I)
             else -> Unit
         }
     }
@@ -338,7 +337,7 @@ internal object ExpressionCompiler {
             throw CompilationException("function call unsupported for expression: $funcExpr")
         }
         val funcType = funcExpr.type
-        if (funcType !is cympl.language.BuiltinType.FUNCTION) {
+        if (funcType !is BuiltinType.FUNCTION) {
             throw CompilationException("not a function: $funcExpr")
         }
 

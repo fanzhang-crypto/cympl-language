@@ -1,6 +1,7 @@
 package cympl.compiler.jvm
 
 import cympl.compiler.CompilationException
+import cympl.language.BuiltinType
 import cympl.language.Expression
 import cympl.language.Statement
 import org.objectweb.asm.Label
@@ -136,7 +137,7 @@ internal object StatementCompiler {
         ExpressionCompiler.compile(indexExpr, ctx)
         ExpressionCompiler.compile(valueExpr, ctx)
 
-        val arrayType = arrayExpr.resolvedType as cympl.language.BuiltinType.ARRAY
+        val arrayType = arrayExpr.resolvedType as BuiltinType.ARRAY
         ctx.mv.arrayStore(arrayType.elementType.asmType)
     }
 

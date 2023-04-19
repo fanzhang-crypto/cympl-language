@@ -1,5 +1,6 @@
 package cympl.compiler.jvm
 
+import cympl.language.BuiltinType
 import cympl.language.Program
 import cympl.language.ProgramVisitor.forStatementType
 import cympl.language.Statement

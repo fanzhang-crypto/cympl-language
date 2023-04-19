@@ -1,17 +1,19 @@
 package cympl.language.symbol
 
+import cympl.language.BuiltinType
+
 object IntrinsicSymbols {
     val printLine = FunctionSymbol(
         "println",
-        cympl.language.BuiltinType.VOID,
-        listOf(VariableSymbol("str", cympl.language.BuiltinType.ANY, null)),
+        BuiltinType.VOID,
+        listOf(VariableSymbol("str", BuiltinType.ANY, null)),
         null
     )
 
     val readLine = FunctionSymbol(
         "readln",
-        cympl.language.BuiltinType.STRING,
-        listOf(VariableSymbol("prompt", cympl.language.BuiltinType.STRING, null)),
+        BuiltinType.STRING,
+        listOf(VariableSymbol("prompt", BuiltinType.STRING, null)),
         null
     )
 }

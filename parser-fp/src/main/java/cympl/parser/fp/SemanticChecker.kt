@@ -2,6 +2,7 @@ package cympl.parser.fp
 
 import com.github.h0tk3y.betterParse.lexer.TokenMatch
 import com.github.h0tk3y.betterParse.utils.Tuple2
+import cympl.language.BuiltinType
 import cympl.parser.SemanticException
 import cympl.parser.TokenLocation
 import cympl.language.symbol.*
@@ -45,7 +46,7 @@ internal class SemanticChecker {
         }
     }
 
-    fun enterFuncDecl(idToken: TokenMatch, type: cympl.language.BuiltinType, paramTypeAndIds: List<Tuple2<cympl.language.BuiltinType, TokenMatch>>?) {
+    fun enterFuncDecl(idToken: TokenMatch, type: BuiltinType, paramTypeAndIds: List<Tuple2<BuiltinType, TokenMatch>>?) {
         val function = defineFunc(idToken, type, paramTypeAndIds)
 //        saveScope(ctx, function)
         currentScope = function
@@ -67,8 +68,8 @@ internal class SemanticChecker {
 
     private fun defineFunc(
         idToken: TokenMatch,
-        type: cympl.language.BuiltinType,
-        paramTypeAndIds: List<Tuple2<cympl.language.BuiltinType, TokenMatch>>?
+        type: BuiltinType,
+        paramTypeAndIds: List<Tuple2<BuiltinType, TokenMatch>>?
     ): FunctionSymbol {
         val name: String = idToken.text
         val functionSymbol: Symbol? = currentScope?.resolve(name)
@@ -91,7 +92,7 @@ internal class SemanticChecker {
             .also { currentScope?.define(it) }
     }
 
-    fun defineVar(idToken: TokenMatch, type: cympl.language.BuiltinType) {
+    fun defineVar(idToken: TokenMatch, type: BuiltinType) {
         val name: String = idToken.text
         val variableSymbol: Symbol? = currentScope?.resolve(name)
 

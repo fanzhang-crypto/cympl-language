@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import cympl.interpreter.antlr.AntlrInterpretVerifier.parser
 import cympl.interpreter.antlr.AntlrInterpretVerifier.verify
+import cympl.language.BuiltinType
 import cympl.language.Statement
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -254,7 +255,7 @@ class FunctionTests {
                 val program = r.value
                 program.statements shouldHaveSize 1
                 val funcDecl = program.statements[0].shouldBeInstanceOf<Statement.FunctionDeclaration>()
-                funcDecl.returnType shouldBe cympl.language.BuiltinType.VOID
+                funcDecl.returnType shouldBe BuiltinType.VOID
             }
         }
     }
@@ -382,4 +383,54 @@ class FunctionTests {
 
         verify(input, output)
     }
+
+    @Test
+    fun `support function that has only varargs`() {
+        val input = """
+            int sum(int... args) {
+                int s = 0;
+                for(int i = 0; i < args.length; i++) {
+                    s = s + args[i];
+                }
+                return s;
+            }
+            sum(1,2,3,4,5);
+        """.trimIndent()
+
+        val output = """
+            func sum(args:int...):int { s:int = 0; for (i:int = 0; i < args.length; i++;) { s = s + args[i]; } return s; } => Closure(#sum)
+            sum([1, 2, 3, 4, 5]); => 15
+            environment:
+            sum: (int...) -> int
+        """.trimIndent()
+
+        verify(input, output)
+    }
+
+    @Test
+    fun `support function that has both fix and variable args`() {
+        val input = """
+            String join(String sep, String... parts) {
+                String s = "";
+                for(int i = 0; i < parts.length; i++) {
+                    s = s + parts[i];
+                    if (i < parts.length - 1) {
+                        s = s + sep;
+                    }
+                }
+                return s;
+            }
+            join(",", "a", "b", "c");
+        """.trimIndent()
+
+        val output = """
+            func join(sep:String, parts:String...):String { s:String = ""; for (i:int = 0; i < parts.length; i++;) { s = s + parts[i]; if (i < parts.length - 1) { s = s + sep; } } return s; } => Closure(#join)
+            join(",", ["a", "b", "c"]); => "a,b,c"
+            environment:
+            join: (String, String...) -> String
+        """.trimIndent()
+
+        verify(input, output)
+    }
+
 }

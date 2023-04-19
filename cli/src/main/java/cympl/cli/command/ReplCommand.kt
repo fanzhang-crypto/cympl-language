@@ -3,8 +3,9 @@ package cympl.cli.command
 import cympl.cli.highlight.SyntaxHighlighter
 import cympl.parser.ParseResult
 import cympl.parser.Parser
-import cympl.language.Program
 import cympl.interpreter.Interpreter
+import cympl.language.BuiltinType
+import cympl.language.Program
 import org.jline.reader.EndOfFileException
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
@@ -127,8 +128,8 @@ class ReplCommand(
         private val keywords = setOf(
             "if", "else", "while", "for", "break", "continue", "return", "func", "true", "false",
             QUIT_COMMAND,
-            cympl.language.BuiltinType.VOID.name, cympl.language.BuiltinType.INT.name, cympl.language.BuiltinType.FLOAT.name, cympl.language.BuiltinType.BOOL.name,
-            cympl.language.BuiltinType.STRING.name
+            BuiltinType.VOID.name, BuiltinType.INT.name, BuiltinType.FLOAT.name, BuiltinType.BOOL.name,
+            BuiltinType.STRING.name
         )
 
         private fun String.fg(color: Int): AttributedString =

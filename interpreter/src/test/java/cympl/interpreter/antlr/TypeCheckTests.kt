@@ -130,8 +130,9 @@ class TypeCheckTests {
         """.trimIndent()
 
         val errors = check(input)
-        errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (4:0): argument types mismatch: expected [int, int], but got [float, String]"
+        errors shouldHaveSize 2
+        errors[0] shouldHaveMessage "semantic error at (4:4): argument type mismatch at index 0: expected int, but got float"
+        errors[1] shouldHaveMessage "semantic error at (4:9): argument type mismatch at index 1: expected int, but got String"
     }
 
     @Test

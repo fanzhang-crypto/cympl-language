@@ -190,7 +190,7 @@ class Interpreter(private val runtime: Runtime) {
                 assertValueType(result, type)
                 // TEmptyArray has no concrete type, so we need to cast it to the type of the variable
                 val variable = if (result == TValue.TEmptyArray)
-                    TValue.TEmptyArray.castTo(type as cympl.language.BuiltinType.ARRAY)
+                    TValue.TEmptyArray.castTo(type as BuiltinType.ARRAY)
                 else result
 
                 scope.defineVariable(id, variable)
@@ -298,10 +298,10 @@ class Interpreter(private val runtime: Runtime) {
             scope.resolveVariable(id) ?: throw InterpretException("variable $id not defined")
         }
 
-        is Expression.BoolLiteral -> TValue(cympl.language.BuiltinType.BOOL, value)
-        is Expression.FloatLiteral -> TValue(cympl.language.BuiltinType.FLOAT, value)
-        is Expression.IntLiteral -> TValue(cympl.language.BuiltinType.INT, value)
-        is Expression.StringLiteral -> TValue(cympl.language.BuiltinType.STRING, value)
+        is Expression.BoolLiteral -> TValue(BuiltinType.BOOL, value)
+        is Expression.FloatLiteral -> TValue(BuiltinType.FLOAT, value)
+        is Expression.IntLiteral -> TValue(BuiltinType.INT, value)
+        is Expression.StringLiteral -> TValue(BuiltinType.STRING, value)
 
         is Expression.Equality -> {
             val left = left.evaluate(scope)
@@ -344,8 +344,8 @@ class Interpreter(private val runtime: Runtime) {
             if (elements.isEmpty()) {
                 TValue.TEmptyArray
             } else {
-                val elementType = elements.firstOrNull()?.type ?: cympl.language.BuiltinType.VOID
-                TValue(cympl.language.BuiltinType.ARRAY(elementType), elements)
+                val elementType = elements.firstOrNull()?.type ?: BuiltinType.VOID
+                TValue(BuiltinType.ARRAY(elementType), elements)
             }
         }
 
@@ -412,26 +412,25 @@ class Interpreter(private val runtime: Runtime) {
 
         is Expression.Property -> {
             val owner = expr.evaluate(scope)
-            val propertyName = propertyName
             when (owner.type) {
-                is cympl.language.BuiltinType.ARRAY -> {
+                is BuiltinType.ARRAY -> {
                     @Suppress("UNCHECKED_CAST")
                     val array = owner.value as Array<TValue>
                     when (propertyName) {
-                        ArrayScope.LENGTH_PROPERTY.name -> TValue(cympl.language.BuiltinType.INT, array.size)
+                        ArrayScope.LENGTH_PROPERTY.name -> TValue(BuiltinType.INT, array.size)
                         else -> throw InterpretException("array has no property $propertyName")
                     }
                 }
 
-                is cympl.language.BuiltinType.STRING -> {
+                is BuiltinType.STRING -> {
                     val string = owner.value as String
                     when (propertyName) {
-                        StringScope.LENGTH_PROPERTY.name -> TValue(cympl.language.BuiltinType.INT, string.length)
+                        StringScope.LENGTH_PROPERTY.name -> TValue(BuiltinType.INT, string.length)
                         else -> throw InterpretException("string has no property $propertyName")
                     }
                 }
 
-                else -> throw InterpretException("cannot access property $propertyName of type ${owner.type}")
+                else -> throw InterpretException("cannot access property [$propertyName] of type ${owner.type}")
             }
         }
 
@@ -443,10 +442,12 @@ class Interpreter(private val runtime: Runtime) {
                 Statement.VariableDeclaration(name, type)
             }
 
+            val lambdaType = BuiltinType.FUNCTION(paramTypes, returnType)
+
             val functionDeclaration = Statement.FunctionDeclaration(
                 id = "<lambda>",
+                resolvedType = lambdaType,
                 parameters = paramDecls,
-                returnType = returnType,
                 body = Statement.Block(listOf(body))
             )
             Closure(functionDeclaration, scope)
@@ -467,12 +468,12 @@ class Interpreter(private val runtime: Runtime) {
         IntrinsicFunction.ReadLine -> {
             val arg = args.firstOrNull() ?: ""
             val line = runtime.readLine(arg.toString())
-            TValue(cympl.language.BuiltinType.STRING, line)
+            TValue(BuiltinType.STRING, line)
         }
     }
 
     private fun formatTValue(tvalue: TValue) = when (tvalue.type) {
-        cympl.language.BuiltinType.STRING -> "\"${tvalue.value}\""
+        BuiltinType.STRING -> "\"${tvalue.value}\""
         else -> tvalue.toString()
     }
 
@@ -501,15 +502,15 @@ class Interpreter(private val runtime: Runtime) {
     private inner class ArrayIndexing(arrayExpr: Expression, indexExpr: Expression, scope: Environment) {
         val array: Array<TValue>
         val index: Int
-        val arrayType: cympl.language.BuiltinType.ARRAY
+        val arrayType: BuiltinType.ARRAY
 
         init {
             val arrayTValue = arrayExpr.evaluate(scope)
             val indexTValue = indexExpr.evaluate(scope)
-            if (arrayTValue.type !is cympl.language.BuiltinType.ARRAY) {
+            if (arrayTValue.type !is BuiltinType.ARRAY) {
                 throw InterpretException("indexing non-array type ${arrayTValue.type}")
             }
-            if (indexTValue.type != cympl.language.BuiltinType.INT) {
+            if (indexTValue.type != BuiltinType.INT) {
                 throw InterpretException("indexing array with non-int type ${indexTValue.type}")
             }
 

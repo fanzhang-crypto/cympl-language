@@ -9,10 +9,10 @@ class SignatureTest {
     @Test
     fun `signature of high order function type that take a (int)int param`() {
         val paramTypes = listOf(
-            cympl.language.BuiltinType.FUNCTION(listOf(cympl.language.BuiltinType.INT), cympl.language.BuiltinType.INT).apply { isFirstClass = true }
+            BuiltinType.FUNCTION(listOf(BuiltinType.INT), BuiltinType.INT).apply { isFirstClass = true }
         )
-        val returnType = cympl.language.BuiltinType.VOID
-        val funcType = cympl.language.BuiltinType.FUNCTION(paramTypes, returnType)
+        val returnType = BuiltinType.VOID
+        val funcType = BuiltinType.FUNCTION(paramTypes, returnType)
 
         funcType.signature shouldBe "(Lcympl/runtime/Function1<Ljava/lang/Integer;Ljava/lang/Integer;>;)V"
     }
@@ -20,10 +20,10 @@ class SignatureTest {
     @Test
     fun `signature of high order function type that return a (int)int`() {
         val paramTypes = listOf(
-            cympl.language.BuiltinType.INT
+            BuiltinType.INT
         )
-        val returnType = cympl.language.BuiltinType.FUNCTION(listOf(cympl.language.BuiltinType.INT), cympl.language.BuiltinType.INT).apply { isFirstClass = true }
-        val funcType = cympl.language.BuiltinType.FUNCTION(paramTypes, returnType)
+        val returnType = BuiltinType.FUNCTION(listOf(BuiltinType.INT), BuiltinType.INT).apply { isFirstClass = true }
+        val funcType = BuiltinType.FUNCTION(paramTypes, returnType)
 
         funcType.signature shouldBe "(I)Lcympl/runtime/Function1<Ljava/lang/Integer;Ljava/lang/Integer;>;"
     }
@@ -31,11 +31,11 @@ class SignatureTest {
     @Test
     fun `signature of high order function type that return a (int)int-array`() {
         val paramTypes = listOf(
-            cympl.language.BuiltinType.INT
+            BuiltinType.INT
         )
-        val returnType = cympl.language.BuiltinType.FUNCTION(listOf(cympl.language.BuiltinType.INT), cympl.language.BuiltinType.ARRAY(
-            cympl.language.BuiltinType.INT)).apply { isFirstClass = true }
-        val funcType = cympl.language.BuiltinType.FUNCTION(paramTypes, returnType)
+        val returnType = BuiltinType.FUNCTION(listOf(BuiltinType.INT), BuiltinType.ARRAY(
+            BuiltinType.INT)).apply { isFirstClass = true }
+        val funcType = BuiltinType.FUNCTION(paramTypes, returnType)
 
         funcType.signature shouldBe "(I)Lcympl/runtime/Function1<Ljava/lang/Integer;[Ljava/lang/Integer;>;"
 
