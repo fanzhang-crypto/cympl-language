@@ -121,7 +121,7 @@ class TypeCheckTests {
     }
 
     @Test
-    fun `should check parameter type on function call`() {
+    fun `should check simple parameter type on function call`() {
         val input = """
             int foo(int x, int y) {
                 return x + y;
@@ -133,6 +133,34 @@ class TypeCheckTests {
         errors shouldHaveSize 2
         errors[0] shouldHaveMessage "semantic error at (4:4): argument type mismatch at index 0: expected int, but got float"
         errors[1] shouldHaveMessage "semantic error at (4:9): argument type mismatch at index 1: expected int, but got String"
+    }
+
+    @Test
+    fun `for function that takes lambda as parameter, the arity of lambda passed on function call should be checked`() {
+        val input = """
+            int foo(int x, int y, (int, int) -> int op) {
+                return op(x, y);
+            }
+            foo(1, 1, (x) -> x);
+        """.trimIndent()
+
+        val errors = check(input)
+        errors shouldHaveSize 1
+        errors[0] shouldHaveMessage "semantic error at (4:10): lambda expression expected to have 2 parameters, but got 1"
+    }
+
+    @Test
+    fun `for function that takes lambda as parameter, the return type of lambda passed on function call should be checked`() {
+        val input = """
+            int foo(int x, int y, (int, int) -> int op) {
+                return op(x, y);
+            }
+            foo(1, 1, (x, y) -> 1.1);
+        """.trimIndent()
+
+        val errors = check(input)
+        errors shouldHaveSize 1
+        errors[0] shouldHaveMessage "semantic error at (4:20): lambda expression expected to return int, but got float"
     }
 
     @Test

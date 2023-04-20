@@ -189,7 +189,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
          * 4. a return statement in a function definition
          */
         override fun enterLambda(ctx: LambdaContext) {
-            val lambdaType: BuiltinType = when (val parent = ctx.parent) {
+            val inferredLambdaType: BuiltinType = when (val parent = ctx.parent) {
                 is VarDeclContext -> resolveType(parent.type())
 
                 is AssignContext -> {
@@ -213,6 +213,18 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                     parameterTypes[argumentIndex]
                 }
 
+                //lambda in a parent lambda
+                is LambdaContext -> {
+                    val parentLambdaType = types.get(parent)
+                    if (parentLambdaType !is BuiltinType.FUNCTION) {
+                        val location = parent.start.location
+                        semanticErrors += SemanticException("parent lambda is not a function", location)
+                        return
+                    }
+                    parentLambdaType.returnType
+                }
+
+                //lambda as an argument in a function call
                 is ExprContext -> {
                     types.get(parent)
                 }
@@ -230,7 +242,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                 else -> BuiltinType.VOID
             }
 
-            if (lambdaType !is BuiltinType.FUNCTION) {
+            if (inferredLambdaType !is BuiltinType.FUNCTION) {
                 val location = ctx.start.location
                 semanticErrors += SemanticException(
                     "lambda expression must be assigned to or returned as a function type",
@@ -238,30 +250,56 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                 )
                 return
             }
-            lambdaType.isFirstClass = true
-            if (lambdaType.paramTypes.size != (ctx.idList()?.ID()?.size ?: 0)) {
+            inferredLambdaType.isFirstClass = true
+            if (inferredLambdaType.paramTypes.size != (ctx.idList()?.ID()?.size ?: 0)) {
                 val location = ctx.start.location
                 semanticErrors += SemanticException(
-                    "lambda expression must have ${lambdaType.paramTypes.size} parameters, but got ${
+                    "lambda expression expected to have ${inferredLambdaType.paramTypes.size} parameters, but got ${
                         ctx.idList().ID().size
                     }",
                     location
                 )
-                return
             }
 
             currentScope = scopes[ctx]
             //update return type of current lambda scope
-            (currentScope as LambdaScope).returnType = lambdaType.returnType
+            (currentScope as LambdaScope).returnType = inferredLambdaType.returnType
 
-            ctx.idList()?.ID()?.zip(lambdaType.paramTypes)?.forEach { (idToken, paramType) ->
+            ctx.idList()?.ID()?.zip(inferredLambdaType.paramTypes)?.forEach { (idToken, paramType) ->
                 val variableSymbol = VariableSymbol(idToken.text, paramType, null)
                 currentScope?.define(variableSymbol)
             }
-            types.put(ctx, lambdaType)
+            types.put(ctx, inferredLambdaType)
         }
 
         override fun exitLambda(ctx: LambdaContext) {
+            val lambdaRetType = (currentScope as LambdaScope).returnType
+
+            val (actualRetType, retLocation) = when (val lambdaBody = ctx.expr() ?: ctx.statement()){
+                // lambda body is an expression, return type is the type of the expression
+                is ExprContext -> {
+                    val type = types.get(lambdaBody)
+                    val location = lambdaBody.start.location
+                    type to location
+                }
+                // lambda body is a block statement, return type is the type of the last return statement
+                is StatementContext -> {
+                    val retStat = (lambdaBody as? BlockStatementContext)?.block()?.statement()?.lastOrNull()
+                    if (retStat is ReturnStatementContext)
+                        types.get(retStat.returnStat().expr()) to retStat.start.location
+                    else
+                        BuiltinType.VOID to lambdaBody.start.location
+                }
+                else -> BuiltinType.VOID to ctx.start.location
+            }
+
+            if (actualRetType != lambdaRetType) {
+                semanticErrors += SemanticException(
+                    "lambda expression expected to return $lambdaRetType, but got $actualRetType",
+                    retLocation
+                )
+            }
+
             currentScope = currentScope?.enclosingScope
         }
 
