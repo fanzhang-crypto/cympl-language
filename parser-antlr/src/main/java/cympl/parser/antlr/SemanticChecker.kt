@@ -165,19 +165,30 @@ class SemanticChecker : TypeResolver, ScopeResolver {
 
         private var currentScope: Scope? = globals
 
-        override fun enterFuncDecl(ctx: FuncDeclContext?) {
+        override fun enterFuncDecl(ctx: FuncDeclContext) {
             currentScope = scopes[ctx]
         }
 
-        override fun exitFuncDecl(ctx: FuncDeclContext?) {
+        override fun exitFuncDecl(ctx: FuncDeclContext) {
+            val functionSymbol = currentScope as FunctionSymbol
+            val functionBody = ctx.block()
+
+            if (functionSymbol.returnType != BuiltinType.VOID
+                && !functionBody.hasReturnStat
+            ) {
+                val location = ctx.stop.location
+                semanticErrors += SemanticException(
+                    "missing return statement in function ${functionSymbol.name}", location
+                )
+            }
             currentScope = currentScope?.enclosingScope
         }
 
-        override fun enterBlock(ctx: BlockContext?) {
+        override fun enterBlock(ctx: BlockContext) {
             currentScope = scopes[ctx]
         }
 
-        override fun exitBlock(ctx: BlockContext?) {
+        override fun exitBlock(ctx: BlockContext) {
             currentScope = currentScope?.enclosingScope
         }
 
@@ -275,7 +286,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
         override fun exitLambda(ctx: LambdaContext) {
             val lambdaRetType = (currentScope as LambdaScope).returnType
 
-            val (actualRetType, retLocation) = when (val lambdaBody = ctx.expr() ?: ctx.statement()){
+            val (actualRetType, retLocation) = when (val lambdaBody = ctx.expr() ?: ctx.statement()) {
                 // lambda body is an expression, return type is the type of the expression
                 is ExprContext -> {
                     val type = types.get(lambdaBody)
@@ -290,6 +301,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                     else
                         BuiltinType.VOID to lambdaBody.start.location
                 }
+
                 else -> BuiltinType.VOID to ctx.start.location
             }
 
@@ -783,6 +795,24 @@ class SemanticChecker : TypeResolver, ScopeResolver {
         }
     }
 }
+
+private val BlockContext.hasReturnStat
+    get(): Boolean = statement().any { it.hasReturnStat }
+
+private val StatementContext.hasReturnStat
+    get(): Boolean = when (this) {
+        is ReturnStatementContext -> true
+        is IfStatementContext -> {
+            val thenBranch = ifStat().thenBranch
+            val elseBranch = ifStat().elseBranch
+            thenBranch.hasReturnStat && elseBranch?.hasReturnStat ?: false
+        }
+        is WhileStatementContext -> whileStat().statement().hasReturnStat
+        is ForStatementContext -> forStat().statement().hasReturnStat
+        is SwitchStatementContext -> switchStat().caseStat().all { it.statement().hasReturnStat }
+        is BlockStatementContext -> block().statement().any { it.hasReturnStat }
+        else -> false
+    }
 
 
 private val Token.location get() = TokenLocation(line, charPositionInLine)

@@ -251,6 +251,18 @@ class TypeCheckTests {
     }
 
 
+    @Test
+    fun `there must be return statement for function that returns non-void`() {
+        val input = """
+            int f() {
+                int a=1;
+            }
+        """.trimIndent()
+
+        val errors = check(input)
+        errors shouldHaveSize 1
+        errors[0] shouldHaveMessage "semantic error at (3:0): missing return statement in function f"
+    }
 
     private fun check(input: String): List<ParseException> =
         when (val r = parser().parse(input.byteInputStream())) {

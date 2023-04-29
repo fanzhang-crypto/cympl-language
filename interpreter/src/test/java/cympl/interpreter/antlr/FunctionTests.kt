@@ -263,20 +263,22 @@ class FunctionTests {
     @Test
     fun `check type of function's return value`() {
         val input = """
-            int f() {
-                1+2;
+            void f() {
+               1+2;
             }
             int i = f();
-        """.trimIndent()
+        """.byteInputStream()
 
-        val output = """
-            func f():int { 1 + 2; } => Closure(#f)
-            i:int = f(); failed => type mismatch: expected int, got void
-            environment:
-            f: () -> int
-        """.trimIndent()
+        when (val r = parser().parse(input)) {
+            is ParseResult.Failure -> {
+                r.errors shouldHaveSize 1
+                r.errors[0].shouldHaveMessage("semantic error at (5:20): type mismatch: expected int, but got void")
+            }
 
-        verify(input, output)
+            is ParseResult.Success -> {
+                fail("should throw semantic error, but not")
+            }
+        }
     }
 
     @Test
