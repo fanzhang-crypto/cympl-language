@@ -136,11 +136,11 @@ class SemanticChecker : TypeResolver, ScopeResolver {
 
         private fun defineVar(idToken: Token, typeContext: TypeContext, isVarargs: Boolean = false) {
             val id: String = idToken.text
-            val variableSymbol: Symbol? = currentScope?.resolve(id)
+            val existingSymbol: Symbol? = currentScope?.resolve(id)
 
-            if (variableSymbol != null) {
+            if (existingSymbol != null) {
                 val location = idToken.location
-                if (variableSymbol.scope == currentScope) {
+                if (existingSymbol.scope == currentScope || (existingSymbol.scope != globals && currentScope !is FunctionScope)) {
                     semanticErrors += SemanticException("symbol $id already defined", location)
                 } else {
 //                    println("variable shadowed at $location: $name")

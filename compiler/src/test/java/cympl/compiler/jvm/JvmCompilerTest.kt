@@ -615,34 +615,6 @@ class JvmCompilerTest {
     }
 
     @Test
-    fun `variables in different blocks have no conflict`() {
-        val input = """
-            int a = 0;
-            {
-                if (true) {
-                    a = 3;
-                }
-                int a = 1;
-                println(a);
-                
-                {
-                    int a = 2;
-                    println(a);
-                }
-            }
-            println(a);
-        """.trimIndent()
-
-        val output = compileAndExecute(input)
-
-        output shouldBe """
-            1
-            2
-            3
-        """.trimIndent()
-    }
-
-    @Test
     fun `support function declaration`() {
         val input = """
             int add(int a, int b) {

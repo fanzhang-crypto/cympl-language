@@ -6,18 +6,19 @@ import org.junit.jupiter.api.Test
 class BlockTests  {
 
     @Test
-    fun `variables in different blocks have no conflict`() {
+    fun `variables in different parallel blocks have no conflict`() {
         val input = """
             {
-                int x = 1;
                 {
                     int x = 2;
                 }
-                x;
+                {
+                    int x = 1;
+                }
             }
         """
         val output = """
-            { x:int = 1; { x:int = 2; } x; } => void
+            { { x:int = 2; } { x:int = 1; } } => void
             environment:
         """
         verify(input, output)

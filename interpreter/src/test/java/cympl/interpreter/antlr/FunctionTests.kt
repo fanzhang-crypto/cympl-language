@@ -199,15 +199,18 @@ class FunctionTests {
         val input = """
             int f(int x) {
                 int x = 1;
-                int x = 2;
+                if (1 < 2) {
+                    int x = 1;
+                }
                 return x;
             }
         """.byteInputStream()
 
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
-                r.errors shouldHaveSize 1
-                r.errors.first().shouldHaveMessage("semantic error at (4:20): symbol x already defined")
+                r.errors shouldHaveSize 2
+                r.errors[0].shouldHaveMessage("semantic error at (3:20): symbol x already defined")
+                r.errors[1].shouldHaveMessage("semantic error at (5:24): symbol x already defined")
             }
 
             is ParseResult.Success -> {
@@ -217,7 +220,30 @@ class FunctionTests {
     }
 
     @Test
-    fun `can't use function as variable`() {
+    fun `allow global variable being shadowed inside function`() {
+        val input = """
+            int x = 1;
+            int f() {
+                int x = 2;
+                return x + 3;
+            }
+            f();
+        """.trimIndent()
+
+        val output = """
+            x:int = 1; => 1
+            func f():int { x:int = 2; return x + 3; } => Closure(#f)
+            f(); => 5
+            environment:
+            x:int = 1
+            f: () -> int
+        """.trimIndent()
+
+        verify(input, output)
+    }
+
+    @Test
+    fun `can't assign value to function`() {
         val input = """
             int f(int x) {
                 return x + 1;
