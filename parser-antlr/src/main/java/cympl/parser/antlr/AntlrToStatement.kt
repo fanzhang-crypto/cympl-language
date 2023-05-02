@@ -1,6 +1,5 @@
 package cympl.parser.antlr
 
-import CymplBaseVisitor
 import cympl.language.*
 
 internal class AntlrToStatement(
@@ -66,15 +65,15 @@ internal class AntlrToStatement(
     }
 
     override fun visitIfStat(ctx: CymplParser.IfStatContext): Statement {
-        val condition = antlrToExpression.visit(ctx.expr())
+        val condition = antlrToExpression.visit(ctx.cond)
         val thenBranch = visit(ctx.thenBranch)
         val elseBranch = ctx.elseBranch?.let { visit(it) }
         return Statement.If(condition, thenBranch, elseBranch)
     }
 
     override fun visitWhileStat(ctx: CymplParser.WhileStatContext): Statement {
-        val condition = antlrToExpression.visit(ctx.expr())
-        val body = visit(ctx.statement())
+        val condition = antlrToExpression.visit(ctx.cond)
+        val body = visit(ctx.body)
         return Statement.While(condition, body)
     }
 
@@ -85,15 +84,19 @@ internal class AntlrToStatement(
             visit(ctx.assign())
         }
 
+    override fun visitForUpdate(ctx: CymplParser.ForUpdateContext): Statement =
+        if (ctx.expr() != null) {
+            antlrToExpression.visit(ctx.expr()).toStatement()
+        } else {
+            visit(ctx.assign())
+        }
+
     override fun visitForStat(ctx: CymplParser.ForStatContext): Statement {
-        val init = ctx.forInit()?.let { visit(it) }
+        val init = ctx.forInit()?.let { visitForInit(it) }
         val condition = ctx.cond?.let { antlrToExpression.visit(it) }
+        val update = ctx.forUpdate()?.let { visitForUpdate(it) }
+        val body = visit(ctx.body)
 
-        val updateExpr = ctx.updateExpr?.let { antlrToExpression.visit(it).toStatement() }
-        val updateAssign = ctx.updateAssign?.let { visit(it) }
-        val update = updateExpr ?: updateAssign
-
-        val body = visit(ctx.statement())
         return Statement.For(init, condition, update, body)
     }
 

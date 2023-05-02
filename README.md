@@ -10,6 +10,7 @@ A toy language implementation to learn how to build a compiler and interpreter.
 - Support Closure
 - Support Recursion
 - Support Lambda expression
+- Support varargs function
 
 ### Types
 - Integer 32 bits
@@ -63,7 +64,7 @@ A toy language implementation to learn how to build a compiler and interpreter.
 ### Pre-requisites
 - [Install GraalVM](https://www.graalvm.org/docs/getting-started/#install-graalvm)
 The cli module needs graalvm compiler to be built into native executable.
-To install GraalVM on macOS or Linux, I recommend using SDKMAN!. 
+To install GraalVM on macOS or Linux, SDKMAN! is recommended. 
 Get SDKMAN! from [sdkman.io](https://sdkman.io/) and install the Liberica GraalVM distribution by using the following commands:
 ```shell
 $ sdk install java 22.3.r17-nik
@@ -79,7 +80,7 @@ $ sdk install gradle 8.0.2
 ### Build and run
 - build and run as a jar file
 ```shell
-$ gradle build && java -jar cli/build/libs/cli-1.0-SNAPSHOT.jar
+$ gradle build && java -jar cli/build/libs/cli.jar
 ```
 
 - build and run as a native executable

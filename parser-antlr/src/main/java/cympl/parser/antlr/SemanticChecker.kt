@@ -1,7 +1,6 @@
 package cympl.parser.antlr
 
-import CymplBaseListener
-import CymplParser.*
+import cympl.parser.antlr.CymplParser.*
 import cympl.language.*
 import cympl.language.symbol.*
 import cympl.parser.SemanticException
@@ -808,7 +807,7 @@ private val StatementContext.hasReturnStat
             thenBranch.hasReturnStat && elseBranch?.hasReturnStat ?: false
         }
         is WhileStatementContext -> whileStat().statement().hasReturnStat
-        is ForStatementContext -> forStat().statement().hasReturnStat
+        is ForStatementContext -> forStat().body.hasReturnStat
         is SwitchStatementContext -> switchStat().caseStat().all { it.statement().hasReturnStat }
         is BlockStatementContext -> block().statement().any { it.hasReturnStat }
         else -> false

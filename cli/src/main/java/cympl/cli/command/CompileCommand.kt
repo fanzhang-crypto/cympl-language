@@ -27,16 +27,10 @@ class CompileCommand(
     fun compile(
         @ShellOption(
             value = ["-f"],
-            defaultValue = ShellOption.NULL,
             help = "cympl script file path to compile",
             valueProvider = FileValueProvider::class
-        ) sourceFile: File?,
+        ) sourceFile: File,
     ) {
-        if (sourceFile == null) {
-            terminal.writer().println("source file is required")
-            terminal.writer().flush()
-            return
-        }
         if (!sourceFile.exists()) {
             terminal.writer().println("source file does not exist")
             terminal.writer().flush()

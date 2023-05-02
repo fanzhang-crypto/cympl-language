@@ -19,7 +19,7 @@ import java.lang.Exception
 
 @ShellComponent
 class InterpretCommand(
-    @Autowired private val parserProvider: () -> Parser<Program>,
+    @Autowired private val parserFactory: () -> Parser<Program>,
     @Autowired private val terminal: Terminal,
     @Lazy @Autowired private val runtime: cympl.interpreter.Runtime
 ) {
@@ -28,23 +28,16 @@ class InterpretCommand(
     fun interpret(
         @ShellOption(
             value = ["-f"],
-            defaultValue = ShellOption.NULL,
             valueProvider = FileValueProvider::class,
             help = "program file path to interpret"
-        ) file: File?,
+        ) file: File,
         @ShellOption(
             value = ["-v"],
             defaultValue = "false",
             help = "show verbose output when interpreting"
         ) verbose: Boolean,
     ) {
-        if (file == null) {
-            printResult("File is required")
-            terminal.writer().flush()
-            return
-        }
-
-        val parser = parserProvider()
+        val parser = parserFactory()
         val interpreter = Interpreter(runtime)
 
         FileInputStream(file).use {

@@ -1,6 +1,5 @@
 package cympl.parser.antlr
 
-import CymplLexer
 import org.antlr.v4.runtime.CharStreams
 
 object LexicalAnalyzer {

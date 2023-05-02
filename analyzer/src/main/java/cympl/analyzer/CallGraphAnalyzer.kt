@@ -6,199 +6,178 @@ import cympl.language.Statement
 import cympl.language.symbol.FunctionSymbol
 import cympl.language.symbol.GlobalScope
 import cympl.language.symbol.Scope
-import guru.nidi.graphviz.attribute.Font
-import guru.nidi.graphviz.attribute.Rank
-import guru.nidi.graphviz.attribute.Shape
-import guru.nidi.graphviz.attribute.Size
-import guru.nidi.graphviz.graph
-import guru.nidi.graphviz.toGraphviz
 
 class CallGraphAnalyzer {
 
-    private val nodes: MutableSet<String> = LinkedHashSet()
-    private val edges: MutableSet<Pair<String, String>> = LinkedHashSet()
-
     private var currentScope: Scope = GlobalScope()
 
-    class Graph(
-        val nodes: Set<String>,
-        val edges: Set<Pair<String, String>>
-    ) {
-        fun toGraphviz() = graph(directed = true) {
-            graph[Rank.dir(Rank.RankDir.TOP_TO_BOTTOM)]
-            node[Shape.CIRCLE, Font.name("Helvetica"), Font.size(15), Size.mode(Size.Mode.FIXED).size(1.0, 1.0)]
-
-            nodes.forEach { -it }
-            edges.forEach { (from, to) -> from - to }
-        }.toGraphviz()
-    }
-
     fun analyze(program: Program): Graph {
+        val graphBuilder = Graph.Builder()
         for (stat in program.statements) {
-            analyze(stat)
+            analyze(stat, graphBuilder)
         }
-        return Graph(nodes.toSet(), edges.toSet()).also { reset() }
+        return graphBuilder.build().also { currentScope = GlobalScope() }
     }
 
-    private fun analyze(statement: Statement) {
+    private fun analyze(statement: Statement, builder: Graph.Builder) {
         when (statement) {
             is Statement.FunctionDeclaration -> {
                 currentScope = FunctionSymbol(statement.id, statement.returnType, emptyList(), currentScope)
-                nodes += currentScope.scopeName
-                analyze(statement.body)
+                builder.addNode(statement.id)
+                analyze(statement.body, builder)
                 currentScope = currentScope.enclosingScope!!
             }
 
             is Statement.Return -> {
-                statement.expr?.let { analyze(it) }
+                statement.expr?.let { analyze(it, builder) }
             }
 
             is Statement.VariableDeclaration -> {
                 if (statement.expr != null)
-                    analyze(statement.expr!!)
+                    analyze(statement.expr!!, builder)
             }
 
             is Statement.Assignment -> {
-                analyze(statement.expr)
+                analyze(statement.expr, builder)
             }
 
             is Statement.ExpressionStatement -> {
-                analyze(statement.expr)
+                analyze(statement.expr, builder)
             }
 
             is Statement.Block -> {
                 for (stat in statement.statements) {
-                    analyze(stat)
+                    analyze(stat, builder)
                 }
             }
 
             is Statement.If -> {
-                analyze(statement.thenBranch)
-                statement.elseBranch?.let { analyze(it) }
+                analyze(statement.thenBranch, builder)
+                statement.elseBranch?.let { analyze(it, builder) }
             }
 
             is Statement.While -> {
-                analyze(statement.body)
+                analyze(statement.body, builder)
             }
 
             is Statement.For -> {
-                analyze(statement.body)
+                analyze(statement.body, builder)
             }
 
             else -> {}
         }
     }
 
-    private fun analyze(expression: Expression) {
+    private fun analyze(expression: Expression, builder: Graph.Builder) {
         when (expression) {
             is Expression.FunctionCall -> {
                 if (currentScope is FunctionSymbol) {
                     val funcExpr = expression.funcExpr
                     if (funcExpr is Expression.Variable) {
-                        edges.add(currentScope.scopeName to funcExpr.id)
+                        builder.addEdge(currentScope.scopeName, funcExpr.id)
                     }
                 }
             }
 
             is Expression.Index -> {
-                analyze(expression.arrayExpr)
-                analyze(expression.indexExpr)
+                analyze(expression.arrayExpr, builder)
+                analyze(expression.indexExpr, builder)
             }
 
             is Expression.Not -> {
-                analyze(expression.expr)
+                analyze(expression.expr, builder)
             }
 
             is Expression.And -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.Or -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.Addition -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.Subtraction -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.Multiplication -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.Division -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.Remainder -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.Power -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.Equality -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.Inequality -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.LessThan -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.LessThanOrEqual -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.GreaterThan -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.GreaterThanOrEqual -> {
-                analyze(expression.left)
-                analyze(expression.right)
+                analyze(expression.left, builder)
+                analyze(expression.right, builder)
             }
 
             is Expression.Negation -> {
-                analyze(expression.expr)
+                analyze(expression.expr, builder)
             }
 
             is Expression.Parenthesized -> {
-                analyze(expression.expr)
+                analyze(expression.expr, builder)
             }
 
             is Expression.ArrayLiteral -> {
                 for (element in expression.elements) {
-                    analyze(element)
+                    analyze(element, builder)
                 }
             }
 
             is Expression.Property -> {
-                analyze(expression.expr)
+                analyze(expression.expr, builder)
             }
 
             is Expression.NewArray -> {
-                expression.dimensions.forEach { analyze(it) }
+                expression.dimensions.forEach { analyze(it, builder) }
             }
 
             is Expression.Variable,
@@ -213,15 +192,29 @@ class CallGraphAnalyzer {
             is Expression.Lambda -> {
 //                currentScope = FunctionSymbol("lambda", expression.returnType, emptyList(), currentScope)
 //                nodes += currentScope.scopeName
-                analyze(expression.body)
+                analyze(expression.body, builder)
 //                currentScope = currentScope.enclosingScope!!
             }
         }
     }
+}
 
-    private fun reset() {
-        nodes.clear()
-        edges.clear()
-        currentScope = GlobalScope()
+class Graph private constructor(
+    val nodes: Set<String>,
+    val edges: Set<Pair<String, String>>
+) {
+    internal class Builder {
+        private val nodes: MutableSet<String> = LinkedHashSet()
+        private val edges: MutableSet<Pair<String, String>> = LinkedHashSet()
+
+        fun addNode(node: String) {
+            nodes += node
+        }
+
+        fun addEdge(from: String, to: String) {
+            edges += from to to
+        }
+
+        fun build() = Graph(nodes, edges)
     }
 }

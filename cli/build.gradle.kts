@@ -17,6 +17,8 @@ dependencies {
     implementation(project(":parser-antlr"))
     implementation(project(":parser-fp"))
 
+    implementation("guru.nidi:graphviz-kotlin:0.18.1")
+    implementation("ch.qos.logback:logback-classic:1.4.6")
     implementation("org.apache.commons:commons-text:1.10.0")
     implementation("org.springframework.shell:spring-shell-starter:3.0.1")
 }

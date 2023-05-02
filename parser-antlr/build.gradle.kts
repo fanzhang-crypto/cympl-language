@@ -29,5 +29,9 @@ tasks.compileTestKotlin {
     dependsOn(tasks.generateGrammarSource)
 }
 tasks.generateGrammarSource {
+    val generatedSrcRoot = "$buildDir/generated-src/main"
+    sourceSets["main"].java.srcDir(generatedSrcRoot)
+    outputDirectory = File("$generatedSrcRoot/cympl/parser/antlr")
+
     arguments = arguments + listOf("-visitor", "-long-messages")
 }

@@ -1,5 +1,9 @@
 grammar Cympl;
 
+@header {
+package cympl.parser.antlr;
+}
+
 prog: statement+EOF             #Program
 ;
 
@@ -45,12 +49,13 @@ returnStat: RETURN expr? ';';
 
 block: '{' statement* '}';
 
-ifStat: IF '(' expr ')' thenBranch=statement (ELSE elseBranch=statement )?;
+ifStat: IF '(' cond=expr ')' thenBranch=statement (ELSE elseBranch=statement )?;
 
-whileStat: WHILE '(' expr ')' statement;
+whileStat: WHILE '(' cond=expr ')' body=statement;
 
+forStat: FOR '(' forInit? ';' cond=expr? ';' forUpdate? ')' body=statement;
 forInit: varDecl | assign;
-forStat: FOR '(' forInit? ';' cond=expr? ';' (updateExpr=expr | updateAssign=assign)? ')' statement;
+forUpdate: expr | assign;
 
 breakStat: BREAK ';';
 

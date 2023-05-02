@@ -1,7 +1,5 @@
 package cympl.parser.antlr
 
-import CymplLexer
-import CymplParser
 import cympl.language.*
 import cympl.parser.*
 import cympl.parser.Parser
@@ -10,7 +8,7 @@ import org.antlr.v4.runtime.atn.ATNSimulator
 import org.antlr.v4.runtime.tree.ParseTree
 import java.io.InputStream
 
-class AntlrProgramParser: Parser<Program> {
+class AntlrProgramParser : Parser<Program> {
 
     private val semanticChecker = SemanticChecker()
     private val programVisitor = AntlrToProgram(semanticChecker, semanticChecker)
@@ -19,10 +17,10 @@ class AntlrProgramParser: Parser<Program> {
         val errorListener = SyntaxErrorListener()
 
         val cs: CharStream = CharStreams.fromStream(inputStream)
-        val lexer = CymplLexer(cs).setErrorListener(errorListener) as CymplLexer
+        val lexer = CymplLexer(cs).apply { setErrorListener(errorListener) }
 
         val tokens = CommonTokenStream(lexer)
-        val parser = CymplParser(tokens).setErrorListener(errorListener) as CymplParser
+        val parser = CymplParser(tokens).apply { setErrorListener(errorListener) }
 
         val programAST: ParseTree = parser.prog()
 
@@ -31,7 +29,7 @@ class AntlrProgramParser: Parser<Program> {
             return ParseResult.Failure(syntaxErrors)
         }
 
-        val semanticErrors:List<SemanticException> = semanticChecker.check(programAST)
+        val semanticErrors: List<SemanticException> = semanticChecker.check(programAST)
         if (semanticErrors.isNotEmpty()) {
             return ParseResult.Failure(semanticErrors)
         }

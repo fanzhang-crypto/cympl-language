@@ -9,14 +9,14 @@ class ForStatementTests {
     fun `support single statement in for loop`() {
         val input = """
             int x = 0;
-            for (int i = 0; i < 10; i = i + 1) 
+            for (int i = 0; i < 10; i++) 
                 x = x + i;
             x;
         """
 
         val output = """
             x:int = 0; => 0
-            for (i:int = 0; i < 10; i = i + 1;) x = x + i; => void
+            for (i:int = 0; i < 10; i++;) x = x + i; => void
             x; => 45
             environment:
             x:int = 45, i:int = 10

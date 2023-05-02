@@ -1,11 +1,17 @@
 package cympl.cli.command
 
 import cympl.analyzer.CallGraphAnalyzer
+import cympl.analyzer.Graph
 import cympl.parser.ParseResult
 import cympl.parser.Parser
 import cympl.language.Program
+import guru.nidi.graphviz.attribute.Font
+import guru.nidi.graphviz.attribute.Rank
+import guru.nidi.graphviz.attribute.Shape
+import guru.nidi.graphviz.attribute.Size
 import guru.nidi.graphviz.engine.Format
-import org.jline.terminal.Terminal
+import guru.nidi.graphviz.graph
+import guru.nidi.graphviz.toGraphviz
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.shell.standard.FileValueProvider
 import org.springframework.shell.standard.ShellComponent
@@ -13,11 +19,11 @@ import org.springframework.shell.standard.ShellMethod
 import org.springframework.shell.standard.ShellOption
 import java.io.File
 import java.io.FileInputStream
+import java.nio.file.Files
 
 @ShellComponent
 class AnalyzeCommand(
-    @Autowired private val parserFactory: () -> Parser<Program>,
-    @Autowired private val terminal: Terminal,
+    @Autowired private val parserFactory: () -> Parser<Program>
 ) {
 
     private val analyzer = CallGraphAnalyzer()
@@ -26,26 +32,19 @@ class AnalyzeCommand(
     fun analyze(
         @ShellOption(
             value = ["-f"],
-            defaultValue = ShellOption.NULL,
             help = "program file path to analyze",
             valueProvider = FileValueProvider::class
-        ) file: File?
+        ) file: File
     ) {
-        if (file == null) {
-            terminal.writer().println("File is required")
-            terminal.writer().flush()
-            return
-        }
-
         FileInputStream(file).use {
             when (val r = parserFactory().parse(it)) {
                 is ParseResult.Success<Program> -> {
-                    val outputFilename = "${file.nameWithoutExtension}-call-graph.png"
-                    val outputPath = file.path.replace(file.name, outputFilename)
+                    val outputPath = Files.createTempFile("call-graph-", "-${file.nameWithoutExtension}.png")
+
                     analyzer.analyze(r.value)
                         .toGraphviz()
                         .render(Format.PNG)
-                        .toFile(File(outputPath))
+                        .toFile(outputPath.toFile())
 
                     Runtime.getRuntime().exec("open $outputPath")
                 }
@@ -54,4 +53,12 @@ class AnalyzeCommand(
             }
         }
     }
+
+    private fun Graph.toGraphviz() = graph(directed = true) {
+        graph[Rank.dir(Rank.RankDir.TOP_TO_BOTTOM)]
+        node[Shape.CIRCLE, Font.name("Helvetica"), Font.size(15), Size.mode(Size.Mode.FIXED).size(1.0, 1.0)]
+
+        nodes.forEach { -it }
+        edges.forEach { (from, to) -> from - to }
+    }.toGraphviz()
 }

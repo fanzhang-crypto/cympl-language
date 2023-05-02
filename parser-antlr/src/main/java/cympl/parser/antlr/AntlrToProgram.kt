@@ -1,6 +1,5 @@
 package cympl.parser.antlr
 
-import CymplBaseVisitor
 import cympl.language.*
 
 internal class AntlrToProgram(typeResolver: TypeResolver, scopeResolver: ScopeResolver) : CymplBaseVisitor<Program>() {

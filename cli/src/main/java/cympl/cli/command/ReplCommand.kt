@@ -126,9 +126,12 @@ class ReplCommand(
         private const val QUIT_COMMAND = "quit"
 
         private val keywords = setOf(
-            "if", "else", "while", "for", "break", "continue", "return", "func", "true", "false",
+            "if", "else", "while", "for", "switch", "case", "break", "continue", "return", "true", "false",
             QUIT_COMMAND,
-            BuiltinType.VOID.name, BuiltinType.INT.name, BuiltinType.FLOAT.name, BuiltinType.BOOL.name,
+            BuiltinType.VOID.name,
+            BuiltinType.INT.name,
+            BuiltinType.FLOAT.name,
+            BuiltinType.BOOL.name,
             BuiltinType.STRING.name
         )
 

@@ -4,8 +4,6 @@ plugins {
 
 dependencies {
     implementation(project(":language"))
-    api("guru.nidi:graphviz-kotlin:0.18.1")
-    implementation("ch.qos.logback:logback-classic:1.4.6")
 
     testImplementation(project(":parser-common"))
     testImplementation(project(":parser-antlr"))
