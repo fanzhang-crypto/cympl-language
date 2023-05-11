@@ -28,7 +28,7 @@ sealed class BuiltinType {
     object STRING : BuiltinType()
 
     data class ARRAY(val elementType: BuiltinType) : BuiltinType() {
-        override fun toString() = "$elementType[]"
+        override fun toString() = if (elementType is FUNCTION) "($elementType)[]" else "$elementType[]"
     }
 
     data class FUNCTION(

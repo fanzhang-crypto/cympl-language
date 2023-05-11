@@ -16,17 +16,16 @@ A toy language implementation to learn how to build a compiler and interpreter.
 - Integer 32 bits
 - Float 64 bit
 - String Unicode characters, support concatenation and length property
-- Boolean true or false
+- Boolean
 - Array 1-dimensional and multidimensional. can be initialized with
   - literal form like `[]` or `[1, 2, 3]` 
   - new form like `new int[10]` or `new int[10, 10]`
-- Function type. 
+- Function 
   - `() -> int` means a function that takes no arguments and returns an integer
   - `(int) -> int` means a function that takes one integer and returns an integer
   - `(int, int) -> int` means a function that takes two integers and returns an integer
-- Null is both a type and a value
-- Void is a type, but not a value
-- Any is a type which is a super type of any other type
+- Void
+- Any is a super type of any other type
 
 ### C-like Syntax
 

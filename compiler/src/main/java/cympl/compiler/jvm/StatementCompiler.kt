@@ -36,14 +36,16 @@ internal object StatementCompiler {
         ctx.declareVar(id, type)
 
         expr?.let {
-            ExpressionCompiler.compile(it, ctx)
-            ctx.setVar(id, type)
+            ctx.setVar(id, type) {
+                ExpressionCompiler.compile(it, ctx)
+            }
         }
     }
 
     private fun Statement.Assignment.compile(ctx: MethodContext) {
-        ExpressionCompiler.compile(expr, ctx)
-        ctx.setVar(id, expr.resolvedType)
+        ctx.setVar(id, expr.resolvedType) {
+            ExpressionCompiler.compile(expr, ctx)
+        }
     }
 
     private fun Statement.ExpressionStatement.compile(ctx: MethodContext) {

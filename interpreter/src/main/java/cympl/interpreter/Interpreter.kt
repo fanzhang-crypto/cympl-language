@@ -116,11 +116,13 @@ class Interpreter(private val runtime: Runtime) {
     }
 
     private fun Statement.For.evaluate(scope: Environment): TValue = scope.withinLoop {
-        init?.evaluate(scope)
+        val forScope = Environment(scope)
 
-        while (condition?.evaluate(scope)?.asBoolean() != false) {
+        init?.evaluate(forScope)
+
+        while (condition?.evaluate(forScope)?.asBoolean() != false) {
             try {
-                body.evaluate(scope)
+                body.evaluate(forScope)
             } catch (jump: Jump) {
                 when (jump) {
                     is Jump.Return -> return@withinLoop jump.value
@@ -128,9 +130,9 @@ class Interpreter(private val runtime: Runtime) {
                     is Jump.Continue -> {}
                 }
             }
-            update?.evaluate(scope)
+            update?.evaluate(forScope)
         }
-        return@withinLoop TValue.VOID
+        TValue.VOID
     }
 
     private fun Statement.Switch.evaluate(scope: Environment): TValue {

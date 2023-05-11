@@ -331,44 +331,58 @@ internal object ExpressionCompiler {
     }
 
     private fun Expression.FunctionCall.compile(ctx: MethodContext) {
+        //TODO: support high order function call expression like `f()()` or `f()()()`
         val funcExpr = this.funcExpr
-        if (funcExpr !is Expression.Variable) {
-            //high order function call expression like `f()()` are not supported yet
-            throw CompilationException("function call unsupported for expression: $funcExpr")
-        }
-        val funcType = funcExpr.type
+
+        val funcType = funcExpr.resolvedType
         if (funcType !is BuiltinType.FUNCTION) {
             throw CompilationException("not a function: $funcExpr")
         }
 
-        when (funcExpr.id) {
-            IntrinsicFunction.PrintLine.id ->
-                IntrinsicCallCompiler.compilePrintLineCall(this, ctx)
+        fun callOrdinaryFunction(functionName: String) {
+            args.forEach { compile(it, ctx) }
+            ctx.invokeMethod(
+                functionName,
+                args.map { it.resolvedType.asmType }.toTypedArray(),
+                resolvedType.asmType
+            )
+        }
 
-            IntrinsicFunction.ReadLine.id ->
-                IntrinsicCallCompiler.compileReadLineCall(this, ctx)
+        fun callLambda() {
+            args.forEach { arg ->
+                compile(arg, ctx)
+                ctx.mv.box(arg.resolvedType.asmType)
+            }
+            val interfaceType = Type.getType(funcType.asJavaFunctionInterface)
+            val interfaceMethod = LambdaCompiler.getApplyBridgeMethod(interfaceType)
+            ctx.mv.invokeInterface(interfaceType, interfaceMethod)
+            ctx.mv.unbox(resolvedType.asmType)
+        }
 
-            else -> {
-                if (funcType.isFirstClass) {
-                    ctx.getVar(funcExpr.id, funcType)
-                    args.forEach { arg ->
-                        compile(arg, ctx)
-                        ctx.mv.box(arg.resolvedType.asmType)
+        when (funcExpr) {
+            is Expression.Variable -> {
+                when (funcExpr.id) {
+                    IntrinsicFunction.PrintLine.id ->
+                        IntrinsicCallCompiler.compilePrintLineCall(this, ctx)
+
+                    IntrinsicFunction.ReadLine.id ->
+                        IntrinsicCallCompiler.compileReadLineCall(this, ctx)
+
+                    else -> {
+                        if (funcType.isFirstClass) {
+                            funcExpr.compile(ctx)
+                            callLambda()
+                        } else {
+                            callOrdinaryFunction(funcExpr.id)
+                        }
                     }
-                    val interfaceType = Type.getType(funcType.asJavaFunctionInterface)
-                    val interfaceMethod = LambdaCompiler.getApplyBridgeMethod(interfaceType)
-                    ctx.mv.invokeInterface(interfaceType, interfaceMethod)
-                    ctx.mv.unbox(resolvedType.asmType)
-                } else {
-                    // normal function call
-                    args.forEach { compile(it, ctx) }
-                    ctx.invokeMethod(
-                        funcExpr.id,
-                        args.map { it.resolvedType.asmType }.toTypedArray(),
-                        resolvedType.asmType
-                    )
                 }
             }
+            is Expression.Index -> {
+                funcExpr.compile(ctx)
+                callLambda()
+            }
+            else -> throw CompilationException("function call unsupported for expression: $funcExpr")
         }
     }
 }

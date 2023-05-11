@@ -19,7 +19,7 @@ class ForStatementTests {
             for (i:int = 0; i < 10; i = i + 1;) x = x + i; => void
             x; => 45
             environment:
-            x:int = 45, i:int = 10
+            x:int = 45
         """
 
         verify(input, output)
@@ -40,7 +40,7 @@ class ForStatementTests {
             for (i:int = 0; i < 10; i = i + 1;) { x = x + i; } => void
             x; => 45
             environment:
-            x:int = 45, i:int = 10
+            x:int = 45
         """
 
         verify(input, output)
@@ -68,7 +68,7 @@ class ForStatementTests {
             for (i:int = 0; i < 10; i = i + 1;) { for (j:int = 0; j < 10; j = j + 1;) { if (j % 2 == 0) { continue; } x = x + 1; if (j > 5) { break; } } } => void
             x; => 40
             environment:
-            x:int = 40, i:int = 10
+            x:int = 40
         """
 
         verify(input, output)
@@ -114,7 +114,7 @@ class ForStatementTests {
             for (i:int = 0; ; i = i + 1;) { x = x + i; if (i > 10) { break; } } => void
             x; => 66
             environment:
-            x:int = 66, i:int = 11
+            x:int = 66
         """.trimIndent()
 
         verify(input, output)

@@ -61,8 +61,7 @@ open class TValue(val type: BuiltinType, val value: Any) {
             BuiltinType.INT -> TValue(type, 0)
             BuiltinType.FLOAT -> TValue(type, 0.0)
             BuiltinType.STRING -> TValue(type, "")
-            is BuiltinType.ARRAY -> NULL
-            else -> throw InterpretException("unknown type $type")
+            is BuiltinType.ARRAY, is BuiltinType.FUNCTION -> NULL
         }
     }
 }

@@ -28,17 +28,37 @@ internal class ClassContext(
         MethodContext(cw, access, method, signature, this, inLambda).apply(block)
     }
 
-    fun declare(name: String, type: BuiltinType, asWrapperType: Boolean = false) {
+    private val instanceFieldNames = mutableSetOf<String>()
+    private val staticFieldNames = mutableSetOf<String>()
+
+    fun declareField(access: Int, name: String, type: BuiltinType, asWrapperType: Boolean = false) {
         val descriptor = if (asWrapperType) type.asmType.wrapperType.descriptor else type.asmType.descriptor
-        cw.visitField(ACC_PRIVATE + ACC_STATIC, name, descriptor, type.signature, null).visitEnd()
+        cw.visitField(access, name, descriptor, type.signature, null).visitEnd()
+
+        if (access and ACC_STATIC != 0)
+            staticFieldNames += name
+        else
+            instanceFieldNames += name
     }
 
-    fun set(mv: GeneratorAdapter, name: String, type: BuiltinType) {
-        mv.putStatic(classType, name, type.asmType)
+    fun set(mv: GeneratorAdapter, name: String, type: BuiltinType, value: () -> Unit) {
+        if (name in instanceFieldNames) {
+            mv.loadThis()
+            value()
+            mv.putField(classType, name, type.asmType)
+        } else {
+            value()
+            mv.putStatic(classType, name, type.asmType)
+        }
     }
 
     fun get(mv: GeneratorAdapter, name: String, type: BuiltinType) {
-        mv.getStatic(classType, name, type.asmType)
+        if (name in instanceFieldNames) {
+            mv.loadThis()
+            mv.getField(classType, name, type.asmType)
+        } else {
+            mv.getStatic(classType, name, type.asmType)
+        }
     }
 
     fun increment(mv: GeneratorAdapter, name: String, type: BuiltinType, postfix: Boolean, asStatement: Boolean) {
@@ -70,7 +90,7 @@ internal class ClassContext(
             else -> throw IllegalArgumentException("unsupported type: $type")
         }
 
-        set(mv, name, type)
+        set(mv, name, type) {}
     }
 
     fun decrement(mv: GeneratorAdapter, name: String, type: BuiltinType, postfix: Boolean, asStatement: Boolean) {
@@ -101,6 +121,6 @@ internal class ClassContext(
 
             else -> throw IllegalArgumentException("unsupported type: $type")
         }
-        set(mv, name, type)
+        set(mv, name, type){}
     }
 }

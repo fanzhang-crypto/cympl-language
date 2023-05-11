@@ -3,7 +3,7 @@ package cympl.compiler.jvm
 import cympl.runtime.*
 import cympl.language.*
 import org.objectweb.asm.Label
-import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.Method
 import org.objectweb.asm.signature.SignatureWriter
@@ -24,7 +24,7 @@ internal object LambdaCompiler {
 
         return ctx.defineInnerClass(className, classSignature, arrayOf(interfaceType.internalName)) {
             lambda.captures.forEach { (name, type) ->
-                declare(name, type)
+                declareField(ACC_PRIVATE, name, type)
             }
 
             defineConstructor(lambda.captures) {
@@ -33,7 +33,7 @@ internal object LambdaCompiler {
                 lambda.captures.forEachIndexed { index, param ->
                     mv.loadThis()
                     mv.loadArg(index)
-                    mv.putStatic(classType, param.id, param.type.asmType)
+                    mv.putField(classType, param.id, param.type.asmType)
                 }
                 mv.returnValue()
                 mv.endMethod()
@@ -52,7 +52,7 @@ internal object LambdaCompiler {
             lambdaType.paramTypes.map { it.asmType.wrapperType }.toTypedArray()
         )
 
-        ctx.defineMethod(Opcodes.ACC_PUBLIC, method) {
+        ctx.defineMethod(ACC_PUBLIC, method) {
             val methodStart = Label()
             val methodEnd = Label()
 
@@ -81,7 +81,7 @@ internal object LambdaCompiler {
     ) {
         val bridgeMethod = getApplyBridgeMethod(interfaceType)
 
-        ctx.defineMethod(Opcodes.ACC_PUBLIC + Opcodes.ACC_SYNTHETIC + Opcodes.ACC_BRIDGE, bridgeMethod) {
+        ctx.defineMethod(ACC_PUBLIC + ACC_SYNTHETIC + ACC_BRIDGE, bridgeMethod) {
             mv.loadThis()
 
             lambdaType.paramTypes.forEachIndexed { argIndex, type ->
@@ -130,7 +130,7 @@ internal object LambdaCompiler {
             Function0::class.java.name,
             classSignature,
             emptyArray(),
-            Opcodes.ACC_PUBLIC + Opcodes.ACC_INTERFACE + Opcodes.ACC_ABSTRACT
+            ACC_PUBLIC + ACC_INTERFACE + ACC_ABSTRACT
         ) {
             val methodSignature = SignatureWriter().apply {
                 visitReturnType()
@@ -138,7 +138,7 @@ internal object LambdaCompiler {
             }.toString()
 
             defineMethod(
-                Opcodes.ACC_PUBLIC + Opcodes.ACC_ABSTRACT,
+                ACC_PUBLIC + ACC_ABSTRACT,
                 Method.getMethod("Object apply ()"),
                 methodSignature
             ) {
@@ -166,7 +166,7 @@ internal object LambdaCompiler {
             Function1::class.java.name,
             classSignature,
             emptyArray(),
-            Opcodes.ACC_PUBLIC + Opcodes.ACC_INTERFACE + Opcodes.ACC_ABSTRACT
+            ACC_PUBLIC + ACC_INTERFACE + ACC_ABSTRACT
         ) {
             val methodSignature = SignatureWriter().apply {
                 visitParameterType()
@@ -177,7 +177,7 @@ internal object LambdaCompiler {
             }.toString()
 
             defineMethod(
-                Opcodes.ACC_PUBLIC + Opcodes.ACC_ABSTRACT,
+                ACC_PUBLIC + ACC_ABSTRACT,
                 Method.getMethod("Object apply (Object)"),
                 methodSignature
             ) {
@@ -207,7 +207,7 @@ internal object LambdaCompiler {
             Function2::class.java.name,
             classSignature,
             emptyArray(),
-            Opcodes.ACC_PUBLIC + Opcodes.ACC_INTERFACE + Opcodes.ACC_ABSTRACT
+            ACC_PUBLIC + ACC_INTERFACE + ACC_ABSTRACT
         ) {
             val methodSignature = SignatureWriter().apply {
                 visitParameterType()
@@ -220,7 +220,7 @@ internal object LambdaCompiler {
             }.toString()
 
             defineMethod(
-                Opcodes.ACC_PUBLIC + Opcodes.ACC_ABSTRACT,
+                ACC_PUBLIC + ACC_ABSTRACT,
                 Method.getMethod("Object apply (Object, Object)"),
                 methodSignature
             ) {

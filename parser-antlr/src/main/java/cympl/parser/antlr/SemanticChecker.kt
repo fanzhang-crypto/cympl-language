@@ -207,6 +207,11 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                     assignVarSymbol?.type ?: BuiltinType.VOID
                 }
 
+                is IndexAssignContext -> {
+                    val arrayType = types.get(parent.arrayExpr) as BuiltinType.ARRAY
+                    arrayType.elementType
+                }
+
                 is ExprlistContext -> {
                     val functionCallContext = parent.parent
                     if (functionCallContext !is FunctionCallContext) {
@@ -494,6 +499,10 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                 }
 
                 is FunctionCallContext -> {
+                    types.get(funcExpr)
+                }
+
+                is IndexContext -> {
                     types.get(funcExpr)
                 }
 

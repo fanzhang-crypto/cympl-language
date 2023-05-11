@@ -974,6 +974,62 @@ class JvmCompilerTest {
     }
 
     @Test
+    fun `lambda array test`() {
+        val input = """
+            (() -> int)[] a = new () -> int[12];
+        
+            for (int i = 0; i < 10; i++) {
+                a[i] = () -> i;
+            }
+            
+            println(a[6]());
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            6
+        """.trimIndent()
+    }
+
+    @Test
+    fun `fibonacci test`() {
+        val input = """
+            () -> int fibonacci() {
+                int a = 0;
+                int b = 1;
+                return () -> {
+                    int c = a;
+                    a = b;
+                    b = a + c;
+                    return c;
+                };
+            }
+
+            () -> int fibo = fibonacci();
+
+            for (int i = 0; i < 10; i++) {
+                println(fibo());
+            }
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            0
+            1
+            1
+            2
+            3
+            5
+            8
+            13
+            21
+            34
+        """.trimIndent()
+    }
+
+    @Test
     fun `quick sort test`() {
         val input = """
             int[] quickSort(int[] arr) {

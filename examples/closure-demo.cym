@@ -1,0 +1,10 @@
+#! cympl interpret
+
+(() -> int)[] a = new () -> int[10];
+
+for (int i = 0; i < 10; i++) {
+    int ii = i;
+    a[i] = () -> ii;
+}
+
+println(a[6]()); // 6

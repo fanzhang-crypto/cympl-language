@@ -23,7 +23,16 @@ statement
     | block                         #BlockStatement
 ;
 
-type: VOID_TYPE | INT_TYPE | FLOAT_TYPE | STRING_TYPE | BOOL_TYPE | type '[' ']' | funcType;
+type
+    : VOID_TYPE                     #VoidType
+    | INT_TYPE                      #IntType
+    | FLOAT_TYPE                    #FloatType
+    | STRING_TYPE                   #StringType
+    | BOOL_TYPE                     #BoolType
+    | funcType                      #FunctionType
+    | '(' funcType ')' '[' ']'      #FunctionArrayType //to distinguish cases like (() -> int)[] and () -> int[]
+    | type '[' ']'                  #ArrayType
+    ;
 
 funcType: '(' paramTypes=typeList? ')' ARROW_RIGHT retType=type;
 typeList

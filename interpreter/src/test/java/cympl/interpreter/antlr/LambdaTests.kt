@@ -110,4 +110,51 @@ class LambdaTests {
 
         verify(input, output)
     }
+
+    @Test
+    fun `lambda array test`() {
+        val input = """
+            (() -> int)[] a = new () -> int[10];
+
+            for (int i = 0; i < 10; i++) {
+              a[i] = () -> i;
+            }
+
+            a[6]();
+        """.trimIndent()
+
+        val output = """
+            a:(() -> int)[] = new () -> int[10]; => [null, null, null, null, null, null, null, null, null, null]
+            for (i:int = 0; i < 10; i++;) { a[i] = () -> i } => void
+            a[6](); => 10
+            environment:
+            a:(() -> int)[] = [Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>)]
+        """.trimIndent()
+
+        verify(input, output)
+    }
+
+    @Test
+    fun `lambda array test2`() {
+        val input = """
+            (() -> int)[] a = new () -> int[10];
+
+            for (int i = 0; i < 10; i++) {
+              int ii = i;
+              a[i] = () -> ii;
+            }
+
+            a[6]();
+        """.trimIndent()
+
+        val output = """
+            a:(() -> int)[] = new () -> int[10]; => [null, null, null, null, null, null, null, null, null, null]
+            for (i:int = 0; i < 10; i++;) { ii:int = i; a[i] = () -> ii } => void
+            a[6](); => 6
+            environment:
+            a:(() -> int)[] = [Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>)]
+        """.trimIndent()
+
+        verify(input, output)
+    }
 }

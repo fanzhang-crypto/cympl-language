@@ -31,7 +31,7 @@ internal class MethodContext(
 
     fun declareVar(name: String, type: BuiltinType, asWrapperType: Boolean = false): Int =
         if (inMainMethod && namingScope.isRoot) {
-            classContext.declare(name, type, asWrapperType)
+            classContext.declareField(ACC_PRIVATE + ACC_STATIC, name, type, asWrapperType)
             -1
         } else {
             localVarContext.declare(name, type, asWrapperType)
@@ -45,10 +45,11 @@ internal class MethodContext(
         }
     }
 
-    fun setVar(name: String, type: BuiltinType) {
+    fun setVar(name: String, type: BuiltinType, value: () -> Unit) {
         if ((inMainMethod && namingScope.isRoot) || !localVarContext.contains(name)) {
-            classContext.set(mv, name, type)
+            classContext.set(mv, name, type, value)
         } else {
+            value()
             localVarContext.set(name)
         }
     }
