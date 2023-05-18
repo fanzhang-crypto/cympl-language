@@ -5,7 +5,6 @@ import cympl.parser.*
 import cympl.parser.Parser
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.atn.ATNSimulator
-import org.antlr.v4.runtime.tree.ParseTree
 import java.io.InputStream
 
 class AntlrProgramParser : Parser<Program> {
@@ -22,19 +21,19 @@ class AntlrProgramParser : Parser<Program> {
         val tokens = CommonTokenStream(lexer)
         val parser = CymplParser(tokens).apply { setErrorListener(errorListener) }
 
-        val programAST: ParseTree = parser.prog()
+        val root = parser.prog()
 
         val syntaxErrors = errorListener.syntaxErrors
         if (syntaxErrors.isNotEmpty()) {
             return ParseResult.Failure(syntaxErrors)
         }
 
-        val semanticErrors: List<SemanticException> = semanticChecker.check(programAST)
+        val semanticErrors: List<SemanticException> = semanticChecker.check(root)
         if (semanticErrors.isNotEmpty()) {
             return ParseResult.Failure(semanticErrors)
         }
 
-        val program = programVisitor.visit(programAST)
+        val program = programVisitor.visit(root)
         return ParseResult.Success(program)
     }
 

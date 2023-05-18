@@ -17,17 +17,17 @@ class SemanticChecker : TypeResolver, ScopeResolver {
     private val scopes = ParseTreeProperty<Scope>()
     private val types = ParseTreeProperty<BuiltinType>()
 
-    fun check(programAST: ParseTree): List<SemanticException> {
+    fun check(root: ParseTree): List<SemanticException> {
         val walker = ParseTreeWalker.DEFAULT
 
         val defPhase = DefPhase()
-        walker.walk(defPhase, programAST)
+        walker.walk(defPhase, root)
 
         val typeCheckPhase = TypeCheckPhase()
-        walker.walk(typeCheckPhase, programAST)
+        walker.walk(typeCheckPhase, root)
 
         val refPhase = RefPhase()
-        walker.walk(refPhase, programAST)
+        walker.walk(refPhase, root)
 
         return (defPhase.semanticErrors + typeCheckPhase.semanticErrors + refPhase.semanticErrors).sorted()
     }

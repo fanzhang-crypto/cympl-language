@@ -19,7 +19,7 @@ A toy language implementation to learn how to build a compiler and interpreter.
 - Boolean
 - Array 1-dimensional and multidimensional. can be initialized with
   - literal form like `[]` or `[1, 2, 3]` 
-  - new form like `new int[10]` or `new int[10, 10]`
+  - new form like `new int[10]` or `new int[10][10]`
 - Function 
   - `() -> int` means a function that takes no arguments and returns an integer
   - `(int) -> int` means a function that takes one integer and returns an integer
@@ -32,7 +32,7 @@ A toy language implementation to learn how to build a compiler and interpreter.
 #### C-like syntax for variable declaration and function declaration
 - `int x = 1`
 - `float y = 2.0`
-- `string z = "hello"`
+- `String z = "hello"`
 - `boolean b = true`
 - `int[] a = [1, 2, 3]`
 - `int[][] b = [[1, 2, 3], [4, 5, 6]]`
@@ -51,8 +51,8 @@ A toy language implementation to learn how to build a compiler and interpreter.
 - array indexing: `a[0]`, `b[0][1]`
 - function call: `add(1, 2)`
 - variable assignment: `x = 1`
-- lambda expression: `(int x) -> x + 1`
-- closure: `int add(int x) { return (int y) -> x + y; }`
+- lambda expression: `(x) -> x + 1`
+- closure: `int add(int x) { return (y) -> x + y; }`
 
 #### Built-in functions
 - `println(any x)`

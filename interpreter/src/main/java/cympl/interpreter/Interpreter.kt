@@ -8,16 +8,16 @@ import cympl.interpreter.RuntimeTypeChecker.checkArrayDimension
 
 class Interpreter(private val runtime: Runtime) {
 
-    private val globalScope = Environment()
+    private val env = Environment()
 
     init {
-        val printLine = Closure(IntrinsicFunction.PrintLine, globalScope)
-        val readLine = Closure(IntrinsicFunction.ReadLine, globalScope)
-        globalScope.defineVariable(IntrinsicFunction.PrintLine.id, printLine)
-        globalScope.defineVariable(IntrinsicFunction.ReadLine.id, readLine)
+        val printLine = Closure(IntrinsicFunction.PrintLine, env)
+        val readLine = Closure(IntrinsicFunction.ReadLine, env)
+        env.defineVariable(IntrinsicFunction.PrintLine.id, printLine)
+        env.defineVariable(IntrinsicFunction.ReadLine.id, readLine)
     }
 
-    val globalSymbols: Set<String> get() = globalScope.getVariables().keys
+    val globalSymbols: Set<String> get() = env.getVariables().keys
 
     sealed class Jump : Throwable() {
         data class Return(val value: TValue) : Jump()
@@ -28,7 +28,7 @@ class Interpreter(private val runtime: Runtime) {
     fun interpret(program: Program, verbose: Boolean = true): Sequence<String> = sequence {
         for (stat in program.statements) {
             try {
-                val result = stat.evaluate(globalScope)
+                val result = stat.evaluate(env)
                 if (verbose) {
                     yield("$stat => ${formatTValue(result)}")
                 }
@@ -48,36 +48,36 @@ class Interpreter(private val runtime: Runtime) {
         }
     }
 
-    private fun Statement.evaluate(scope: Environment): TValue = when (this) {
-        is Statement.VariableDeclaration -> evaluate(scope)
-        is Statement.Assignment -> evaluate(scope)
-        is Statement.IndexAssignment -> evaluate(scope)
-        is Statement.FunctionDeclaration -> evaluate(scope)
-        is Statement.Block -> evaluate(scope)
-        is Statement.ExpressionStatement -> expr.evaluate(scope)
-        is Statement.If -> evaluate(scope)
-        is Statement.While -> evaluate(scope)
-        is Statement.For -> evaluate(scope)
+    private fun Statement.evaluate(env: Environment): TValue = when (this) {
+        is Statement.VariableDeclaration -> evaluate(env)
+        is Statement.Assignment -> evaluate(env)
+        is Statement.IndexAssignment -> evaluate(env)
+        is Statement.FunctionDeclaration -> evaluate(env)
+        is Statement.Block -> evaluate(env)
+        is Statement.ExpressionStatement -> expr.evaluate(env)
+        is Statement.If -> evaluate(env)
+        is Statement.While -> evaluate(env)
+        is Statement.For -> evaluate(env)
         is Statement.Break -> {
-            if (scope.isInLoop())
+            if (env.isInLoop())
                 throw Jump.Break
             else
                 throw InterpretException("break outside of loop")
         }
 
         is Statement.Continue -> {
-            if (scope.isInLoop())
+            if (env.isInLoop())
                 throw Jump.Continue
             else
                 throw InterpretException("continue outside of loop")
         }
 
         is Statement.Return -> {
-            val value = expr?.evaluate(scope) ?: TValue.VOID
+            val value = expr?.evaluate(env) ?: TValue.VOID
             throw Jump.Return(value)
         }
 
-        is Statement.Switch -> evaluate(scope)
+        is Statement.Switch -> evaluate(env)
 
         else -> throw InterpretException("unknown statement $this")
     }
@@ -92,18 +92,18 @@ class Interpreter(private val runtime: Runtime) {
         return TValue.VOID
     }
 
-    private fun Statement.If.evaluate(scope: Environment): TValue {
-        return if (condition.evaluate(scope).asBoolean()) {
-            thenBranch.evaluate(scope)
+    private fun Statement.If.evaluate(env: Environment): TValue {
+        return if (condition.evaluate(env).asBoolean()) {
+            thenBranch.evaluate(env)
         } else {
-            elseBranch?.evaluate(scope) ?: TValue.VOID
+            elseBranch?.evaluate(env) ?: TValue.VOID
         }
     }
 
-    private fun Statement.While.evaluate(scope: Environment): TValue = scope.withinLoop {
-        while (condition.evaluate(scope).asBoolean()) {
+    private fun Statement.While.evaluate(env: Environment): TValue = env.withinLoop {
+        while (condition.evaluate(env).asBoolean()) {
             try {
-                body.evaluate(scope)
+                body.evaluate(env)
             } catch (jump: Jump) {
                 when (jump) {
                     is Jump.Return -> return@withinLoop jump.value
@@ -115,8 +115,8 @@ class Interpreter(private val runtime: Runtime) {
         return@withinLoop TValue.VOID
     }
 
-    private fun Statement.For.evaluate(scope: Environment): TValue = scope.withinLoop {
-        val forScope = Environment(scope)
+    private fun Statement.For.evaluate(env: Environment): TValue = env.withinLoop {
+        val forScope = Environment(env)
 
         init?.evaluate(forScope)
 
@@ -135,13 +135,13 @@ class Interpreter(private val runtime: Runtime) {
         TValue.VOID
     }
 
-    private fun Statement.Switch.evaluate(scope: Environment): TValue {
-        val value = expr.evaluate(scope)
+    private fun Statement.Switch.evaluate(env: Environment): TValue {
+        val value = expr.evaluate(env)
         var matched = false
         for (case in cases) {
-            matched = matched || case.condition.evaluate(scope) == value
+            matched = matched || case.condition.evaluate(env) == value
             if (matched) {
-                case.action?.evaluate(scope)
+                case.action?.evaluate(env)
             } else {
                 continue
             }
@@ -150,32 +150,32 @@ class Interpreter(private val runtime: Runtime) {
             }
         }
         if (!matched) {
-            defaultCase?.evaluate(scope)
+            defaultCase?.evaluate(env)
         }
         return TValue.VOID
     }
 
-    private fun Statement.FunctionDeclaration.evaluate(scope: Environment): TValue {
-        if (scope.containsVariable(id, true)) {
+    private fun Statement.FunctionDeclaration.evaluate(env: Environment): TValue {
+        if (env.containsVariable(id, true)) {
             throw InterpretException("function $id already declared")
         }
-        return Closure(this, scope)
-            .also { scope.defineVariable(id, it) }
+        return Closure(this, env)
+            .also { env.defineVariable(id, it) }
     }
 
-    private fun Statement.Assignment.evaluate(scope: Environment): TValue {
-        scope.resolveVariable(id)
+    private fun Statement.Assignment.evaluate(env: Environment): TValue {
+        env.resolveVariable(id)
             ?: throw InterpretException("variable $id not defined")
 
-        val value = expr.evaluate(scope)
-        scope.setVariable(id, value)
+        val value = expr.evaluate(env)
+        env.setVariable(id, value)
         return value
     }
 
-    private fun Statement.IndexAssignment.evaluate(scope: Environment): TValue {
-        val arrayIndexing = ArrayIndexing(arrayExpr, indexExpr, scope)
+    private fun Statement.IndexAssignment.evaluate(env: Environment): TValue {
+        val arrayIndexing = ArrayIndexing(arrayExpr, indexExpr, env)
 
-        val value = valueExpr.evaluate(scope)
+        val value = valueExpr.evaluate(env)
         assertValueType(value, arrayIndexing.arrayType.elementType)
 
         arrayIndexing.setValue(value)
@@ -183,11 +183,11 @@ class Interpreter(private val runtime: Runtime) {
         return value
     }
 
-    private fun Statement.VariableDeclaration.evaluate(scope: Environment): TValue {
-        if (scope.containsVariable(id, true)) {
+    private fun Statement.VariableDeclaration.evaluate(env: Environment): TValue {
+        if (env.containsVariable(id, true)) {
             throw InterpretException("variable $id already declared")
         }
-        return expr!!.evaluate(scope)
+        return expr!!.evaluate(env)
             .also { result ->
                 assertValueType(result, type)
                 // TEmptyArray has no concrete type, so we need to cast it to the type of the variable
@@ -195,63 +195,63 @@ class Interpreter(private val runtime: Runtime) {
                     TValue.TEmptyArray.castTo(type as BuiltinType.ARRAY)
                 else result
 
-                scope.defineVariable(id, variable)
+                env.defineVariable(id, variable)
             }
     }
 
-    private fun Expression.evaluate(scope: Environment): TValue = when (this) {
-        is Expression.Parenthesized -> expr.evaluate(scope)
+    private fun Expression.evaluate(env: Environment): TValue = when (this) {
+        is Expression.Parenthesized -> expr.evaluate(env)
 
         is Expression.Addition -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Arithmetic.Plus.apply(left, right)
         }
 
         is Expression.Subtraction -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Arithmetic.Minus.apply(left, right)
         }
 
         is Expression.Multiplication -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Arithmetic.Times.apply(left, right)
         }
 
         is Expression.Division -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Arithmetic.Div.apply(left, right)
         }
 
         is Expression.Remainder -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Arithmetic.Rem.apply(left, right)
         }
 
         is Expression.Power -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Arithmetic.Pow.apply(left, right)
         }
 
         is Expression.Negation -> {
-            val tvalue = expr.evaluate(scope)
+            val tvalue = expr.evaluate(env)
             UnaryOperation.Minus.apply(tvalue)
         }
 
         is Expression.Increment -> {
             val target = expr
-            val tvalue = target.evaluate(scope)
+            val tvalue = target.evaluate(env)
             val tvalueUpdated = UnaryOperation.Increment.apply(tvalue)
 
             when (target) {
-                is Expression.Variable -> scope.setVariable(target.id, tvalueUpdated)
+                is Expression.Variable -> env.setVariable(target.id, tvalueUpdated)
                 is Expression.Index -> {
-                    val arrayIndexing = ArrayIndexing(target.arrayExpr, target.indexExpr, scope)
+                    val arrayIndexing = ArrayIndexing(target.arrayExpr, target.indexExpr, env)
                     arrayIndexing.setValue(tvalueUpdated)
                 }
 
@@ -263,13 +263,13 @@ class Interpreter(private val runtime: Runtime) {
 
         is Expression.Decrement -> {
             val target = expr
-            val tvalue = target.evaluate(scope)
+            val tvalue = target.evaluate(env)
             val tvalueUpdated = UnaryOperation.Decrement.apply(tvalue)
 
             when (target) {
-                is Expression.Variable -> scope.setVariable(target.id, tvalueUpdated)
+                is Expression.Variable -> env.setVariable(target.id, tvalueUpdated)
                 is Expression.Index -> {
-                    val arrayIndexing = ArrayIndexing(target.arrayExpr, target.indexExpr, scope)
+                    val arrayIndexing = ArrayIndexing(target.arrayExpr, target.indexExpr, env)
                     arrayIndexing.setValue(tvalueUpdated)
                 }
 
@@ -280,24 +280,24 @@ class Interpreter(private val runtime: Runtime) {
         }
 
         is Expression.And -> {
-            val left = left.evaluate(scope)
-            val right = { right.evaluate(scope) }
+            val left = left.evaluate(env)
+            val right = { right.evaluate(env) }
             BinaryOperation.Logical.And.apply(left, right)
         }
 
         is Expression.Or -> {
-            val left = left.evaluate(scope)
-            val right = { right.evaluate(scope) }
+            val left = left.evaluate(env)
+            val right = { right.evaluate(env) }
             BinaryOperation.Logical.Or.apply(left, right)
         }
 
         is Expression.Not -> {
-            val tvalue = expr.evaluate(scope)
+            val tvalue = expr.evaluate(env)
             UnaryOperation.Not.apply(tvalue)
         }
 
         is Expression.Variable -> {
-            scope.resolveVariable(id) ?: throw InterpretException("variable $id not defined")
+            env.resolveVariable(id) ?: throw InterpretException("variable $id not defined")
         }
 
         is Expression.BoolLiteral -> TValue(BuiltinType.BOOL, value)
@@ -306,43 +306,43 @@ class Interpreter(private val runtime: Runtime) {
         is Expression.StringLiteral -> TValue(BuiltinType.STRING, value)
 
         is Expression.Equality -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Comparison.Eq.apply(left, right)
         }
 
         is Expression.Inequality -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Comparison.Neq.apply(left, right)
         }
 
         is Expression.GreaterThan -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Comparison.Gt.apply(left, right)
         }
 
         is Expression.GreaterThanOrEqual -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Comparison.Geq.apply(left, right)
         }
 
         is Expression.LessThan -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Comparison.Lt.apply(left, right)
         }
 
         is Expression.LessThanOrEqual -> {
-            val left = left.evaluate(scope)
-            val right = right.evaluate(scope)
+            val left = left.evaluate(env)
+            val right = right.evaluate(env)
             BinaryOperation.Comparison.Leq.apply(left, right)
         }
 
         is Expression.ArrayLiteral -> {
-            val elements = elements.map { it.evaluate(scope) }.toTypedArray()
+            val elements = elements.map { it.evaluate(env) }.toTypedArray()
             if (elements.isEmpty()) {
                 TValue.TEmptyArray
             } else {
@@ -353,16 +353,16 @@ class Interpreter(private val runtime: Runtime) {
 
         is Expression.NewArray -> when {
             dimensions.size == 1 -> {
-                val dimension = dimensions.first().evaluate(scope).let { checkArrayDimension(it) }
+                val dimension = dimensions.first().evaluate(env).let { checkArrayDimension(it) }
                 val elements = Array(dimension) { TValue.defaultValueOf(elementType) }
                 TValue(resolvedType, elements)
             }
 
             dimensions.size > 1 -> {
-                val dimension = dimensions.first().evaluate(scope).let { checkArrayDimension(it) }
+                val dimension = dimensions.first().evaluate(env).let { checkArrayDimension(it) }
 
                 TValue(resolvedType, Array(dimension) {
-                    Expression.NewArray(elementType, dimensions.drop(1)).evaluate(scope)
+                    Expression.NewArray(elementType, dimensions.drop(1)).evaluate(env)
                 })
             }
 
@@ -374,18 +374,18 @@ class Interpreter(private val runtime: Runtime) {
         is Expression.FunctionCall -> {
             val closure = when (val funcExpr = this.funcExpr) {
                 is Expression.Variable -> {
-                    scope.resolveVariable(funcExpr.id) as? Closure
+                    env.resolveVariable(funcExpr.id) as? Closure
                         ?: throw InterpretException("function not defined: $funcExpr")
                 }
 
                 else -> {
-                    funcExpr.evaluate(scope) as? Closure
+                    funcExpr.evaluate(env) as? Closure
                         ?: throw InterpretException("not a function: $funcExpr")
                 }
             }
 
             val function = closure.function
-            val args = args.map { it.evaluate(scope) }
+            val args = args.map { it.evaluate(env) }
             if (args.size != function.parameters.size) {
                 throw InterpretException("function $funcExpr expects ${function.parameters.size} arguments, got ${args.size}")
             }
@@ -409,11 +409,11 @@ class Interpreter(private val runtime: Runtime) {
         }
 
         is Expression.Index -> {
-            ArrayIndexing(arrayExpr, indexExpr, scope).getValue()
+            ArrayIndexing(arrayExpr, indexExpr, env).getValue()
         }
 
         is Expression.Property -> {
-            val owner = expr.evaluate(scope)
+            val owner = expr.evaluate(env)
             when (owner.type) {
                 is BuiltinType.ARRAY -> {
                     @Suppress("UNCHECKED_CAST")
@@ -452,7 +452,7 @@ class Interpreter(private val runtime: Runtime) {
                 parameters = paramDecls,
                 body = Statement.Block(listOf(body))
             )
-            Closure(functionDeclaration, scope)
+            Closure(functionDeclaration, env)
         }
     }
 
@@ -482,7 +482,7 @@ class Interpreter(private val runtime: Runtime) {
     private fun dumpEnvironment(): Sequence<String> = sequence {
         yield("environment:")
 
-        val (functions, variables) = globalScope.getVariables()
+        val (functions, variables) = env.getVariables()
             .asSequence()
             .partition { it.value is Closure }
 
@@ -501,14 +501,14 @@ class Interpreter(private val runtime: Runtime) {
         }
     }
 
-    private inner class ArrayIndexing(arrayExpr: Expression, indexExpr: Expression, scope: Environment) {
+    private inner class ArrayIndexing(arrayExpr: Expression, indexExpr: Expression, env: Environment) {
         val array: Array<TValue>
         val index: Int
         val arrayType: BuiltinType.ARRAY
 
         init {
-            val arrayTValue = arrayExpr.evaluate(scope)
-            val indexTValue = indexExpr.evaluate(scope)
+            val arrayTValue = arrayExpr.evaluate(env)
+            val indexTValue = indexExpr.evaluate(env)
             if (arrayTValue.type !is BuiltinType.ARRAY) {
                 throw InterpretException("indexing non-array type ${arrayTValue.type}")
             }
