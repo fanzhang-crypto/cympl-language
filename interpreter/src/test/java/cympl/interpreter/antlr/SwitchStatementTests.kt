@@ -24,8 +24,8 @@ class SwitchStatementTests {
         """
 
         val output = """
-            x:int = 1; => 1
-            result:String = ""; => ""
+            int x = 1; => 1
+            String result = ""; => ""
             switch (x) {
             case 1:result = "one";break;
             case 2:result = "two";break;
@@ -56,8 +56,8 @@ class SwitchStatementTests {
         """
 
         val output = """
-            x:int = 1; => 1
-            result:String = ""; => ""
+            int x = 1; => 1
+            String result = ""; => ""
             switch (x) {
             case 1:
             case 2:result = "one or two";break;
@@ -93,8 +93,8 @@ class SwitchStatementTests {
         """
 
         val output = """
-            x:int = 2; => 2
-            result:String = ""; => ""
+            int x = 2; => 2
+            String result = ""; => ""
             switch (x) {
             case 1:result = result + "one";
             case 2:result = result + "two";
@@ -129,8 +129,8 @@ class SwitchStatementTests {
         """
 
         val output = """
-            x:int = 4; => 4
-            result:String = ""; => ""
+            int x = 4; => 4
+            String result = ""; => ""
             switch (x) {
             case 1:result = "one";break;
             case 2:result = "two";break;
@@ -161,8 +161,8 @@ class SwitchStatementTests {
         """
 
         val output = """
-            x:int = 4; => 4
-            result:String = ""; => ""
+            int x = 4; => 4
+            String result = ""; => ""
             switch (x) {
             case 1:result = "one";break;
             case 2:result = "two";break;
@@ -192,7 +192,7 @@ class SwitchStatementTests {
         """
 
         val output = """
-            func foo(x:int):String { switch (x) {
+            func foo(int x):String { switch (x) {
             case 1:return "one";
             case 2:return "two";
             default:return "other";

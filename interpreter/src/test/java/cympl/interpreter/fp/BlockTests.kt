@@ -17,7 +17,7 @@ class BlockTests  {
             }
         """
         val output = """
-            { x:int = 1; { x:int = 2; } x; } => void
+            { int x = 1; { int x = 2; } x; } => void
             environment:
         """
         verify(input, output)
@@ -35,7 +35,7 @@ class BlockTests  {
             }
         """
         val output = """
-            { func f(x:int):int { return x + 1; } { func f(x:int):int { return x + 2; } } f(1); } => void
+            { func f(int x):int { return x + 1; } { func f(int x):int { return x + 2; } } f(1); } => void
             environment:
         """
         verify(input, output)

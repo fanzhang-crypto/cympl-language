@@ -165,7 +165,7 @@ sealed interface Expression : Typed {
         override fun toString() = "$funcExpr(${args.joinToString(", ")})"
     }
 
-    data class Index(val arrayExpr: Expression, val indexExpr: Expression) : Expression {
+    data class ArrayAccess(val arrayExpr: Expression, val indexExpr: Expression) : Expression {
         override val resolvedType by lazy { (arrayExpr.resolvedType as BuiltinType.ARRAY).elementType }
         override fun toString() = "$arrayExpr[$indexExpr]"
     }

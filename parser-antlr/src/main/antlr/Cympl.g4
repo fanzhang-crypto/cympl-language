@@ -11,7 +11,6 @@ statement
     : varDecl ';'                   #VariableDeclaration
     | funcDecl                      #FunctionDeclaration
     | assign ';'                    #Assignment
-    | indexAssign ';'               #IndexAssignment
     | expr ';'                      #Expression
     | returnStat                    #ReturnStatement
     | ifStat                        #IfStatement
@@ -75,15 +74,13 @@ switchStat: SWITCH '(' expr ')' '{' caseStat* defaultCase? '}';
 caseStat: CASE expr ':' statement? breakStat?;
 defaultCase: DEFAULT ':' statement;
 
-assign: ID '=' expr;
-
-indexAssign: arrayExpr=expr '[' indexExpr=expr ']' '=' valueExpr=expr;
+assign: (lvalue=expr) '=' (rvalue=expr);
 
 idList: ID (',' ID)*;
 
-expr: funcExpr=expr '(' paramList=exprlist? ')'                            # FunctionCall
+expr: funcExpr=expr '(' paramList=exprlist? ')'         # FunctionCall
     | NEW type ('[' expr ']')+                          # NewArray
-    | arrayExpr=expr '[' indexExpr=expr ']'             # Index
+    | arrayExpr=expr '[' indexExpr=expr ']'             # ArrayAccess
     | '(' idList? ')' ARROW_RIGHT (expr | statement)    # Lambda
     | MINUS expr                                        # Negation
     | NOT expr                                          # LogicalNot

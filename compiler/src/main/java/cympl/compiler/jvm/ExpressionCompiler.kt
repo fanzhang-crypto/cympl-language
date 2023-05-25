@@ -37,7 +37,7 @@ internal object ExpressionCompiler {
             is Expression.StringLiteral -> ctx.mv.push(source.value)
             is Expression.BoolLiteral -> ctx.mv.push(source.value)
             is Expression.ArrayLiteral -> source.compile(ctx)
-            is Expression.Index -> source.compile(ctx)
+            is Expression.ArrayAccess -> source.compile(ctx)
             is Expression.Property -> source.compile(ctx)
             is Expression.FunctionCall -> source.compile(ctx)
             is Expression.NewArray -> source.compile(ctx)
@@ -73,7 +73,7 @@ internal object ExpressionCompiler {
         }
     }
 
-    private fun Expression.Index.compile(ctx: MethodContext) {
+    private fun Expression.ArrayAccess.compile(ctx: MethodContext) {
         compile(arrayExpr, ctx)
         compile(indexExpr, ctx)
 
@@ -378,7 +378,7 @@ internal object ExpressionCompiler {
                     }
                 }
             }
-            is Expression.Index -> {
+            is Expression.ArrayAccess -> {
                 funcExpr.compile(ctx)
                 callLambda()
             }

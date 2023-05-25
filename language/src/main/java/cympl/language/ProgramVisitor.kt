@@ -36,7 +36,6 @@ object ProgramVisitor {
                 elseBranch?.forType(clazz, action)
             }
 
-            is Statement.IndexAssignment -> {}
             is Statement.Return -> {
 
             }

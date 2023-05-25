@@ -38,7 +38,8 @@ class CallGraphAnalyzer {
             }
 
             is Statement.Assignment -> {
-                analyze(statement.expr, builder)
+                analyze(statement.leftExpr, builder)
+                analyze(statement.rightExpr, builder)
             }
 
             is Statement.ExpressionStatement -> {
@@ -79,7 +80,7 @@ class CallGraphAnalyzer {
                 }
             }
 
-            is Expression.Index -> {
+            is Expression.ArrayAccess -> {
                 analyze(expression.arrayExpr, builder)
                 analyze(expression.indexExpr, builder)
             }

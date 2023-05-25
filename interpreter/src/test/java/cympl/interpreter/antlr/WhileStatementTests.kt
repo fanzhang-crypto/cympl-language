@@ -16,7 +16,7 @@ class WhileStatementTests {
         """
 
         val output ="""
-            x:int = 1; => 1
+            int x = 1; => 1
             while (x < 10) { x = x + 1; } => void
             x; => 10
             environment:
@@ -39,7 +39,7 @@ class WhileStatementTests {
             x;
         """
         val output = """
-            x:int = 1; => 1
+            int x = 1; => 1
             while (x < 10) { x = x + 1; if (x == 5) { break; } } => void
             x; => 5
             environment:
@@ -65,8 +65,8 @@ class WhileStatementTests {
         """
 
         val output ="""
-            x:int = 0; => 0
-            i:int = 0; => 0
+            int x = 0; => 0
+            int i = 0; => 0
             while (i < 10) { if (i % 2 == 0) { i = i + 1; continue; } x = x + i; i = i + 1; } => void
             x; => 25
             environment:
@@ -91,9 +91,9 @@ class WhileStatementTests {
             x;
         """
         val output = """
-            x:int = 0; => 0
-            i:int = 0; => 0
-            while (i < 10) { j:int = 0; while (j < 10) { x = x + 1; j = j + 1; } i = i + 1; } => void
+            int x = 0; => 0
+            int i = 0; => 0
+            while (i < 10) { int j = 0; while (j < 10) { x = x + 1; j = j + 1; } i = i + 1; } => void
             x; => 100
             environment:
             x:int = 100, i:int = 10
@@ -121,9 +121,9 @@ class WhileStatementTests {
         """
 
         val output = """
-            x:int = 0; => 0
-            i:int = 0; => 0
-            while (i < 10) { j:int = 0; while (j < 10) { x = x + 1; if (j > 5) { break; } j = j + 1; } i = i + 1; } => void
+            int x = 0; => 0
+            int i = 0; => 0
+            while (i < 10) { int j = 0; while (j < 10) { x = x + 1; if (j > 5) { break; } j = j + 1; } i = i + 1; } => void
             x; => 70
             environment:
             x:int = 70, i:int = 10
@@ -155,9 +155,9 @@ class WhileStatementTests {
         """
 
         val output ="""
-            x:int = 0; => 0
-            i:int = 0; => 0
-            while (i < 10) { j:int = 0; while (j < 10) { if (j % 2 == 0) { j = j + 1; continue; } x = x + 1; if (j > 5) { break; } j = j + 1; } i = i + 1; } => void
+            int x = 0; => 0
+            int i = 0; => 0
+            while (i < 10) { int j = 0; while (j < 10) { if (j % 2 == 0) { j = j + 1; continue; } x = x + 1; if (j > 5) { break; } j = j + 1; } i = i + 1; } => void
             x; => 40
             environment:
             x:int = 40, i:int = 10
@@ -180,7 +180,7 @@ class WhileStatementTests {
             f(1);
         """
         val output ="""
-            func f(x:int):int { while (x < 10) { x = x + 1; if (x == 5) { return x; } } return x; } => Closure(#f)
+            func f(int x):int { while (x < 10) { x = x + 1; if (x == 5) { return x; } } return x; } => Closure(#f)
             f(1); => 5
             environment:
             f: (int) -> int

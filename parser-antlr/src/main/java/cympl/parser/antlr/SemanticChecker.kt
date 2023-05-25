@@ -203,13 +203,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                 is VarDeclContext -> resolveType(parent.type())
 
                 is AssignContext -> {
-                    val assignVarSymbol = currentScope?.resolve(parent.ID().text) as? VariableSymbol
-                    assignVarSymbol?.type ?: BuiltinType.VOID
-                }
-
-                is IndexAssignContext -> {
-                    val arrayType = types.get(parent.arrayExpr) as BuiltinType.ARRAY
-                    arrayType.elementType
+                    types.get(parent.lvalue)
                 }
 
                 is ExprlistContext -> {
@@ -471,43 +465,24 @@ class SemanticChecker : TypeResolver, ScopeResolver {
         }
 
         override fun exitAssign(ctx: AssignContext) {
-            val variableSymbol = currentScope?.resolve(ctx.ID().text) as? VariableSymbol
-            if (variableSymbol != null) {
-                val varType = variableSymbol.type
-                val exprType = types.get(ctx.expr())
-                if (!TypeChecker.typeMatch(exprType, varType)) {
-                    val location = ctx.expr().start.location
-                    semanticErrors += SemanticException(
-                        "type mismatch: expected ${variableSymbol.type}, but got $exprType",
-                        location
-                    )
-                }
+            val lvalueType = types.get(ctx.lvalue)
+            val rvalueType = types.get(ctx.rvalue)
+
+            if (lvalueType == null || rvalueType == null) {
+                return
+            }
+
+            if (!TypeChecker.typeMatch(lvalueType, rvalueType)) {
+                val location = ctx.rvalue.start.location
+                semanticErrors += SemanticException(
+                    "type mismatch: expected ${lvalueType}, but got $rvalueType",
+                    location
+                )
             }
         }
 
         override fun exitFunctionCall(ctx: FunctionCallContext) {
-            val functionType = when (val funcExpr = ctx.funcExpr) {
-                is VariableContext -> {
-                    val functionName = funcExpr.ID().text
-                    val functionSymbol: Symbol = currentScope?.resolve(functionName) ?: return
-                    if (functionSymbol.type !is BuiltinType.FUNCTION) {
-                        val location = funcExpr.ID().symbol.location
-                        semanticErrors += SemanticException("${functionSymbol.name} is not a function:", location)
-                        return
-                    }
-                    functionSymbol.type
-                }
-
-                is FunctionCallContext -> {
-                    types.get(funcExpr)
-                }
-
-                is IndexContext -> {
-                    types.get(funcExpr)
-                }
-
-                else -> BuiltinType.VOID
-            }
+            val functionType = types.get(ctx.funcExpr) ?: return
 
             if (functionType !is BuiltinType.FUNCTION) {
                 val location = ctx.funcExpr.start.location
@@ -570,7 +545,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             }
         }
 
-        override fun exitIndex(ctx: IndexContext) {
+        override fun exitArrayAccess(ctx: ArrayAccessContext) {
             val arrayType = types.get(ctx.arrayExpr)
             if (arrayType !is BuiltinType.ARRAY) {
                 val location = ctx.arrayExpr.start.location
@@ -585,30 +560,6 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             }
 
             types.put(ctx, arrayType.elementType)
-        }
-
-        override fun exitIndexAssign(ctx: IndexAssignContext) {
-            val arrayType = types.get(ctx.arrayExpr)
-            if (arrayType !is BuiltinType.ARRAY) {
-                val location = ctx.arrayExpr.start.location
-                semanticErrors += SemanticException("indexing only works on arrays", location)
-                return
-            }
-
-            val indexType = types.get(ctx.indexExpr)
-            if (indexType != BuiltinType.INT) {
-                val location = ctx.expr(1).start.location
-                semanticErrors += SemanticException("array index must be of type int, but got $indexType", location)
-            }
-
-            val exprType = types.get(ctx.valueExpr)
-            if (exprType != arrayType.elementType) {
-                val location = ctx.valueExpr.start.location
-                semanticErrors += SemanticException(
-                    "type mismatch: expected ${arrayType.elementType}, but got $exprType",
-                    location
-                )
-            }
         }
 
         override fun exitProperty(ctx: PropertyContext) {
@@ -765,20 +716,6 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             if (variableSymbol == null) {
                 val location = ctx.ID().symbol.location
                 semanticErrors += SemanticException("variable $varName not defined", location)
-            }
-        }
-
-        override fun exitAssign(ctx: AssignContext) {
-            val idToken = ctx.ID()
-            val varName: String = idToken.text
-            val variableSymbol: Symbol? = currentScope?.resolve(varName)
-
-            if (variableSymbol == null) {
-                val location = ctx.ID().symbol.location
-                semanticErrors += SemanticException("variable $varName not defined", location)
-            } else if (variableSymbol !is VariableSymbol) {
-                val location = ctx.ID().symbol.location
-                semanticErrors += SemanticException("$varName is not a variable", location)
             }
         }
 

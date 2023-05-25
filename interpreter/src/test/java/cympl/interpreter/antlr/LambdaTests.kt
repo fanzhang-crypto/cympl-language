@@ -13,7 +13,7 @@ class LambdaTests {
         """.trimIndent()
 
         val output = """
-            g:(int, int) -> int = (x, y) -> x + y; => Closure(#<lambda>)
+            (int, int) -> int g = (x, y) -> x + y; => Closure(#<lambda>)
             g(1, 2); => 3
             environment:
             g: (int, int) -> int
@@ -31,7 +31,7 @@ class LambdaTests {
         """.trimIndent()
 
         val output = """
-            g:(int) -> int = (x) -> x + 1; => Closure(#<lambda>)
+            (int) -> int g = (x) -> x + 1; => Closure(#<lambda>)
             g = (x) -> x + 2; => Closure(#<lambda>)
             g(1); => 3
             environment:
@@ -49,7 +49,7 @@ class LambdaTests {
         """.trimIndent()
 
         val output = """
-            f:(int) -> (int) -> int = (x) -> (y) -> x + y; => Closure(#<lambda>)
+            (int) -> (int) -> int f = (x) -> (y) -> x + y; => Closure(#<lambda>)
             f(1)(2); => 3
             environment:
             f: (int) -> (int) -> int
@@ -66,7 +66,7 @@ class LambdaTests {
         """.trimIndent()
 
         val output = """
-            f:(int, (int) -> int) -> int = (x, g) -> g(x); => Closure(#<lambda>)
+            (int, (int) -> int) -> int f = (x, g) -> g(x); => Closure(#<lambda>)
             f(1, (x) -> x + 1); => 2
             environment:
             f: (int, (int) -> int) -> int
@@ -97,8 +97,8 @@ class LambdaTests {
         """.trimIndent()
 
         val output = """
-            func fibonacci():() -> int { a:int = 0; b:int = 1; return () -> { c:int = a; a = b; b = a + c; return c; }; } => Closure(#fibonacci)
-            fibo:() -> int = fibonacci(); => Closure(#<lambda>)
+            func fibonacci():() -> int { int a = 0; int b = 1; return () -> { int c = a; a = b; b = a + c; return c; }; } => Closure(#fibonacci)
+            () -> int fibo = fibonacci(); => Closure(#<lambda>)
             fibo(); => 0
             fibo(); => 1
             fibo(); => 1
@@ -124,8 +124,8 @@ class LambdaTests {
         """.trimIndent()
 
         val output = """
-            a:(() -> int)[] = new () -> int[10]; => [null, null, null, null, null, null, null, null, null, null]
-            for (i:int = 0; i < 10; i++;) { a[i] = () -> i } => void
+            (() -> int)[] a = new () -> int[10]; => [null, null, null, null, null, null, null, null, null, null]
+            for (int i = 0; i < 10; i++;) { a[i] = () -> i; } => void
             a[6](); => 10
             environment:
             a:(() -> int)[] = [Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>)]
@@ -148,8 +148,8 @@ class LambdaTests {
         """.trimIndent()
 
         val output = """
-            a:(() -> int)[] = new () -> int[10]; => [null, null, null, null, null, null, null, null, null, null]
-            for (i:int = 0; i < 10; i++;) { ii:int = i; a[i] = () -> ii } => void
+            (() -> int)[] a = new () -> int[10]; => [null, null, null, null, null, null, null, null, null, null]
+            for (int i = 0; i < 10; i++;) { int ii = i; a[i] = () -> ii; } => void
             a[6](); => 6
             environment:
             a:(() -> int)[] = [Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>), Closure(#<lambda>)]

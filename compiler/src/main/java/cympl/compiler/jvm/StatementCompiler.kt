@@ -23,8 +23,6 @@ internal object StatementCompiler {
             is Statement.Continue -> statement.compile(ctx)
             is Statement.Switch -> statement.compile(ctx)
             is Statement.Case -> statement.compile(ctx)
-            is Statement.IndexAssignment -> statement.compile(ctx)
-
             is Statement.Return -> statement.compile(ctx)
             is Statement.FunctionDeclaration -> {
                 // leave it to ProgramCompiler
@@ -43,8 +41,21 @@ internal object StatementCompiler {
     }
 
     private fun Statement.Assignment.compile(ctx: MethodContext) {
-        ctx.setVar(id, expr.resolvedType) {
-            ExpressionCompiler.compile(expr, ctx)
+        when(val leftExpr = this.leftExpr) {
+            is Expression.Variable -> {
+                ctx.setVar(leftExpr.id, leftExpr.resolvedType) {
+                    ExpressionCompiler.compile(rightExpr, ctx)
+                }
+            }
+            is Expression.ArrayAccess -> {
+                ExpressionCompiler.compile(leftExpr.arrayExpr, ctx)
+                ExpressionCompiler.compile(leftExpr.indexExpr, ctx)
+                ExpressionCompiler.compile(rightExpr, ctx)
+
+                val arrayType = leftExpr.arrayExpr.resolvedType as BuiltinType.ARRAY
+                ctx.mv.arrayStore(arrayType.elementType.asmType)
+            }
+            else -> throw CompilationException("Invalid left expression for assignment: $leftExpr")
         }
     }
 
@@ -132,15 +143,6 @@ internal object StatementCompiler {
         ctx.loopContext.nearestContinueLabel?.let {
             ctx.mv.goTo(it)
         } ?: run { throw CompilationException("Continue statement outside of loop") }
-    }
-
-    private fun Statement.IndexAssignment.compile(ctx: MethodContext) {
-        ExpressionCompiler.compile(arrayExpr, ctx)
-        ExpressionCompiler.compile(indexExpr, ctx)
-        ExpressionCompiler.compile(valueExpr, ctx)
-
-        val arrayType = arrayExpr.resolvedType as BuiltinType.ARRAY
-        ctx.mv.arrayStore(arrayType.elementType.asmType)
     }
 
     private fun Statement.Return.compile(ctx: MethodContext) {

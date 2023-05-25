@@ -150,16 +150,16 @@ internal class CymplGrammar(
         }
 
     private val variable by ID.map { idToken ->
-        semanticChecker.checkVariableRef(idToken)
+        semanticChecker.checkIDRef(idToken)
         Expression.Variable(idToken.text, BuiltinType.VOID)
     }
 
-    private val arrayIndex: Parser<Expression.Index> by (ID * oneOrMore(-LBRACKET * expression * -RBRACKET))
+    private val arrayAccess: Parser<Expression.ArrayAccess> by (ID * oneOrMore(-LBRACKET * expression * -RBRACKET))
         .map { (idToken, indices) ->
             val array = Expression.Variable(idToken.text, BuiltinType.VOID)
-            val initialArrayIndex = Expression.Index(array, indices[0])
+            val initialArrayIndex = Expression.ArrayAccess(array, indices[0])
             indices.subList(1, indices.size).fold(initialArrayIndex) { acc, index ->
-                Expression.Index(acc, index)
+                Expression.ArrayAccess(acc, index)
             }
         }
 
@@ -169,13 +169,13 @@ internal class CymplGrammar(
     private val preDecrement: Parser<Expression> by (-DEC * parser { term })
         .map { expr -> Expression.Decrement(expr, false) }
 
-    private val postIncrement: Parser<Expression> by ((arrayIndex or variable) * -INC)
+    private val postIncrement: Parser<Expression> by ((arrayAccess or variable) * -INC)
         .map { expr -> Expression.Increment(expr, true) }
 
-    private val postDecrement: Parser<Expression> by ((arrayIndex or variable) * -DEC)
+    private val postDecrement: Parser<Expression> by ((arrayAccess or variable) * -DEC)
         .map { expr -> Expression.Decrement(expr, true) }
 
-    private val property: Parser<Expression.Property> by ((arrayIndex or variable) * oneOrMore(-DOT * ID))
+    private val property: Parser<Expression.Property> by ((arrayAccess or variable) * oneOrMore(-DOT * ID))
         .map { (obj, properties) ->
             val initialProperty = Expression.Property(obj, properties[0].text, BuiltinType.INT)
             properties.subList(1, properties.size).fold(initialProperty) { acc, property ->
@@ -197,23 +197,18 @@ internal class CymplGrammar(
         preDecrement or
         postIncrement or
         postDecrement or
-        arrayIndex or
+        arrayAccess or
         variable or
         negation or
         logicalNot or
         parenthesized
     // @formatter:on
 
-    private val assign: Parser<Statement> by (ID * -ASSIGN * expression).map { (idToken, e) ->
-        semanticChecker.checkVariableRef(idToken)
-        Statement.Assignment(idToken.text, e)
-    }
+    private val lvalue by (arrayAccess or variable)
 
-    private val arrayIndexAssign by (arrayIndex * -ASSIGN * expression)
-        .map { (arrayIndex, valueExpr) ->
-//            semanticChecker.checkVariableRef()
-            Statement.IndexAssignment(arrayIndex.arrayExpr, arrayIndex.indexExpr, valueExpr)
-        }
+    private val assign: Parser<Statement> by (lvalue * -ASSIGN * expression).map { (leftExpr, rightExpr) ->
+        Statement.Assignment(leftExpr, rightExpr)
+    }
 
     private val valueType by (BOOL_TYPE or INT_TYPE or FLOAT_TYPE or STRING_TYPE or VOID_TYPE)
         .map(TypeResolver::resolveValueType)
@@ -318,7 +313,6 @@ internal class CymplGrammar(
     private val statement: Parser<Statement> by functionDecl or
             (variableDecl * -SEMICOLON) or
             (assign * -SEMICOLON) or
-            (arrayIndexAssign * -SEMICOLON) or
             exprStat or
             returnStat or
             ifStat or

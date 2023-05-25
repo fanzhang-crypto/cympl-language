@@ -27,10 +27,10 @@ internal class AntlrToExpression(
         return Expression.FunctionCall(funcExpr, arguments, type)
     }
 
-    override fun visitIndex(ctx: CymplParser.IndexContext): Expression {
+    override fun visitArrayAccess(ctx: CymplParser.ArrayAccessContext): Expression {
         val array = visit(ctx.arrayExpr)
         val index = visit(ctx.indexExpr)
-        return Expression.Index(array, index)
+        return Expression.ArrayAccess(array, index)
     }
 
     override fun visitParenthesizedExpression(ctx: CymplParser.ParenthesizedExpressionContext): Expression {

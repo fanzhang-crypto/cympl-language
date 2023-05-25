@@ -3,16 +3,11 @@ package cympl.language
 sealed interface Statement {
 
     data class VariableDeclaration(val id: String, val type: BuiltinType, val expr: Expression? = null) : Statement {
-        override fun toString() = if (expr != null) "$id:${type.name} = $expr;" else "$id:${type.name}"
+        override fun toString() = if (expr != null) "${type.name} $id = $expr;" else "${type.name} $id"
     }
 
-    data class Assignment(val id: String, val expr: Expression) : Statement {
-        override fun toString() = "$id = $expr;"
-    }
-
-    data class IndexAssignment(val arrayExpr: Expression, val indexExpr: Expression, val valueExpr: Expression) :
-        Statement {
-        override fun toString() = "$arrayExpr[$indexExpr] = $valueExpr"
+    data class Assignment(val leftExpr: Expression, val rightExpr: Expression) : Statement {
+        override fun toString() = "$leftExpr = $rightExpr;"
     }
 
     data class ExpressionStatement(val expr: Expression) : Statement {
@@ -86,7 +81,7 @@ sealed interface Statement {
                 parameters.withIndex().joinToString(", ") { (i, param) ->
                     if (i == parameters.size - 1) {
                         val varargType = (param.type as BuiltinType.ARRAY).elementType
-                        "${param.id}:$varargType..."
+                        "$varargType... ${param.id}"
                     } else
                         param.toString()
                 }

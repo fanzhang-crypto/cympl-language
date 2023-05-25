@@ -19,8 +19,8 @@ class IfStatementTests {
             x;
         """
         val output = """
-            x:int = 1; => 1
-            if (x == 1) { x:int = 2; x; } else { x:int = 3; x; } => void
+            int x = 1; => 1
+            if (x == 1) { int x = 2; x; } else { int x = 3; x; } => void
             x; => 1
             environment:
             x:int = 1
@@ -39,7 +39,7 @@ class IfStatementTests {
             x;
         """
         val output = """
-                    x:int = 1; => 1
+                    int x = 1; => 1
                     if (x == 1) x = 2; else x = 3; => 2
                     x; => 2
                     environment:
@@ -64,7 +64,7 @@ class IfStatementTests {
             x;
         """
         val output = """
-            x:int = 1; => 1
+            int x = 1; => 1
             if (x == 1) { if (x < 0) { x = -x; } else { x = x + 1; } } else { x = 5; } => void
             x; => 2
             environment:

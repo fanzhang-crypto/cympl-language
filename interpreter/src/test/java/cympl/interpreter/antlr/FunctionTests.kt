@@ -44,8 +44,8 @@ class FunctionTests {
         """
 
         val output = """
-            func f(x:int):int { return x + 1; } => Closure(#f)
-            func g(x:int):int { return x * 2; } => Closure(#g)
+            func f(int x):int { return x + 1; } => Closure(#f)
+            func g(int x):int { return x * 2; } => Closure(#g)
             f(g(2)); => 5
             environment:
             f: (int) -> int, g: (int) -> int
@@ -62,7 +62,7 @@ class FunctionTests {
             f(1, 2);
         """
         val output = """
-            func f(x:int, y:int):int { return x + y; } => Closure(#f)
+            func f(int x, int y):int { return x + y; } => Closure(#f)
             f(1, 2); => 3
             environment:
             f: (int, int) -> int
@@ -83,9 +83,9 @@ class FunctionTests {
             f(g(2));
         """
         val output = """
-            x:int = 1; => 1
-            func f(x:int):int { return x + 1; } => Closure(#f)
-            func g(x:int):int { return x * 2; } => Closure(#g)
+            int x = 1; => 1
+            func f(int x):int { return x + 1; } => Closure(#f)
+            func g(int x):int { return x * 2; } => Closure(#g)
             f(g(2)); => 5
             environment:
             x:int = 1
@@ -107,7 +107,7 @@ class FunctionTests {
             f(5);
         """
         val output = """
-            func f(x:int):int { if (x == 0) { return 1; } else { return x * f(x - 1); } } => Closure(#f)
+            func f(int x):int { if (x == 0) { return 1; } else { return x * f(x - 1); } } => Closure(#f)
             f(5); => 120
             environment:
             f: (int) -> int
@@ -127,8 +127,8 @@ class FunctionTests {
             f(2);
         """
         val output = """
-            func f(x:int):int { return g(x + 1); } => Closure(#f)
-            func g(x:int):int { return x * 2; } => Closure(#g)
+            func f(int x):int { return g(x + 1); } => Closure(#f)
+            func g(int x):int { return x * 2; } => Closure(#g)
             f(2); => 6
             environment:
             f: (int) -> int, g: (int) -> int
@@ -145,7 +145,7 @@ class FunctionTests {
             f("hello");
         """
         val output = """
-            func f(x:String):String { return x + " world"; } => Closure(#f)
+            func f(String x):String { return x + " world"; } => Closure(#f)
             f("hello"); => "hello world"
             environment:
             f: (String) -> String
@@ -231,8 +231,8 @@ class FunctionTests {
         """.trimIndent()
 
         val output = """
-            x:int = 1; => 1
-            func f():int { x:int = 2; return x + 3; } => Closure(#f)
+            int x = 1; => 1
+            func f():int { int x = 2; return x + 3; } => Closure(#f)
             f(); => 5
             environment:
             x:int = 1
@@ -255,7 +255,7 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors[0].shouldHaveMessage("semantic error at (5:12): f is not a variable")
+                r.errors[0].shouldHaveMessage("semantic error at (5:16): type mismatch: expected (int) -> int, but got int")
             }
 
             is ParseResult.Success -> {
@@ -328,7 +328,7 @@ class FunctionTests {
         """.trimIndent()
 
         val output = """
-            func insertionSort(arr:int[]):int[] { for (i:int = 1; i < arr.length; i++;) { key:int = arr[i]; j:int = i - 1; while (j >= 0 && arr[j] > key) { arr[j + 1] = arr[j] j = j - 1; } arr[j + 1] = key } return arr; } => Closure(#insertionSort)
+            func insertionSort(int[] arr):int[] { for (int i = 1; i < arr.length; i++;) { int key = arr[i]; int j = i - 1; while (j >= 0 && arr[j] > key) { arr[j + 1] = arr[j]; j = j - 1; } arr[j + 1] = key; } return arr; } => Closure(#insertionSort)
             insertionSort([2, 3, 9, 1, 11, 32, 17, 23, 15, 21]); => [1, 2, 3, 9, 11, 15, 17, 21, 23, 32]
             environment:
             insertionSort: (int[]) -> int[]
@@ -350,7 +350,7 @@ class FunctionTests {
         """.trimIndent()
 
         val output = """
-            func f(x:int):int { func g(y:int):int { return x + y; } return g(1); } => Closure(#f)
+            func f(int x):int { func g(int y):int { return x + y; } return g(1); } => Closure(#f)
             f(2); => 3
             environment:
             f: (int) -> int
@@ -377,8 +377,8 @@ class FunctionTests {
         """.trimIndent()
 
         val output = """
-            func f():() -> int { x:int = 0; func g():int { x = x + 1; return x; } return g; } => Closure(#f)
-            g:() -> int = f(); => Closure(#g)
+            func f():() -> int { int x = 0; func g():int { x = x + 1; return x; } return g; } => Closure(#f)
+            () -> int g = f(); => Closure(#g)
             g(); => 1
             g(); => 2
             g(); => 3
@@ -402,7 +402,7 @@ class FunctionTests {
         """.trimIndent()
 
         val output = """
-            func f(x:int, gg:() -> int):int { return gg() + x; } => Closure(#f)
+            func f(int x, () -> int gg):int { return gg() + x; } => Closure(#f)
             func g():int { return 1; } => Closure(#g)
             f(2, g); => 3
             environment:
@@ -426,7 +426,7 @@ class FunctionTests {
         """.trimIndent()
 
         val output = """
-            func sum(args:int...):int { s:int = 0; for (i:int = 0; i < args.length; i++;) { s = s + args[i]; } return s; } => Closure(#sum)
+            func sum(int... args):int { int s = 0; for (int i = 0; i < args.length; i++;) { s = s + args[i]; } return s; } => Closure(#sum)
             sum([1, 2, 3, 4, 5]); => 15
             environment:
             sum: (int...) -> int
@@ -452,7 +452,7 @@ class FunctionTests {
         """.trimIndent()
 
         val output = """
-            func join(sep:String, parts:String...):String { s:String = ""; for (i:int = 0; i < parts.length; i++;) { s = s + parts[i]; if (i < parts.length - 1) { s = s + sep; } } return s; } => Closure(#join)
+            func join(String sep, String... parts):String { String s = ""; for (int i = 0; i < parts.length; i++;) { s = s + parts[i]; if (i < parts.length - 1) { s = s + sep; } } return s; } => Closure(#join)
             join(",", ["a", "b", "c"]); => "a,b,c"
             environment:
             join: (String, String...) -> String

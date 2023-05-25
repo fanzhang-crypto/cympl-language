@@ -13,7 +13,7 @@ class ArrayTests {
         """
 
         val output = """
-            arr:int[] = [1, 2, 3]; => [1, 2, 3]
+            int[] arr = [1, 2, 3]; => [1, 2, 3]
             environment:
             arr:int[] = [1, 2, 3]
         """
@@ -28,7 +28,7 @@ class ArrayTests {
         """
 
         val output = """
-            arr:int[] = []; => []
+            int[] arr = []; => []
             environment:
             arr:int[] = []
         """
@@ -47,7 +47,7 @@ class ArrayTests {
 
         val output = """
             func f():int[] { return [1, 2, 3]; } => Closure(#f)
-            arr:int[] = f(); => [1, 2, 3]
+            int[] arr = f(); => [1, 2, 3]
             environment:
             arr:int[] = [1, 2, 3]
             f: () -> int[]
@@ -66,8 +66,8 @@ class ArrayTests {
         """
 
         val output = """
-            func f(arr:int[]):int[] { return arr; } => Closure(#f)
-            arr:int[] = f([1, 2, 3]); => [1, 2, 3]
+            func f(int[] arr):int[] { return arr; } => Closure(#f)
+            int[] arr = f([1, 2, 3]); => [1, 2, 3]
             environment:
             arr:int[] = [1, 2, 3]
             f: (int[]) -> int[]
@@ -86,10 +86,10 @@ class ArrayTests {
         """
 
         val output = """
-            arr:int[] = [1, 2, 3]; => [1, 2, 3]
-            a:int = arr[0]; => 1
-            b:int = arr[1]; => 2
-            c:int = arr[2]; => 3
+            int[] arr = [1, 2, 3]; => [1, 2, 3]
+            int a = arr[0]; => 1
+            int b = arr[1]; => 2
+            int c = arr[2]; => 3
             environment:
             arr:int[] = [1, 2, 3], a:int = 1, b:int = 2, c:int = 3
         """
@@ -107,10 +107,10 @@ class ArrayTests {
         """
 
         val output = """
-            arr:int[] = [1, 2, 3]; => [1, 2, 3]
-            arr[0] = 4 => 4
-            arr[1] = 5 => 5
-            arr[2] = 6 => 6
+            int[] arr = [1, 2, 3]; => [1, 2, 3]
+            arr[0] = 4; => 4
+            arr[1] = 5; => 5
+            arr[2] = 6; => 6
             environment:
             arr:int[] = [4, 5, 6]
         """
@@ -126,8 +126,8 @@ class ArrayTests {
         """.trimIndent()
 
         val output = """
-            arr:int[] = [1, 2, 3]; => [1, 2, 3]
-            arr[3] = 4 failed => index 3 out of bounds for array of size 3
+            int[] arr = [1, 2, 3]; => [1, 2, 3]
+            arr[3] = 4; failed => index 3 out of bounds for array of size 3
             environment:
             arr:int[] = [1, 2, 3]
         """.trimIndent()
@@ -144,8 +144,8 @@ class ArrayTests {
         """
 
         val output = """
-            arr:int[][] = [[1, 2, 3], [4, 5, 6]]; => [[1, 2, 3], [4, 5, 6]]
-            arr[0][0] = 7 => 7
+            int[][] arr = [[1, 2, 3], [4, 5, 6]]; => [[1, 2, 3], [4, 5, 6]]
+            arr[0][0] = 7; => 7
             arr[0][1]; => 2
             environment:
             arr:int[][] = [[7, 2, 3], [4, 5, 6]]
@@ -166,8 +166,8 @@ class ArrayTests {
 
         val output = """
             func f():int { return 1; } => Closure(#f)
-            arr:int[] = [1, 2, 3]; => [1, 2, 3]
-            a:int = arr[f()]; => 2
+            int[] arr = [1, 2, 3]; => [1, 2, 3]
+            int a = arr[f()]; => 2
             environment:
             arr:int[] = [1, 2, 3], a:int = 2
             f: () -> int
@@ -188,9 +188,9 @@ class ArrayTests {
 
         val output = """
             func f():int[] { return [1, 2, 3]; } => Closure(#f)
-            a:int = f()[1]; => 2
+            int a = f()[1]; => 2
             environment:
-            a:int = 2
+            int a = 2
             f():int[]
         """
 
@@ -205,8 +205,8 @@ class ArrayTests {
         """
 
         val output = """
-            arr:int[] = [1, 2, 3]; => [1, 2, 3]
-            a:int = arr.length; => 3
+            int[] arr = [1, 2, 3]; => [1, 2, 3]
+            int a = arr.length; => 3
             environment:
             arr:int[] = [1, 2, 3], a:int = 3
         """
@@ -224,7 +224,7 @@ class ArrayTests {
         """
 
         val output = """
-            arr:int[][] = [[1, 2, 3], [4, 5]]; => [[1, 2, 3], [4, 5]]
+            int[][] arr = [[1, 2, 3], [4, 5]]; => [[1, 2, 3], [4, 5]]
             arr.length; => 2
             arr[0].length; => 3
             arr[1].length; => 2

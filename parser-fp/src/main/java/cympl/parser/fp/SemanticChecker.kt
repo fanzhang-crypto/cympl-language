@@ -20,16 +20,13 @@ internal class SemanticChecker {
         semanticErrors.clear()
     }
 
-    fun checkVariableRef(idToken: TokenMatch) {
-        val varName: String = idToken.text
-        val variableSymbol: Symbol? = currentScope?.resolve(varName)
+    fun checkIDRef(idToken: TokenMatch) {
+        val id = idToken.text
+        val symbol: Symbol? = currentScope?.resolve(id)
 
-        if (variableSymbol == null) {
+        if (symbol == null) {
             val location = getLocation(idToken)
-            semanticErrors += SemanticException("variable $varName not defined", location)
-        } else if (variableSymbol !is VariableSymbol) {
-            val location = getLocation(idToken)
-            semanticErrors += SemanticException("$varName is not a variable", location)
+            semanticErrors += SemanticException("symbol $id not defined", location)
         }
     }
 

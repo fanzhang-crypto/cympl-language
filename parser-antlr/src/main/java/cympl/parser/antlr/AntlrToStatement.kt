@@ -27,17 +27,9 @@ internal class AntlrToStatement(
     }
 
     override fun visitAssign(ctx: CymplParser.AssignContext): Statement {
-        val idToken = ctx.ID().symbol
-        val id = idToken.text
-        val value = antlrToExpression.visit(ctx.expr())
-        return Statement.Assignment(id, value)
-    }
-
-    override fun visitIndexAssign(ctx: CymplParser.IndexAssignContext): Statement {
-        val array = antlrToExpression.visit(ctx.arrayExpr)
-        val index = antlrToExpression.visit(ctx.indexExpr)
-        val value = antlrToExpression.visit(ctx.valueExpr)
-        return Statement.IndexAssignment(array, index, value)
+        val leftExpr = antlrToExpression.visit(ctx.lvalue)
+        val rightExpr = antlrToExpression.visit(ctx.rvalue)
+        return Statement.Assignment(leftExpr, rightExpr)
     }
 
     override fun visitFuncDecl(ctx: CymplParser.FuncDeclContext): Statement {
@@ -101,8 +93,6 @@ internal class AntlrToStatement(
     }
 
     override fun visitAssignment(ctx: CymplParser.AssignmentContext) = visitAssign(ctx.assign())
-
-    override fun visitIndexAssignment(ctx: CymplParser.IndexAssignmentContext) = visitIndexAssign(ctx.indexAssign())
 
     override fun visitVariableDeclaration(ctx: CymplParser.VariableDeclarationContext) = visitVarDecl(ctx.varDecl())
 

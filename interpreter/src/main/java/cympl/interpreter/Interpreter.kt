@@ -51,7 +51,6 @@ class Interpreter(private val runtime: Runtime) {
     private fun Statement.evaluate(env: Environment): TValue = when (this) {
         is Statement.VariableDeclaration -> evaluate(env)
         is Statement.Assignment -> evaluate(env)
-        is Statement.IndexAssignment -> evaluate(env)
         is Statement.FunctionDeclaration -> evaluate(env)
         is Statement.Block -> evaluate(env)
         is Statement.ExpressionStatement -> expr.evaluate(env)
@@ -164,23 +163,27 @@ class Interpreter(private val runtime: Runtime) {
     }
 
     private fun Statement.Assignment.evaluate(env: Environment): TValue {
-        env.resolveVariable(id)
-            ?: throw InterpretException("variable $id not defined")
+        when (val leftExpr = this.leftExpr) {
+            is Expression.Variable -> {
+                env.resolveVariable(leftExpr.id)
+                    ?: throw InterpretException("variable ${leftExpr.id} not defined")
 
-        val value = expr.evaluate(env)
-        env.setVariable(id, value)
-        return value
-    }
+                val rightValue = rightExpr.evaluate(env)
+                env.setVariable(leftExpr.id, rightValue)
+                return rightValue
+            }
+            is Expression.ArrayAccess -> {
+                val arrayIndexing = ArrayAccess(leftExpr.arrayExpr, leftExpr.indexExpr, env)
 
-    private fun Statement.IndexAssignment.evaluate(env: Environment): TValue {
-        val arrayIndexing = ArrayIndexing(arrayExpr, indexExpr, env)
+                val value = rightExpr.evaluate(env)
+                assertValueType(value, arrayIndexing.arrayType.elementType)
 
-        val value = valueExpr.evaluate(env)
-        assertValueType(value, arrayIndexing.arrayType.elementType)
+                arrayIndexing.setValue(value)
 
-        arrayIndexing.setValue(value)
-
-        return value
+                return value
+            }
+            else -> throw InterpretException("invalid assignment $this")
+        }
     }
 
     private fun Statement.VariableDeclaration.evaluate(env: Environment): TValue {
@@ -250,8 +253,8 @@ class Interpreter(private val runtime: Runtime) {
 
             when (target) {
                 is Expression.Variable -> env.setVariable(target.id, tvalueUpdated)
-                is Expression.Index -> {
-                    val arrayIndexing = ArrayIndexing(target.arrayExpr, target.indexExpr, env)
+                is Expression.ArrayAccess -> {
+                    val arrayIndexing = ArrayAccess(target.arrayExpr, target.indexExpr, env)
                     arrayIndexing.setValue(tvalueUpdated)
                 }
 
@@ -268,8 +271,8 @@ class Interpreter(private val runtime: Runtime) {
 
             when (target) {
                 is Expression.Variable -> env.setVariable(target.id, tvalueUpdated)
-                is Expression.Index -> {
-                    val arrayIndexing = ArrayIndexing(target.arrayExpr, target.indexExpr, env)
+                is Expression.ArrayAccess -> {
+                    val arrayIndexing = ArrayAccess(target.arrayExpr, target.indexExpr, env)
                     arrayIndexing.setValue(tvalueUpdated)
                 }
 
@@ -408,8 +411,8 @@ class Interpreter(private val runtime: Runtime) {
             }
         }
 
-        is Expression.Index -> {
-            ArrayIndexing(arrayExpr, indexExpr, env).getValue()
+        is Expression.ArrayAccess -> {
+            ArrayAccess(arrayExpr, indexExpr, env).getValue()
         }
 
         is Expression.Property -> {
@@ -501,7 +504,7 @@ class Interpreter(private val runtime: Runtime) {
         }
     }
 
-    private inner class ArrayIndexing(arrayExpr: Expression, indexExpr: Expression, env: Environment) {
+    private inner class ArrayAccess(arrayExpr: Expression, indexExpr: Expression, env: Environment) {
         val array: Array<TValue>
         val index: Int
         val arrayType: BuiltinType.ARRAY

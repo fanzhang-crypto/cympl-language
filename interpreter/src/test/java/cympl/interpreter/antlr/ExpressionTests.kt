@@ -28,9 +28,9 @@ class ExpressionTests {
             -i;
         """
         val output = """
-            i:int = 1; => 1
-            j:int = 2; => 2
-            k:int = 3; => 3
+            int i = 1; => 1
+            int j = 2; => 2
+            int k = 3; => 3
             k = i - j; => -1
             (i + j) * k; => -3
             i + j * 2 - k / 3; => 5
@@ -55,9 +55,9 @@ class ExpressionTests {
             (1 - (i + j)) / 2;
         """
         val output = """
-            i:int = 1; => 1
-            j:float = 2.0; => 2.0
-            k:float = 3.0; => 3.0
+            int i = 1; => 1
+            float j = 2.0; => 2.0
+            float k = 3.0; => 3.0
             k = i - j; => -1.0
             (i + j) * k; => -3.0
             i + j * 2 - k / 3; => 5.333333333333333
@@ -116,8 +116,8 @@ class ExpressionTests {
             i <= j;
         """
         val output = """
-            i:int = 5; => 5
-            j:int = 7; => 7
+            int i = 5; => 5
+            int j = 7; => 7
             i == j; => false
             i != j; => true
             i > j; => false
@@ -211,7 +211,7 @@ class ExpressionTests {
             --i;
         """
         val output = """
-            i:int = 5; => 5
+            int i = 5; => 5
             i++; => 5
             i--; => 6
             ++i; => 6
@@ -232,7 +232,7 @@ class ExpressionTests {
             --a[0];
         """
         val output = """
-            a:int[] = [1, 2, 3]; => [1, 2, 3]
+            int[] a = [1, 2, 3]; => [1, 2, 3]
             a[0]++; => 1
             a[1]--; => 2
             ++a[2]; => 4

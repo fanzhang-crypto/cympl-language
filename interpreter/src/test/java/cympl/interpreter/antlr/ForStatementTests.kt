@@ -15,8 +15,8 @@ class ForStatementTests {
         """
 
         val output = """
-            x:int = 0; => 0
-            for (i:int = 0; i < 10; i++;) x = x + i; => void
+            int x = 0; => 0
+            for (int i = 0; i < 10; i++;) x = x + i; => void
             x; => 45
             environment:
             x:int = 45
@@ -36,8 +36,8 @@ class ForStatementTests {
         """
 
         val output = """
-            x:int = 0; => 0
-            for (i:int = 0; i < 10; i = i + 1;) { x = x + i; } => void
+            int x = 0; => 0
+            for (int i = 0; i < 10; i = i + 1;) { x = x + i; } => void
             x; => 45
             environment:
             x:int = 45
@@ -64,8 +64,8 @@ class ForStatementTests {
             x;
         """
         val output = """
-            x:int = 0; => 0
-            for (i:int = 0; i < 10; i = i + 1;) { for (j:int = 0; j < 10; j = j + 1;) { if (j % 2 == 0) { continue; } x = x + 1; if (j > 5) { break; } } } => void
+            int x = 0; => 0
+            for (int i = 0; i < 10; i = i + 1;) { for (int j = 0; j < 10; j = j + 1;) { if (j % 2 == 0) { continue; } x = x + 1; if (j > 5) { break; } } } => void
             x; => 40
             environment:
             x:int = 40
@@ -89,7 +89,7 @@ class ForStatementTests {
             f(1);
         """
         val output = """
-            func f(x:int):int { for (i:int = 0; i < 10; i = i + 1;) { x = x + 1; if (x == 5) { return x; } } return x; } => Closure(#f)
+            func f(int x):int { for (int i = 0; i < 10; i = i + 1;) { x = x + 1; if (x == 5) { return x; } } return x; } => Closure(#f)
             f(1); => 5
             environment:
             f: (int) -> int
@@ -110,8 +110,8 @@ class ForStatementTests {
             x;
         """
         val output= """
-            x:int = 0; => 0
-            for (i:int = 0; ; i = i + 1;) { x = x + i; if (i > 10) { break; } } => void
+            int x = 0; => 0
+            for (int i = 0; ; i = i + 1;) { x = x + i; if (i > 10) { break; } } => void
             x; => 66
             environment:
             x:int = 66
