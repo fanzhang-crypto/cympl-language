@@ -744,17 +744,26 @@ class SemanticChecker : TypeResolver, ScopeResolver {
 private val BlockContext.hasReturnStat
     get(): Boolean = statement().any { it.hasReturnStat }
 
+/**
+ * @return true if the statement has a return statement in all possible branches
+ */
 private val StatementContext.hasReturnStat
     get(): Boolean = when (this) {
         is ReturnStatementContext -> true
+
         is IfStatementContext -> {
             val thenBranch = ifStat().thenBranch
             val elseBranch = ifStat().elseBranch
-            thenBranch.hasReturnStat && elseBranch?.hasReturnStat ?: false
+            thenBranch.hasReturnStat && (elseBranch?.hasReturnStat ?: true)
         }
+
+        is SwitchStatementContext -> {
+            switchStat().caseClause().all { it.statement().hasReturnStat } &&
+                    (switchStat().defaultClause()?.statement()?.hasReturnStat ?: true)
+        }
+
         is WhileStatementContext -> whileStat().statement().hasReturnStat
         is ForStatementContext -> forStat().body.hasReturnStat
-        is SwitchStatementContext -> switchStat().caseStat().all { it.statement().hasReturnStat }
         is BlockStatementContext -> block().statement().any { it.hasReturnStat }
         else -> false
     }

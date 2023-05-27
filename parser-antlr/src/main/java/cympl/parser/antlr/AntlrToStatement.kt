@@ -145,12 +145,12 @@ internal class AntlrToStatement(
 
     override fun visitSwitchStat(ctx: CymplParser.SwitchStatContext): Statement {
         val condition = antlrToExpression.visit(ctx.expr())
-        val cases = ctx.caseStat().map { visitCaseStat(it) }
-        val defaultCase = ctx.defaultCase()?.let { visit(it) }
+        val cases = ctx.caseClause().map { visitCaseClause(it) }
+        val defaultCase = ctx.defaultClause()?.let { visit(it) }
         return Statement.Switch(condition, cases, defaultCase)
     }
 
-    override fun visitCaseStat(ctx: CymplParser.CaseStatContext): Statement.Case {
+    override fun visitCaseClause(ctx: CymplParser.CaseClauseContext): Statement.Case {
         val condition = antlrToExpression.visit(ctx.expr())
         val action = ctx.statement()?.let { visit(it) }
         val hasBreak = ctx.breakStat() != null

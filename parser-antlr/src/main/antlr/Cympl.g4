@@ -69,10 +69,9 @@ breakStat: BREAK ';';
 
 continueStat: CONTINUE ';';
 
-switchStat: SWITCH '(' expr ')' '{' caseStat* defaultCase? '}';
-
-caseStat: CASE expr ':' statement? breakStat?;
-defaultCase: DEFAULT ':' statement;
+switchStat: SWITCH '(' expr ')' '{' caseClause* defaultClause? '}';
+caseClause: CASE expr ':' statement? breakStat?;
+defaultClause: DEFAULT ':' statement;
 
 assign: (lvalue=expr) '=' (rvalue=expr);
 
