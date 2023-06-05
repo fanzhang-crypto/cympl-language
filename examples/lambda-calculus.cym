@@ -1,0 +1,61 @@
+#! cympl interpret
+
+((int) -> int) -> (int) -> int zero = (f) -> (x) -> x;
+((int) -> int) -> (int) -> int one = (f) -> (x) -> f(x);
+((int) -> int) -> (int) -> int two = (f) -> (x) -> f(f(x));
+
+(
+    ((int) -> int) -> (int) -> int
+) -> ((int) -> int) -> (int) -> int
+succ = (n) -> (f) -> (x) -> f(n(f)(x));
+
+//(
+//    ((int) -> int) -> (int) -> int
+//) -> ((int) -> int) -> (int) -> int
+//pred = (n) -> (f) -> (x) -> n((g) -> (h) -> h(g(f)))((u) -> x)((u) -> u);
+
+//(
+//    ((int) -> int) -> (int) -> int,
+//    ((int) -> int) -> (int) -> int
+//) -> ((int) -> int) -> (int) -> int
+//sub = (m) -> (n) -> n(pred)(m);
+
+(
+    ((int) -> int) -> (int) -> int,
+    ((int) -> int) -> (int) -> int
+) -> ((int) -> int) -> (int) -> int
+add = (n, m) -> (f) -> (x) -> m(f)(n(f)(x));
+
+(
+    ((int) -> int) -> (int) -> int,
+    ((int) -> int) -> (int) -> int
+) -> ((int) -> int) -> (int) -> int
+mult = (n, m) -> (f) -> (x) -> m(n(f))(x);
+
+/*(
+    ((int) -> int) -> (int) -> int,
+    ((int) -> int) -> (int) -> int
+) -> ((int) -> int) -> (int) -> int
+exp = (n, m) -> (f) -> (x) -> n(m)(f)(x);*/
+
+(
+    ((int) -> int) -> (int) -> int
+) -> int
+toInt = (n) -> n((x) -> x + 1)(0);
+
+((int) -> int) -> (int) -> int three = add(one, two);
+((int) -> int) -> (int) -> int four = succ(three);
+((int) -> int) -> (int) -> int six = mult(three, two);
+
+int _1 = toInt(one); // 1
+int _2 = toInt(two); // 2
+int _3 = toInt(three); // 3
+int _4 = toInt(four); // 4
+int _6 = toInt(six); // 6
+
+three((_) -> {
+    println("print 3 times");
+    return 0;
+})(0);
+
+

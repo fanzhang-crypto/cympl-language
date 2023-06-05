@@ -173,12 +173,12 @@ class Interpreter(private val runtime: Runtime) {
                 return rightValue
             }
             is Expression.ArrayAccess -> {
-                val arrayIndexing = ArrayAccess(leftExpr.arrayExpr, leftExpr.indexExpr, env)
+                val arrayAccess = ArrayAccess(leftExpr.arrayExpr, leftExpr.indexExpr, env)
 
                 val value = rightExpr.evaluate(env)
-                assertValueType(value, arrayIndexing.arrayType.elementType)
+                assertValueType(value, arrayAccess.arrayType.elementType)
 
-                arrayIndexing.setValue(value)
+                arrayAccess.setValue(value)
 
                 return value
             }
@@ -505,34 +505,36 @@ class Interpreter(private val runtime: Runtime) {
     }
 
     private inner class ArrayAccess(arrayExpr: Expression, indexExpr: Expression, env: Environment) {
-        val array: Array<TValue>
-        val index: Int
+        val arrayValue: Array<TValue>
         val arrayType: BuiltinType.ARRAY
+        val index: Int
 
         init {
-            val arrayTValue = arrayExpr.evaluate(env)
-            val indexTValue = indexExpr.evaluate(env)
-            if (arrayTValue.type !is BuiltinType.ARRAY) {
-                throw InterpretException("indexing non-array type ${arrayTValue.type}")
-            }
-            if (indexTValue.type != BuiltinType.INT) {
-                throw InterpretException("indexing array with non-int type ${indexTValue.type}")
-            }
-
-            @Suppress("UNCHECKED_CAST")
-            this.array = arrayTValue.value as Array<TValue>
-            this.index = indexTValue.value as Int
-            if (index < 0 || index >= array.size) {
-                throw InterpretException("index $index out of bounds for array of size ${array.size}")
+            arrayExpr.evaluate(env).also {
+                if (it.type !is BuiltinType.ARRAY) {
+                    throw InterpretException("indexing non-array type ${it.type}")
+                }
+                this.arrayType = it.type
+                @Suppress("UNCHECKED_CAST")
+                this.arrayValue = it.value as Array<TValue>
             }
 
-            arrayType = arrayTValue.type
+            indexExpr.evaluate(env).also {
+                if (it.type != BuiltinType.INT) {
+                    throw InterpretException("indexing array with non-int type ${it.type}")
+                }
+                this.index = it.value as Int
+            }
+
+            if (index < 0 || index >= arrayValue.size) {
+                throw InterpretException("index $index out of bounds for array of size ${arrayValue.size}")
+            }
         }
 
-        fun getValue(): TValue = array[index]
+        fun getValue(): TValue = arrayValue[index]
 
         fun setValue(value: TValue) {
-            array[index] = value
+            arrayValue[index] = value
         }
     }
 }

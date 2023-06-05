@@ -23,11 +23,11 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 5
-        errors[0] shouldHaveMessage "semantic error at (1:0): type mismatch: expected bool, int, float or String, but got int and String"
-        errors[1] shouldHaveMessage "semantic error at (2:0): type mismatch: expected bool, int or float, but got String and int"
-        errors[2] shouldHaveMessage "semantic error at (3:0): increment/decrement only works on int or float, but got String"
-        errors[3] shouldHaveMessage "semantic error at (4:2): increment/decrement only works on int or float, but got bool"
-        errors[4] shouldHaveMessage "semantic error at (6:0): increment/decrement only works on int or float, but got String"
+        errors[0] shouldHaveMessage "semantic error at (1:1): type mismatch: expected bool, int, float or String, but got int and String"
+        errors[1] shouldHaveMessage "semantic error at (2:1): type mismatch: expected bool, int or float, but got String and int"
+        errors[2] shouldHaveMessage "semantic error at (3:1): increment/decrement only works on int or float, but got String"
+        errors[3] shouldHaveMessage "semantic error at (4:3): increment/decrement only works on int or float, but got bool"
+        errors[4] shouldHaveMessage "semantic error at (6:1): increment/decrement only works on int or float, but got String"
     }
 
     @Test
@@ -44,13 +44,13 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 7
-        errors[0] shouldHaveMessage "semantic error at (1:8): type mismatch: expected int, but got float"
-        errors[1] shouldHaveMessage "semantic error at (2:10): type mismatch: expected float, but got String"
-        errors[2] shouldHaveMessage "semantic error at (3:11): type mismatch: expected String, but got int"
-        errors[3] shouldHaveMessage "semantic error at (4:9): type mismatch: expected bool, but got int"
-        errors[4] shouldHaveMessage "semantic error at (5:9): type mismatch: expected int, but got float"
-        errors[5] shouldHaveMessage "semantic error at (6:12): array elements must be of the same type"
-        errors[6] shouldHaveMessage "semantic error at (7:13): type mismatch: expected int[], but got float[]"
+        errors[0] shouldHaveMessage "semantic error at (1:9): type mismatch: expected int, but got float"
+        errors[1] shouldHaveMessage "semantic error at (2:11): type mismatch: expected float, but got String"
+        errors[2] shouldHaveMessage "semantic error at (3:12): type mismatch: expected String, but got int"
+        errors[3] shouldHaveMessage "semantic error at (4:10): type mismatch: expected bool, but got int"
+        errors[4] shouldHaveMessage "semantic error at (5:10): type mismatch: expected int, but got float"
+        errors[5] shouldHaveMessage "semantic error at (6:13): array elements must be of the same type"
+        errors[6] shouldHaveMessage "semantic error at (7:14): type mismatch: expected int[], but got float[]"
     }
 
     @Test
@@ -72,12 +72,12 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 6
-        errors[0] shouldHaveMessage "semantic error at (2:4): type mismatch: expected int, but got float"
-        errors[1] shouldHaveMessage "semantic error at (4:4): type mismatch: expected float, but got String"
-        errors[2] shouldHaveMessage "semantic error at (6:4): type mismatch: expected String, but got int"
-        errors[3] shouldHaveMessage "semantic error at (8:4): type mismatch: expected bool, but got int"
-        errors[4] shouldHaveMessage "semantic error at (10:6): array elements must be of the same type"
-        errors[5] shouldHaveMessage "semantic error at (12:7): type mismatch: expected int[], but got float[]"
+        errors[0] shouldHaveMessage "semantic error at (2:5): type mismatch: expected int, but got float"
+        errors[1] shouldHaveMessage "semantic error at (4:5): type mismatch: expected float, but got String"
+        errors[2] shouldHaveMessage "semantic error at (6:5): type mismatch: expected String, but got int"
+        errors[3] shouldHaveMessage "semantic error at (8:5): type mismatch: expected bool, but got int"
+        errors[4] shouldHaveMessage "semantic error at (10:7): array elements must be of the same type"
+        errors[5] shouldHaveMessage "semantic error at (12:8): type mismatch: expected int[], but got float[]"
     }
 
     @Test
@@ -90,8 +90,8 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 2
-        errors[0] shouldHaveMessage "semantic error at (2:4): array index must be of type int, but got float"
-        errors[1] shouldHaveMessage "semantic error at (3:4): array index must be of type int, but got float"
+        errors[0] shouldHaveMessage "semantic error at (2:5): array index must be of type int, but got float"
+        errors[1] shouldHaveMessage "semantic error at (3:5): array index must be of type int, but got float"
     }
 
     @Test
@@ -104,8 +104,8 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 2
-        errors[0] shouldHaveMessage "semantic error at (2:0): indexing only works on arrays"
-        errors[1] shouldHaveMessage "semantic error at (3:0): indexing only works on arrays"
+        errors[0] shouldHaveMessage "semantic error at (2:1): indexing only works on arrays"
+        errors[1] shouldHaveMessage "semantic error at (3:1): indexing only works on arrays"
     }
 
     @Test
@@ -117,7 +117,7 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (2:9): type mismatch: expected int, but got float"
+        errors[0] shouldHaveMessage "semantic error at (2:10): type mismatch: expected int, but got float"
     }
 
     @Test
@@ -131,8 +131,8 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 2
-        errors[0] shouldHaveMessage "semantic error at (4:4): argument type mismatch at index 0: expected int, but got float"
-        errors[1] shouldHaveMessage "semantic error at (4:9): argument type mismatch at index 1: expected int, but got String"
+        errors[0] shouldHaveMessage "semantic error at (4:5): argument type mismatch at index 0: expected int, but got float"
+        errors[1] shouldHaveMessage "semantic error at (4:10): argument type mismatch at index 1: expected int, but got String"
     }
 
     @Test
@@ -146,7 +146,7 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (4:10): lambda expression expected to have 2 parameters, but got 1"
+        errors[0] shouldHaveMessage "semantic error at (4:11): lambda expression expected to have 2 parameters, but got 1"
     }
 
     @Test
@@ -160,7 +160,7 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (4:20): lambda expression expected to return int, but got float"
+        errors[0] shouldHaveMessage "semantic error at (4:21): lambda expression expected to return int, but got float"
     }
 
     @Test
@@ -174,7 +174,7 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (5:27): type mismatch: expected String[], but got int[]"
+        errors[0] shouldHaveMessage "semantic error at (5:28): type mismatch: expected String[], but got int[]"
     }
 
     @Test
@@ -192,8 +192,8 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 2
-        errors[0] shouldHaveMessage "semantic error at (3:15): return expression type mismatch: expected void, but got int"
-        errors[1] shouldHaveMessage "semantic error at (7:11): return expression type mismatch: expected void, but got float"
+        errors[0] shouldHaveMessage "semantic error at (3:16): return expression type mismatch: expected void, but got int"
+        errors[1] shouldHaveMessage "semantic error at (7:12): return expression type mismatch: expected void, but got float"
     }
 
     @Test
@@ -206,9 +206,9 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 3
-        errors[0] shouldHaveMessage "semantic error at (1:20): array dimensions must be of type int"
-        errors[1] shouldHaveMessage "semantic error at (2:16): type mismatch: expected String[], but got int[]"
-        errors[2] shouldHaveMessage "semantic error at (3:10): type mismatch: expected String, but got float"
+        errors[0] shouldHaveMessage "semantic error at (1:21): array dimensions must be of type int"
+        errors[1] shouldHaveMessage "semantic error at (2:17): type mismatch: expected String[], but got int[]"
+        errors[2] shouldHaveMessage "semantic error at (3:11): type mismatch: expected String, but got float"
     }
 
     @Test
@@ -221,7 +221,7 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (1:4): if condition must be of type bool, but got int"
+        errors[0] shouldHaveMessage "semantic error at (1:5): if condition must be of type bool, but got int"
     }
 
     @Test
@@ -234,7 +234,7 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (1:7): while condition must be of type bool, but got int"
+        errors[0] shouldHaveMessage "semantic error at (1:8): while condition must be of type bool, but got int"
     }
 
     @Test
@@ -247,7 +247,7 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (1:16): for condition must be of type bool, but got String"
+        errors[0] shouldHaveMessage "semantic error at (1:17): for condition must be of type bool, but got String"
     }
 
 
@@ -261,7 +261,7 @@ class TypeCheckTests {
 
         val errors = check(input)
         errors shouldHaveSize 1
-        errors[0] shouldHaveMessage "semantic error at (3:0): missing return statement in function f"
+        errors[0] shouldHaveMessage "semantic error at (3:1): missing return statement in function f"
     }
 
     private fun check(input: String): List<ParseException> =

@@ -23,7 +23,7 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors[0].shouldHaveMessage("semantic error at (2:12): function: f not defined")
+                r.errors[0].shouldHaveMessage("semantic error at (2:13): function: f not defined")
             }
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
@@ -167,7 +167,7 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors.first().shouldHaveMessage("semantic error at (5:16): function f already defined")
+                r.errors.first().shouldHaveMessage("semantic error at (5:17): function f already defined")
             }
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
@@ -186,7 +186,7 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors.first().shouldHaveMessage("semantic error at (2:29): symbol x already defined")
+                r.errors.first().shouldHaveMessage("semantic error at (2:30): symbol x already defined")
             }
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
@@ -209,8 +209,8 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 2
-                r.errors[0].shouldHaveMessage("semantic error at (3:20): symbol x already defined")
-                r.errors[1].shouldHaveMessage("semantic error at (5:24): symbol x already defined")
+                r.errors[0].shouldHaveMessage("semantic error at (3:21): symbol x already defined")
+                r.errors[1].shouldHaveMessage("semantic error at (5:25): symbol x already defined")
             }
 
             is ParseResult.Success -> {
@@ -255,7 +255,7 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors[0].shouldHaveMessage("semantic error at (5:16): type mismatch: expected (int) -> int, but got int")
+                r.errors[0].shouldHaveMessage("semantic error at (5:17): type mismatch: expected (int) -> int, but got int")
             }
 
             is ParseResult.Success -> {
@@ -298,7 +298,7 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors[0].shouldHaveMessage("semantic error at (5:20): type mismatch: expected int, but got void")
+                r.errors[0].shouldHaveMessage("semantic error at (5:21): type mismatch: expected int, but got void")
             }
 
             is ParseResult.Success -> {

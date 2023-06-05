@@ -769,4 +769,4 @@ private val StatementContext.hasReturnStat
     }
 
 
-private val Token.location get() = TokenLocation(line, charPositionInLine)
+private val Token.location get() = TokenLocation(line, charPositionInLine + 1)

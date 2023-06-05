@@ -12,8 +12,8 @@ field
     |               # EMPTY
     ;
 
+WS: [ ] -> skip;
 TEXT: ~[,\r\n"]+;
 STRING: '"' ('""'|~'"')* '"';
-WS: [ ] -> skip;
 
 
