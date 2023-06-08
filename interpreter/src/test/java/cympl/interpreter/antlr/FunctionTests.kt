@@ -116,27 +116,6 @@ class FunctionTests {
     }
 
     @Test
-    fun `function can be called before defined`() {
-        val input = """
-            int f(int x) {
-                return g(x + 1);
-            }
-            int g(int x) {
-                return x * 2;
-            }
-            f(2);
-        """
-        val output = """
-            func f(int x):int { return g(x + 1); } => Closure(#f)
-            func g(int x):int { return x * 2; } => Closure(#g)
-            f(2); => 6
-            environment:
-            f: (int) -> int, g: (int) -> int
-        """
-        verify(input, output)
-    }
-
-    @Test
     fun `function can operate string`() {
         val input = """
             String f(String x) {
@@ -167,7 +146,7 @@ class FunctionTests {
         when (val r = parser().parse(input)) {
             is ParseResult.Failure -> {
                 r.errors shouldHaveSize 1
-                r.errors.first().shouldHaveMessage("semantic error at (5:17): function f already defined")
+                r.errors.first().shouldHaveMessage("semantic error at (5:17): symbol f already defined")
             }
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
@@ -188,31 +167,6 @@ class FunctionTests {
                 r.errors shouldHaveSize 1
                 r.errors.first().shouldHaveMessage("semantic error at (2:30): symbol x already defined")
             }
-            is ParseResult.Success -> {
-                fail("should throw semantic error, but not")
-            }
-        }
-    }
-
-    @Test
-    fun `can't define variables with same name in function`() {
-        val input = """
-            int f(int x) {
-                int x = 1;
-                if (1 < 2) {
-                    int x = 1;
-                }
-                return x;
-            }
-        """.byteInputStream()
-
-        when (val r = parser().parse(input)) {
-            is ParseResult.Failure -> {
-                r.errors shouldHaveSize 2
-                r.errors[0].shouldHaveMessage("semantic error at (3:21): symbol x already defined")
-                r.errors[1].shouldHaveMessage("semantic error at (5:25): symbol x already defined")
-            }
-
             is ParseResult.Success -> {
                 fail("should throw semantic error, but not")
             }

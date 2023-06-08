@@ -17,19 +17,23 @@ class SemanticChecker : TypeResolver, ScopeResolver {
     private val scopes = ParseTreeProperty<Scope>()
     private val types = ParseTreeProperty<BuiltinType>()
 
+    private val semanticErrors = mutableListOf<SemanticException>()
+
+    private var currentScope: Scope? = globals
+
     fun check(root: ParseTree): List<SemanticException> {
         val walker = ParseTreeWalker.DEFAULT
 
         val defPhase = DefPhase()
         walker.walk(defPhase, root)
 
-        val typeCheckPhase = TypeCheckPhase()
-        walker.walk(typeCheckPhase, root)
-
         val refPhase = RefPhase()
         walker.walk(refPhase, root)
 
-        return (defPhase.semanticErrors + typeCheckPhase.semanticErrors + refPhase.semanticErrors).sorted()
+        val typeCheckPhase = TypeCheckPhase()
+        walker.walk(typeCheckPhase, root)
+
+        return semanticErrors.sorted()
     }
 
     override fun resolveScope(ctx: LambdaContext): LambdaScope {
@@ -40,11 +44,71 @@ class SemanticChecker : TypeResolver, ScopeResolver {
         return types.get(node) ?: throw IllegalStateException("No type found for node $node")
     }
 
+    private fun defineFunc(
+        idToken: Token,
+        typeContext: TypeContext?,
+        paramsContext: ParamDeclsContext?
+    ): FunctionSymbol {
+        val id: String = idToken.text
+        val returnType: BuiltinType = resolveType(typeContext)
+
+        val fixParams = paramsContext?.paramDecl()?.map { param ->
+            val paramName = param.ID().text
+            val paramType = resolveType(param.type())
+            VariableSymbol(paramName, paramType, currentScope)
+        } ?: emptyList()
+
+        val variableParam = paramsContext?.variableParamDecl()?.let { param ->
+            val paramName = param.ID().text
+            val paramType = resolveType(param.type())
+            VariableSymbol(paramName, paramType, currentScope)
+        }
+
+        val parameters = if (variableParam != null) fixParams + variableParam else fixParams
+        val newSymbol = FunctionSymbol(id, returnType, parameters, currentScope, supportVarargs = variableParam != null)
+
+        defineSymbol(newSymbol, idToken)
+
+        return newSymbol
+    }
+
+    private fun defineVar(idToken: Token, typeContext: TypeContext, isVarargs: Boolean = false) {
+        val id: String = idToken.text
+        val type = resolveType(typeContext)
+        if (type is BuiltinType.FUNCTION) {
+            type.isFirstClass = true
+        }
+
+        val resolvedType = if (isVarargs) BuiltinType.ARRAY(type) else type
+        val newSymbol = VariableSymbol(id, resolvedType, currentScope)
+
+        defineSymbol(newSymbol, idToken)
+    }
+
+    private fun defineSymbol(newSymbol: Symbol, idToken: Token) {
+        val id = newSymbol.name
+        val existingSymbol: Symbol? = currentScope?.resolve(id)
+        if (existingSymbol != null && !shadowingAllowed(newSymbol, existingSymbol)) {
+            val location = idToken.location
+            semanticErrors += SemanticException("symbol $id already defined", location)
+        }
+
+        currentScope?.define(newSymbol)
+    }
+
+    //shadowing only allowed when a symbol inside function scope overrides a symbol outside that function scope
+    private fun shadowingAllowed(newSymbol: Symbol, existingSymbol: Symbol): Boolean {
+        var scope = newSymbol.scope
+        while (scope != null && scope != existingSymbol.scope) {
+            if (scope is FunctionSymbol) {
+                return true
+            }
+            scope = scope.enclosingScope
+        }
+        return false
+    }
+
     private inner class DefPhase : CymplBaseListener() {
-
-        val semanticErrors = mutableListOf<SemanticException>()
-
-        private var currentScope: Scope? = globals
 
         override fun enterFuncDecl(ctx: FuncDeclContext) {
             val function = defineFunc(ctx.ID().symbol, ctx.type(), ctx.paramDecls())
@@ -80,6 +144,13 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             currentScope = currentScope?.enclosingScope
         }
 
+        private fun saveScope(ctx: ParserRuleContext, s: Scope?) {
+            scopes.put(ctx, s)
+        }
+    }
+
+    private inner class RefPhase : CymplBaseListener() {
+
         override fun exitParamDecl(ctx: ParamDeclContext) {
             defineVar(ctx.ID().symbol, ctx.type())
         }
@@ -92,77 +163,65 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             defineVar(ctx.ID().symbol, ctx.type())
         }
 
-        private fun saveScope(ctx: ParserRuleContext, s: Scope?) {
-            scopes.put(ctx, s)
+        override fun enterFuncDecl(ctx: FuncDeclContext) {
+            currentScope = scopes[ctx]
         }
 
-        private fun defineFunc(
-            idToken: Token,
-            typeContext: TypeContext?,
-            paramsContext: ParamDeclsContext?
-        ): FunctionSymbol {
-            val name: String = idToken.text
-            val existingSymbol: Symbol? = currentScope?.resolve(name)
-
-            if (existingSymbol != null) {
-                val location = idToken.location
-                if (existingSymbol.scope == currentScope) {
-                    semanticErrors += SemanticException("function $name already defined", location)
-                } else {
-                    println("function shadowed at $location: $name")
-                }
-            }
-
-            val returnType: BuiltinType = resolveType(typeContext)
-
-            val fixParams = paramsContext?.paramDecl()?.map { param ->
-                val paramName = param.ID().text
-                val paramType = resolveType(param.type())
-                VariableSymbol(paramName, paramType, currentScope)
-            } ?: emptyList()
-
-            val variableParam = paramsContext?.variableParamDecl()?.let { param ->
-                val paramName = param.ID().text
-                val paramType = resolveType(param.type())
-                VariableSymbol(paramName, paramType, currentScope)
-            }
-
-            val parameters = if (variableParam != null) fixParams + variableParam else fixParams
-
-            return FunctionSymbol(name, returnType, parameters, currentScope, supportVarargs = variableParam != null)
-                .also { currentScope?.define(it) }
+        override fun exitFuncDecl(ctx: FuncDeclContext) {
+            currentScope = currentScope?.enclosingScope
         }
 
-        private fun defineVar(idToken: Token, typeContext: TypeContext, isVarargs: Boolean = false) {
-            val id: String = idToken.text
-            val existingSymbol: Symbol? = currentScope?.resolve(id)
+        override fun enterBlock(ctx: BlockContext) {
+            currentScope = scopes[ctx]
+        }
 
-            if (existingSymbol != null) {
-                val location = idToken.location
-                if (existingSymbol.scope == currentScope || (existingSymbol.scope != globals && currentScope !is FunctionScope)) {
-                    semanticErrors += SemanticException("symbol $id already defined", location)
-                } else {
-//                    println("variable shadowed at $location: $name")
-                }
+        override fun exitBlock(ctx: BlockContext) {
+            currentScope = currentScope?.enclosingScope
+        }
+
+        override fun enterLambda(ctx: LambdaContext) {
+            currentScope = scopes[ctx]
+        }
+
+        override fun exitLambda(ctx: LambdaContext) {
+            currentScope = currentScope?.enclosingScope
+        }
+
+        override fun exitVariable(ctx: VariableContext) {
+            if (ctx.parent is FunctionCallContext) {
+                //leave it to the function call check
+                return
             }
 
-            val type = resolveType(typeContext)
-            if (type is BuiltinType.FUNCTION) {
-                type.isFirstClass = true
+            val idToken = ctx.ID()
+            val varName: String = idToken.text
+            val variableSymbol: Symbol? = currentScope?.resolve(varName)
+
+            if (variableSymbol == null) {
+                val location = ctx.ID().symbol.location
+                semanticErrors += SemanticException("variable $varName not defined", location)
+            }
+        }
+
+        override fun exitFunctionCall(ctx: FunctionCallContext) {
+            val funcExprCtx = ctx.funcExpr
+            if (funcExprCtx !is VariableContext) {
+                // function to call is not a variable, so skip the reference check
+                return
             }
 
-            val resolvedType = if (isVarargs) BuiltinType.ARRAY(type) else type
+            val idToken = funcExprCtx.ID()
+            val functionName = idToken.text
+            val functionSymbol: Symbol? = currentScope?.resolve(functionName)
 
-            val symbol = VariableSymbol(id, resolvedType, currentScope)
-            currentScope?.define(symbol)
+            if (functionSymbol == null) {
+                val location = idToken.symbol.location
+                semanticErrors += SemanticException("function: $functionName not defined", location)
+            }
         }
     }
 
     private inner class TypeCheckPhase : CymplBaseListener() {
-
-        val semanticErrors = mutableListOf<SemanticException>()
-
-        private var currentScope: Scope? = globals
 
         override fun enterFuncDecl(ctx: FuncDeclContext) {
             currentScope = scopes[ctx]
@@ -672,73 +731,6 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             return null
         }
     }
-
-    private inner class RefPhase : CymplBaseListener() {
-
-        val semanticErrors = mutableListOf<SemanticException>()
-
-        private var currentScope: Scope? = globals
-
-        override fun enterFuncDecl(ctx: FuncDeclContext) {
-            currentScope = scopes[ctx]
-        }
-
-        override fun exitFuncDecl(ctx: FuncDeclContext) {
-            currentScope = currentScope?.enclosingScope
-        }
-
-        override fun enterBlock(ctx: BlockContext) {
-            currentScope = scopes[ctx]
-        }
-
-        override fun exitBlock(ctx: BlockContext) {
-            currentScope = currentScope?.enclosingScope
-        }
-
-        override fun enterLambda(ctx: LambdaContext) {
-            currentScope = scopes[ctx]
-        }
-
-        override fun exitLambda(ctx: LambdaContext) {
-            currentScope = currentScope?.enclosingScope
-        }
-
-        override fun exitVariable(ctx: VariableContext) {
-            if (ctx.parent is FunctionCallContext) {
-                //leave it to the function call check
-                return
-            }
-
-            val idToken = ctx.ID()
-            val varName: String = idToken.text
-            val variableSymbol: Symbol? = currentScope?.resolve(varName)
-
-            if (variableSymbol == null) {
-                val location = ctx.ID().symbol.location
-                semanticErrors += SemanticException("variable $varName not defined", location)
-            }
-        }
-
-        override fun exitFunctionCall(ctx: FunctionCallContext) {
-            val funcExprCtx = ctx.funcExpr
-            if (funcExprCtx !is VariableContext) {
-                // function to call is not a variable, so skip the reference check
-                return
-            }
-
-            val idToken = funcExprCtx.ID()
-            val functionName = idToken.text
-            val functionSymbol: Symbol? = currentScope?.resolve(functionName)
-
-            if (functionSymbol == null) {
-                val location = idToken.symbol.location
-                semanticErrors += SemanticException("function: $functionName not defined", location)
-            } else if (functionSymbol.type !is BuiltinType.FUNCTION) {
-                val location = idToken.symbol.location
-                semanticErrors += SemanticException("$functionName is not a function", location)
-            }
-        }
-    }
 }
 
 private val BlockContext.hasReturnStat
@@ -767,6 +759,5 @@ private val StatementContext.hasReturnStat
         is BlockStatementContext -> block().statement().any { it.hasReturnStat }
         else -> false
     }
-
 
 private val Token.location get() = TokenLocation(line, charPositionInLine + 1)

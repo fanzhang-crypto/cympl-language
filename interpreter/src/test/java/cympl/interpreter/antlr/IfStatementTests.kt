@@ -10,17 +10,17 @@ class IfStatementTests {
         val input = """
             int x = 1;
             if (x == 1) {
-                int x = 2;
-                x;
+                int y = 2;
+                y;
             } else {
-                int x = 3;
-                x;
+                int y = 3;
+                y;
             }
             x;
         """
         val output = """
             int x = 1; => 1
-            if (x == 1) { int x = 2; x; } else { int x = 3; x; } => void
+            if (x == 1) { int y = 2; y; } else { int y = 3; y; } => void
             x; => 1
             environment:
             x:int = 1
