@@ -6,11 +6,13 @@ import cympl.language.Program
 import org.jline.reader.LineReader
 import org.jline.utils.AttributedString
 import org.jline.utils.AttributedStyle
+import org.jline.utils.AttributedStyle.YELLOW
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.convert.ApplicationConversionService
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.core.convert.converter.Converter
+import org.springframework.shell.jline.PromptProvider
 import java.io.File
 
 @SpringBootApplication(proxyBeanMethods = false)
@@ -18,6 +20,11 @@ open class CliApp {
 
     @Bean
     open fun parserProvider(): () -> Parser<Program> = ::AntlrProgramParser
+
+    @Bean("cymplPromptProvider")
+    open fun promptProvider() = PromptProvider {
+        "cympl:>".fg(YELLOW)
+    }
 
 //    @Bean
 //    open fun terminalCustomizer(): TerminalCustomizer = TerminalCustomizer { terminal ->

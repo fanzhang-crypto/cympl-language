@@ -34,7 +34,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
         val typeCheckPhase = TypeCheckPhase()
         walker.walk(typeCheckPhase, root)
 
-        return semanticErrors.sorted()
+        return semanticErrors.sorted().also { semanticErrors.clear() }
     }
 
     override fun resolveScope(ctx: LambdaContext): LambdaScope {

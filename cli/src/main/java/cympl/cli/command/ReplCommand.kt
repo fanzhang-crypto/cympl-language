@@ -1,5 +1,6 @@
 package cympl.cli.command
 
+import cympl.cli.fg
 import cympl.cli.highlight.SyntaxHighlighter
 import cympl.parser.ParseResult
 import cympl.parser.Parser
@@ -12,7 +13,6 @@ import org.jline.reader.LineReaderBuilder
 import org.jline.reader.UserInterruptException
 import org.jline.reader.impl.completer.StringsCompleter
 import org.jline.terminal.Terminal
-import org.jline.utils.AttributedString
 import org.jline.utils.AttributedStyle
 import org.jline.widget.AutosuggestionWidgets
 import org.springframework.beans.factory.annotation.Autowired
@@ -134,8 +134,5 @@ class ReplCommand(
             BuiltinType.BOOL.name,
             BuiltinType.STRING.name
         )
-
-        private fun String.fg(color: Int): AttributedString =
-            AttributedString(this, AttributedStyle.DEFAULT.foreground(color))
     }
 }

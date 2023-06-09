@@ -2,7 +2,7 @@ spring:
   application:
     name: cli
   main:
-    banner-mode: console
+    banner-mode: off
   shell:
     command:
       version:
@@ -12,3 +12,8 @@ spring:
         show-git-branch: true
         show-git-short-commit-id: true
         show-git-commit-time: true
+logging:
+  pattern:
+    console:
+  file:
+    name: 'cympl-cli.log'
