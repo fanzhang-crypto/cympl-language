@@ -1136,6 +1136,23 @@ class JvmCompilerTest {
         """.trimIndent()
     }
 
+    @Test
+    fun `lambda calculus test`() {
+        val input = """
+            ((int) -> int) -> (int) -> int one = (f) -> (x) -> f(x);
+            one((x) -> {
+                println("1");
+                return 0;
+            })(0);
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            1
+        """.trimIndent()
+    }
+
     @Disabled("Not supported yet")
     @Test
     fun `support lambda that has variable arguments`() {

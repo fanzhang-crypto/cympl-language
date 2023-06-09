@@ -331,7 +331,6 @@ internal object ExpressionCompiler {
     }
 
     private fun Expression.FunctionCall.compile(ctx: MethodContext) {
-        //TODO: support high order function call expression like `f()()` or `f()()()`
         val funcExpr = this.funcExpr
 
         val funcType = funcExpr.resolvedType
