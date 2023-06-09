@@ -4,6 +4,7 @@ import cympl.parser.antlr.CymplParser.*
 import cympl.language.*
 import cympl.language.symbol.*
 import cympl.parser.SemanticException
+import cympl.parser.SyntaxException
 import cympl.parser.TokenLocation
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
@@ -42,6 +43,42 @@ class SemanticChecker : TypeResolver, ScopeResolver {
 
     override fun resolveType(node: ExprContext): BuiltinType {
         return types.get(node) ?: throw IllegalStateException("No type found for node $node")
+    }
+
+    override fun resolveType(typeContext: TypeContext?): BuiltinType = when (typeContext) {
+        null, is VoidTypeContext -> BuiltinType.VOID
+        is BoolTypeContext -> BuiltinType.BOOL
+        is IntTypeContext -> BuiltinType.INT
+        is FloatTypeContext -> BuiltinType.FLOAT
+        is StringTypeContext -> BuiltinType.STRING
+        is FunctionTypeContext -> {
+            val funcTypeContext = typeContext.funcType()
+            val returnType = resolveType(funcTypeContext.retType)
+            val parameterTypes =
+                funcTypeContext.paramTypes?.type()?.map { resolveType(it as TypeContext) }
+                    ?: emptyList()
+            BuiltinType.FUNCTION(parameterTypes, returnType)
+        }
+
+        is FunctionArrayTypeContext -> {
+            val funcTypeContext = typeContext.funcType()
+            val returnType = resolveType(funcTypeContext.retType)
+            val parameterTypes =
+                funcTypeContext.paramTypes?.type()?.map { resolveType(it as TypeContext) }
+                    ?: emptyList()
+            BuiltinType.ARRAY(BuiltinType.FUNCTION(parameterTypes, returnType))
+        }
+
+        is ArrayTypeContext -> {
+            val elementTypeContext = typeContext.type()
+            val elementType = resolveType(elementTypeContext)
+            BuiltinType.ARRAY(elementType)
+        }
+
+        else -> {
+            val location = TokenLocation(typeContext.start.line, typeContext.start.charPositionInLine)
+            throw SyntaxException("unknown type ${typeContext.text}", location)
+        }
     }
 
     private fun defineFunc(
