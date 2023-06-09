@@ -382,6 +382,10 @@ internal object ExpressionCompiler {
                 funcExpr.compile(ctx)
                 callLambda()
             }
+            is Expression.FunctionCall -> {
+                funcExpr.compile(ctx)
+                callLambda()
+            }
             else -> throw CompilationException("function call unsupported for expression: $funcExpr")
         }
     }

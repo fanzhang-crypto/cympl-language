@@ -935,6 +935,20 @@ class JvmCompilerTest {
     }
 
     @Test
+    fun `support high order function chaining`() {
+        val input = """
+            (int) -> (int) -> (int) -> int f = (x) -> (y) -> (z) -> x + y + z;
+            println(f(1)(2)(3));
+        """.trimIndent()
+
+        val output = compileAndExecute(input)
+
+        output shouldBe """
+            6
+        """.trimIndent()
+    }
+
+    @Test
     fun `lambda can be passed as argument`() {
         val input = """
             int z = 3;
