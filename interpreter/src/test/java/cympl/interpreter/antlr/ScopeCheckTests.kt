@@ -83,6 +83,27 @@ class ScopeCheckTests  {
     }
 
     @Test
+    fun `for loop should have a separate scope even without brackets`() {
+        val input = """
+            for (int x = 0; x < 3; x++)
+                println(x);
+                
+            println(x);
+        """.byteInputStream()
+
+        when (val r = parser().parse(input)) {
+            is ParseResult.Failure -> {
+                r.errors shouldHaveSize 1
+                r.errors[0].shouldHaveMessage("semantic error at (5:21): variable x not defined")
+            }
+
+            is ParseResult.Success -> {
+                fail("should throw semantic error, but not")
+            }
+        }
+    }
+
+    @Test
     fun `external variable can be shadowed in function`() {
         val input = """
             int x = 10;

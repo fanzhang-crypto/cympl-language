@@ -196,12 +196,21 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             currentScope = currentScope?.enclosingScope
         }
 
+        override fun enterForStat(ctx: ForStatContext) {
+            currentScope = LocalScope(currentScope)
+            saveScope(ctx, currentScope)
+        }
+
+        override fun exitForStat(ctx: ForStatContext) {
+            currentScope = currentScope?.enclosingScope
+        }
+
         private fun saveScope(ctx: ParserRuleContext, s: Scope?) {
             scopes.put(ctx, s)
         }
     }
 
-    private inner class RefPhase : CymplBaseListener() {
+    private inner class RefPhase : PostDefPhase() {
 
         override fun exitParamDecl(ctx: ParamDeclContext) {
             defineVar(ctx.ID().symbol, ctx.type())
@@ -213,30 +222,6 @@ class SemanticChecker : TypeResolver, ScopeResolver {
 
         override fun exitVarDecl(ctx: VarDeclContext) {
             defineVar(ctx.ID().symbol, ctx.type())
-        }
-
-        override fun enterFuncDecl(ctx: FuncDeclContext) {
-            currentScope = scopes[ctx]
-        }
-
-        override fun exitFuncDecl(ctx: FuncDeclContext) {
-            currentScope = currentScope?.enclosingScope
-        }
-
-        override fun enterBlock(ctx: BlockContext) {
-            currentScope = scopes[ctx]
-        }
-
-        override fun exitBlock(ctx: BlockContext) {
-            currentScope = currentScope?.enclosingScope
-        }
-
-        override fun enterLambda(ctx: LambdaContext) {
-            currentScope = scopes[ctx]
-        }
-
-        override fun exitLambda(ctx: LambdaContext) {
-            currentScope = currentScope?.enclosingScope
         }
 
         override fun exitVariable(ctx: VariableContext) {
@@ -273,11 +258,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
         }
     }
 
-    private inner class TypeCheckPhase : CymplBaseListener() {
-
-        override fun enterFuncDecl(ctx: FuncDeclContext) {
-            currentScope = scopes[ctx]
-        }
+    private inner class TypeCheckPhase : PostDefPhase() {
 
         override fun exitFuncDecl(ctx: FuncDeclContext) {
             val functionSymbol = currentScope as FunctionSymbol
@@ -291,15 +272,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                     "missing return statement in function ${functionSymbol.name}", location
                 )
             }
-            currentScope = currentScope?.enclosingScope
-        }
-
-        override fun enterBlock(ctx: BlockContext) {
-            currentScope = scopes[ctx]
-        }
-
-        override fun exitBlock(ctx: BlockContext) {
-            currentScope = currentScope?.enclosingScope
+            super.exitFuncDecl(ctx)
         }
 
         /**
@@ -602,7 +575,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             }
 
             val parameterTypes = functionType.paramTypes
-            val argumentTypes = ctx.exprlist()?.expr()?.mapNotNull { types.get(it) } ?: emptyList()
+            val argumentTypes = ctx.exprlist()?.expr()?.map { types.get(it) ?: BuiltinType.ANY } ?: emptyList()
 
             val fixParamTypes = if (functionType.supportVarargs) parameterTypes.dropLast(1) else parameterTypes
             val variableParamType = if (functionType.supportVarargs) parameterTypes.last() else null
@@ -728,6 +701,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                     location
                 )
             }
+            super.exitForStat(ctx)
         }
 
         private fun checkArithmeticBop(ctx: ParserRuleContext, leftType: BuiltinType?, rightType: BuiltinType?) {
@@ -781,6 +755,41 @@ class SemanticChecker : TypeResolver, ScopeResolver {
                 scope = scope.enclosingScope
             }
             return null
+        }
+    }
+
+    private abstract inner class PostDefPhase : CymplBaseListener() {
+
+        override fun enterFuncDecl(ctx: FuncDeclContext) {
+            currentScope = scopes[ctx]
+        }
+
+        override fun exitFuncDecl(ctx: FuncDeclContext) {
+            currentScope = currentScope?.enclosingScope
+        }
+
+        override fun enterBlock(ctx: BlockContext) {
+            currentScope = scopes[ctx]
+        }
+
+        override fun exitBlock(ctx: BlockContext) {
+            currentScope = currentScope?.enclosingScope
+        }
+
+        override fun enterLambda(ctx: LambdaContext) {
+            currentScope = scopes[ctx]
+        }
+
+        override fun exitLambda(ctx: LambdaContext) {
+            currentScope = currentScope?.enclosingScope
+        }
+
+        override fun enterForStat(ctx: ForStatContext) {
+            currentScope = scopes[ctx]
+        }
+
+        override fun exitForStat(ctx: ForStatContext) {
+            currentScope = currentScope?.enclosingScope
         }
     }
 }
