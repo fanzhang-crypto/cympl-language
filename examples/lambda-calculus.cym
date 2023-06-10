@@ -1,51 +1,41 @@
 #! cympl interpret
 
-((int) -> int) -> (int) -> int zero = (f) -> (x) -> x;
-((int) -> int) -> (int) -> int one = (f) -> (x) -> f(x);
-((int) -> int) -> (int) -> int two = (f) -> (x) -> f(f(x));
+typealias CHURCH_NUMERAL = ((int) -> int) -> (int) -> int;
 
-(
-    ((int) -> int) -> (int) -> int
-) -> ((int) -> int) -> (int) -> int
-succ = (n) -> (f) -> (x) -> f(n(f)(x));
+CHURCH_NUMERAL zero = (f) -> (x) -> x;
+CHURCH_NUMERAL one = (f) -> (x) -> f(x);
+CHURCH_NUMERAL two = (f) -> (x) -> f(f(x));
 
+typealias CHURCH_NUMERAL_UNARY_OP = (CHURCH_NUMERAL) -> CHURCH_NUMERAL;
+typealias CHURCH_NUMERAL_BINARY_OP = (CHURCH_NUMERAL, CHURCH_NUMERAL) -> CHURCH_NUMERAL;
+
+CHURCH_NUMERAL_UNARY_OP succ = (n) -> (f) -> (x) -> f(n(f)(x));
 //(
-//    ((int) -> int) -> (int) -> int
-//) -> ((int) -> int) -> (int) -> int
+//    CHURCH_NUMERAL
+//) -> CHURCH_NUMERAL
 //pred = (n) -> (f) -> (x) -> n((g) -> (h) -> h(g(f)))((u) -> x)((u) -> u);
 
 //(
-//    ((int) -> int) -> (int) -> int,
-//    ((int) -> int) -> (int) -> int
-//) -> ((int) -> int) -> (int) -> int
+//    CHURCH_NUMERAL,
+//    CHURCH_NUMERAL
+//) -> CHURCH_NUMERAL
 //sub = (m) -> (n) -> n(pred)(m);
 
-(
-    ((int) -> int) -> (int) -> int,
-    ((int) -> int) -> (int) -> int
-) -> ((int) -> int) -> (int) -> int
-add = (n, m) -> (f) -> (x) -> m(f)(n(f)(x));
+CHURCH_NUMERAL_BINARY_OP add = (n, m) -> (f) -> (x) -> m(f)(n(f)(x));
 
-(
-    ((int) -> int) -> (int) -> int,
-    ((int) -> int) -> (int) -> int
-) -> ((int) -> int) -> (int) -> int
-mult = (n, m) -> (f) -> (x) -> m(n(f))(x);
+CHURCH_NUMERAL_BINARY_OP mult = (n, m) -> (f) -> (x) -> m(n(f))(x);
 
 /*(
-    ((int) -> int) -> (int) -> int,
-    ((int) -> int) -> (int) -> int
-) -> ((int) -> int) -> (int) -> int
+    CHURCH_NUMERAL,
+    CHURCH_NUMERAL
+) -> CHURCH_NUMERAL
 exp = (n, m) -> (f) -> (x) -> n(m)(f)(x);*/
 
-(
-    ((int) -> int) -> (int) -> int
-) -> int
-toInt = (n) -> n((x) -> x + 1)(0);
+(CHURCH_NUMERAL) -> int toInt = (n) -> n((x) -> x + 1)(0);
 
-((int) -> int) -> (int) -> int three = add(one, two);
-((int) -> int) -> (int) -> int four = succ(three);
-((int) -> int) -> (int) -> int six = mult(three, two);
+CHURCH_NUMERAL three = add(one, two);
+CHURCH_NUMERAL four = succ(three);
+CHURCH_NUMERAL six = mult(three, two);
 
 int _1 = toInt(one); // 1
 int _2 = toInt(two); // 2

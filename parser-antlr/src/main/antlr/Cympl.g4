@@ -4,8 +4,10 @@ grammar Cympl;
 package cympl.parser.antlr;
 }
 
-prog: statement+EOF             #Program
+prog: (typeAliasDecl | statement)+EOF             #Program
 ;
+
+typeAliasDecl: TYPE_ALIAS ID '=' type ';';
 
 statement
     : varDecl ';'                   #VariableDeclaration
@@ -31,6 +33,7 @@ type
     | funcType                      #FunctionType
     | '(' funcType ')' '[' ']'      #FunctionArrayType //to distinguish cases like (() -> int)[] and () -> int[]
     | type '[' ']'                  #ArrayType
+    | ID                            #AliasType
     ;
 
 funcType: '(' paramTypes=typeList? ')' ARROW_RIGHT retType=type;
@@ -144,6 +147,7 @@ DEFAULT: 'default';
 BREAK: 'break';
 CONTINUE: 'continue';
 RETURN: 'return';
+TYPE_ALIAS: 'typealias';
 
 ID: [a-zA-Z_][a-zA-Z0-9_]*;
 COMMENT: '/*' .*? '*/' -> skip;

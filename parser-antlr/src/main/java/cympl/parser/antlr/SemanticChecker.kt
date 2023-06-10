@@ -4,7 +4,6 @@ import cympl.parser.antlr.CymplParser.*
 import cympl.language.*
 import cympl.language.symbol.*
 import cympl.parser.SemanticException
-import cympl.parser.SyntaxException
 import cympl.parser.TokenLocation
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
@@ -17,6 +16,7 @@ class SemanticChecker : TypeResolver, ScopeResolver {
     private val globals = GlobalScope()
     private val scopes = ParseTreeProperty<Scope>()
     private val types = ParseTreeProperty<BuiltinType>()
+    private val typeAliases = mutableMapOf<String, BuiltinType>()
 
     private val semanticErrors = mutableListOf<SemanticException>()
 
@@ -75,9 +75,18 @@ class SemanticChecker : TypeResolver, ScopeResolver {
             BuiltinType.ARRAY(elementType)
         }
 
+        is AliasTypeContext -> {
+            val alias = typeContext.ID().text
+            typeAliases[alias] ?: run {
+                val location = typeContext.start.location
+                semanticErrors += SemanticException("unknown type alias: $alias", location)
+                BuiltinType.VOID
+            }
+        }
+
         else -> {
             val location = TokenLocation(typeContext.start.line, typeContext.start.charPositionInLine)
-            throw SyntaxException("unknown type ${typeContext.text}", location)
+            throw SemanticException("unknown type ${typeContext.text}", location)
         }
     }
 
@@ -146,6 +155,12 @@ class SemanticChecker : TypeResolver, ScopeResolver {
     }
 
     private inner class DefPhase : CymplBaseListener() {
+
+        override fun exitTypeAliasDecl(ctx: TypeAliasDeclContext) {
+            val alias = ctx.ID().text
+            val type = resolveType(ctx.type())
+            typeAliases[alias] = type
+        }
 
         override fun enterFuncDecl(ctx: FuncDeclContext) {
             val function = defineFunc(ctx.ID().symbol, ctx.type(), ctx.paramDecls())
